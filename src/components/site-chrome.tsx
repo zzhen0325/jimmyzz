@@ -1,169 +1,138 @@
 "use client";
-
 import Link from "next/link";
-import { gsap, useGSAP, motionConditions } from "@/lib/gsap";
-import { GsapPresence } from "./gsap-presence";
-import { ArrowDown, CircleDot, Menu, Play, Video, X } from "lucide-react";
-import { FaInstagram, FaXTwitter, FaYoutube } from "react-icons/fa6";
-import { useEffect, useRef, useState } from "react";
-
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { ArrowUpRight, ArrowUp, Menu, X } from "lucide-react";
+import { profile } from "@/lib/site-data";
 const nav = [
-  ["Work", "/work", "01"],
-  ["Reels", "/#reels", "02"],
-  ["Services", "/#services", "03"],
-  ["About", "/#about", "04"],
+  ["作品", "/work"],
+  ["视觉漫游", "/#gallery"],
+  ["设计实践", "/#services"],
+  ["关于", "/#about"],
 ] as const;
-
 export function TopNav() {
-  const scope = useRef<HTMLElement>(null);
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
-    mm.add(motionConditions, ({ conditions }) => {
-      const cleanups = Array.from(scope.current!.querySelectorAll("nav a")).map(link => {
-        const hover = gsap.to(link, { opacity: 0.55, duration: conditions?.reduced ? 0 : 0.2, paused: true });
-        const enter = () => { hover.play(); };
-        const leave = () => { hover.reverse(); };
-        link.addEventListener("pointerenter", enter); link.addEventListener("pointerleave", leave);
-        link.addEventListener("focus", enter); link.addEventListener("blur", leave);
-        return () => { link.removeEventListener("pointerenter", enter); link.removeEventListener("pointerleave", leave); link.removeEventListener("focus", enter); link.removeEventListener("blur", leave); };
-      });
-      return () => cleanups.forEach(cleanup => cleanup());
-    }, scope);
-    return () => mm.revert();
-  }, { scope });
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   return (
-    <header ref={scope} className="absolute top-0 left-0 z-20 grid w-full grid-cols-[1fr_auto] items-center px-[var(--page-pad)] py-[22px] text-xs max-[809px]:grid-cols-2 max-[809px]:pt-[15px]">
-      <Link href="/" className="text-sm font-[650]" aria-label="Jimmy home">Jimmy™</Link>
-      <nav className="flex gap-[30px] justify-self-end max-[809px]:hidden" aria-label="Primary navigation">
-        {nav.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}
+    <header className="site-nav">
+      <Link href="/" className="site-wordmark" aria-label="ZZ 张振 首页">
+        ZZ<span>©</span>
+      </Link>
+      <nav aria-label="主导航" className="desktop-nav">
+        {nav.map(([label, href]) => (
+          <Link
+            aria-current={pathname === href ? "page" : undefined}
+            key={href}
+            href={href}
+          >
+            {label}
+          </Link>
+        ))}
+        <a href={`mailto:${profile.email}`}>
+          聊聊项目 <ArrowUpRight size={14} />
+        </a>
       </nav>
+      <button
+        className="mobile-menu-toggle"
+        aria-label={open ? "关闭导航" : "打开导航"}
+        aria-expanded={open}
+        aria-controls="mobile-navigation"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? <X /> : <Menu />}
+      </button>
+      {open && (
+        <nav
+          id="mobile-navigation"
+          className="mobile-nav"
+          aria-label="移动导航"
+        >
+          {nav.map(([label, href]) => (
+            <Link onClick={() => setOpen(false)} key={href} href={href}>
+              {label}
+              <ArrowUpRight size={20} />
+            </Link>
+          ))}
+          <a href={`mailto:${profile.email}`}>
+            联系我 <ArrowUpRight size={20} />
+          </a>
+        </nav>
+      )}
     </header>
   );
 }
-
-function FilmRunner() {
-  const [playing, setPlaying] = useState(false);
-  const [frame, setFrame] = useState(0);
-  const board = useRef<HTMLButtonElement>(null);
-  const leapTimeline = useRef<gsap.core.Timeline | null>(null);
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
-    mm.add(motionConditions, ({ conditions }) => {
-      const reduced = conditions?.reduced;
-      gsap.set("[data-obstacle]", { x: 210 });
-      leapTimeline.current = gsap.timeline({ paused: true })
-        .to("[data-runner]", { y: reduced ? 0 : -22, duration: 0.2, ease: "power2.out" })
-        .to("[data-runner]", { y: 0, duration: 0.28, ease: "bounce.out" });
-      if (playing && !reduced) {
-        gsap.fromTo("[data-obstacle]", { x: 220 }, { x: -20, duration: 2.2, repeat: -1, ease: "none" });
-        const counter = { frame: 0 };
-        gsap.to(counter, { frame: 100000, duration: 9000, ease: "none", onUpdate: () => setFrame(Math.floor(counter.frame)) });
-      }
-      if (playing) leapTimeline.current.play();
-      return () => { leapTimeline.current = null; };
-    }, board);
-    return () => mm.revert();
-  }, { scope: board, dependencies: [playing], revertOnUpdate: true });
-  const leap = () => {
-    if (!playing) setPlaying(true);
-    else leapTimeline.current?.restart();
-  };
+export function Timeline({
+  className = "",
+}: {
+  max?: string;
+  className?: string;
+}) {
   return (
-    <button ref={board} className="relative h-[82px] w-full overflow-hidden border-t border-white/16 text-left" onClick={leap} aria-label="Film runner game board">
-      <span className="mt-2.5 flex justify-between text-[9px] text-[#777]"><b className="flex items-center gap-[5px] text-[#aaa]"><i className="block size-1.5 rounded-full bg-current" /> REC</b><em>FRAME {String(frame).padStart(4, "0")}</em></span>
-      <span className="absolute right-0 bottom-1 left-0 h-[35px] border-b border-[#3a3a3a]">
-        <span data-runner className="absolute bottom-px left-[5px]"><Video size={15}/></span>
-        <span data-obstacle className="absolute bottom-px left-0"><CircleDot size={18}/></span>
-      </span>
-      {!playing && <span className="absolute right-0 bottom-[5px] grid size-7 place-items-center rounded-full border border-[#555] text-[0px] [&_svg]:w-2.5"><Play size={12} fill="currentColor" /> Play</span>}
-    </button>
-  );
-}
-
-export function FloatingMenu() {
-  const [open, setOpen] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const toggle = useRef<HTMLDivElement>(null);
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
-    mm.add(motionConditions, ({ conditions }) => {
-      gsap.to(toggle.current, { autoAlpha: visible || open ? 1 : 0, y: visible || open ? 0 : 12, duration: conditions?.reduced ? 0 : 0.25, overwrite: "auto" });
-    });
-    return () => mm.revert();
-  }, { dependencies: [visible, open], revertOnUpdate: true });
-  useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 260);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return (
-    <>
-      <div ref={toggle} inert={!visible && !open} style={{ visibility: "hidden" }} className="pointer-events-auto fixed bottom-[72px] left-10 z-80 flex items-center gap-2.5 max-[809px]:bottom-[22px] max-[809px]:left-4">
-        <button className="grid size-12 place-items-center rounded-full border border-white/20 bg-[rgba(8,8,8,.8)] backdrop-blur-[10px] [&_svg]:w-5" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"}>{open ? <X /> : <Menu />}</button>
-      </div>
-      <GsapPresence open={open}>
-            <button data-presence-fade aria-label="Close menu backdrop" onClick={() => setOpen(false)} className="fixed inset-0 z-70 bg-black/40 backdrop-blur-[10px]" />
-            <aside data-presence-panel className="fixed bottom-[130px] left-10 z-81 min-h-[214px] w-[440px] rounded-[14px] border border-white/12 bg-[rgba(13,13,13,.9)] p-6 backdrop-blur-[18px] max-[809px]:right-4 max-[809px]:bottom-[84px] max-[809px]:left-4 max-[809px]:w-auto">
-              <div className="grid grid-cols-[.85fr_1.15fr] gap-[26px] max-[809px]:grid-cols-[1fr_1.2fr] [&>div]:flex [&>div]:flex-col [&>div]:items-start [&_a]:my-0.5 [&_a]:text-base [&_sup]:ml-[7px] [&_sup]:text-[8px] [&_sup]:text-[#666]">
-                <div>
-                  <span className="mb-[18px] text-[11px] tracking-[.02em] text-[#777] uppercase">MENU</span>
-                  {nav.map(([label, href, no]) => <Link onClick={() => setOpen(false)} key={label} href={href}>{label}<sup>{no}</sup></Link>)}
-                </div>
-                <div>
-                  <span className="mb-[18px] text-[11px] tracking-[.02em] text-[#777] uppercase">GET IN TOUCH</span>
-                  <a className="border-b border-[#555]" href="mailto:noah@Jimmy.studio">noah@Jimmy.studio</a>
-                  <small className="my-[14px] mb-2.5 text-[#777]">© 2026 Jimmy™</small>
-                  <FilmRunner />
-                </div>
-              </div>
-            </aside>
-      </GsapPresence>
-    </>
-  );
-}
-
-export function Timeline({ max = "02:00", className = "" }: { max?: string; className?: string }) {
-  return (
-    <div className={`absolute right-[var(--page-pad)] bottom-[104px] left-[var(--page-pad)] z-4 border-t border-white/20 pt-[7px] text-[10px] text-white/54 max-[809px]:top-[102px] max-[809px]:bottom-auto max-[809px]:[&_span:nth-child(even)]:hidden ${className}`} aria-hidden>
-      <div className="absolute top-0 left-0 right-0 h-[5px] bg-[repeating-linear-gradient(90deg,rgba(255,255,255,.35)_0_1px,transparent_1px_calc(25%_-_1px))]" />
-      <span className="absolute left-0">00:00</span>
-      <span className="absolute left-1/4">00:30</span>
-      <span className="absolute left-1/2">01:00</span>
-      <span className="absolute left-3/4">01:30</span>
-      <span className="absolute right-0 text-right">{max}</span>
+    <div
+      aria-hidden
+      className={`absolute right-[var(--page-pad)] left-[var(--page-pad)] z-4 flex justify-between border-t border-white/20 pt-2 text-[10px] text-white/60 ${className}`}
+    >
+      <span>THINK</span>
+      <span>PLAN</span>
+      <span>DO</span>
+      <span>REVIEW</span>
+      <span>REPEAT</span>
     </div>
   );
 }
-
-export function Stats() {
-  const data = [["120+","Projects Delivered"],["48M+","Views Generated"],["12","Years Editing"],["24H","Avg Turnaround"]];
-  return <div className="mx-[var(--page-pad)] grid grid-cols-4 border-t border-white/16 max-[809px]:grid-cols-2">{data.map(([value,label], i)=><div className="grid grid-cols-[50px_1fr] border-r border-white/16 py-[22px] last:border-0 max-[809px]:min-h-[120px] max-[809px]:[&:nth-child(2)]:border-r-0" key={label}><small className="text-[#666]">0{i+1}</small><strong className="col-start-2 text-[42px] font-[450] max-[809px]:text-[32px]">{value}</strong><span className="col-start-2 mt-[5px] text-xs text-[#888]">{label}</span></div>)}</div>;
-}
-
-export function SectionLabel({ index, title, time }: { index: string; title: string; time: string }) {
-  return <div className="grid grid-cols-[1fr_auto_1fr] border-b border-white/16 px-[var(--page-pad)] py-[22px] text-[11px] tracking-[.02em] text-[#777] uppercase max-[809px]:py-[18px]"><span>({index}) — {title}</span><i className="not-italic">+</i><time className="text-right">{time}</time></div>;
-}
-
-export function Footer({ variant = "home" }: { variant?: "home" | "work" | "project" }) {
-  const height = variant === "work"
-    ? "min-h-[1050px] max-[809px]:min-h-[700px]"
-    : variant === "project"
-      ? "min-h-[720px] max-[809px]:min-h-[750px]"
-      : "min-h-[780px] max-[809px]:min-h-[1080px]";
+export function SectionLabel({
+  index,
+  title,
+  time,
+}: {
+  index: string;
+  title: string;
+  time: string;
+}) {
   return (
-    <footer className={`relative overflow-hidden border-t border-white/16 bg-[#090909] px-[var(--page-pad)] pt-[110px] pb-6 max-[809px]:px-4 max-[809px]:pt-[90px] max-[809px]:pb-5 ${height}`}>
-      <div className="grid grid-cols-[1.7fr_1fr_1fr] gap-20 max-[809px]:grid-cols-2 max-[809px]:gap-x-[25px] max-[809px]:gap-y-[60px] [&>div]:flex [&>div]:flex-col [&>div]:items-start max-[809px]:[&>div:first-child]:col-span-full [&_p]:max-w-[280px] [&_p]:text-[#8a8a86] [&_a]:my-0.5">
-        <div><p>I edit, grade and finish reels, campaigns and title work for creatives and brands.</p></div>
-        <div><span className="mb-[18px] text-[11px] tracking-[.02em] text-[#777] uppercase">(01) — NAVIGATION</span>{nav.map(([l,h])=><Link key={l} href={h}>{l}</Link>)}<a href="mailto:noah@Jimmy.studio">Contact</a></div>
-        <div><span className="mb-[18px] text-[11px] tracking-[.02em] text-[#777] uppercase">(02) — VISIT US</span><p>Downtown, Dubai — UAE</p><p>Mon–Fri: 09:00 – 18:00<br/>Sat: 10:00 – 16:00</p><div className="mt-[18px] flex gap-[9px] [&_a]:grid [&_a]:size-7 [&_a]:place-items-center [&_a]:border [&_a]:border-white/16"><a href="https://x.com/Jimmy" aria-label="X"><FaXTwitter/></a><a href="https://instagram.com/Jimmy.studio" aria-label="Instagram"><FaInstagram/></a><a href="https://youtube.com/@Jimmy" aria-label="YouTube"><FaYoutube/></a></div></div>
+    <div className="section-label">
+      <span>
+        ({index}) — {title}
+      </span>
+      <span aria-hidden>+</span>
+      <span>{time}</span>
+    </div>
+  );
+}
+export function Footer({
+  variant = "home",
+}: {
+  variant?: "home" | "work" | "project";
+}) {
+  return (
+    <footer id="contact" className={`portfolio-footer footer-${variant}`}>
+      <p className="eyebrow">HAVE SOMETHING IN MIND? / 一起创造点什么</p>
+      <a href={`mailto:${profile.email}`} className="footer-title">
+        Let&apos;s make
+        <br />
+        it happen.
+        <ArrowUpRight />
+      </a>
+      <div className="footer-details">
+        <a href={`mailto:${profile.email}`}>{profile.email}</a>
+        <div>
+          {nav.map(([label, href]) => (
+            <Link key={href} href={href}>
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
-      <div className="mt-[200px] mr-0 mb-[50px] ml-[-1.2vw] whitespace-nowrap text-[20.8vw] leading-[.8] font-[450] tracking-[-.07em] max-[1199px]:mt-[180px] max-[809px]:mt-[210px] max-[809px]:mb-10 max-[809px]:ml-0 max-[809px]:text-[26vw]">Jimmy</div>
-      <div className="grid grid-cols-2 border-t border-white/16 pt-[15px] text-[10px] text-[#666] uppercase max-[809px]:grid-cols-[1fr_auto]"><span>© 2026 Jimmy™</span><span className="text-right"><a className="inline-flex items-center gap-[7px]" href="#top">Back To Top <ArrowDown size={14}/></a></span></div>
+      <div className="footer-bottom">
+        <span>© {new Date().getFullYear()} ZZ · 张振</span>
+        <span>VISUAL DESIGN & CREATIVE TECHNOLOGY</span>
+        <a href="#top">
+          回到顶部 <ArrowUp size={14} />
+        </a>
+      </div>
     </footer>
   );
 }
-
 export function GlobalChrome() {
-  return <FloatingMenu/>;
+  return null;
 }

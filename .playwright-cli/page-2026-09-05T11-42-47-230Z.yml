@@ -1,0 +1,27 @@
+- generic [active]:
+  - main:
+    - generic:
+      - heading "Curve Gallery with Three.js and GSAP" [level=1]
+      - navigation:
+        - link "Tutorial" [ref=e1] [cursor=pointer]:
+          - /url: https://tympanus.net/codrops/?p=117076
+        - link "All demos" [ref=e2] [cursor=pointer]:
+          - /url: https://tympanus.net/codrops/hub/
+        - link "GitHub" [ref=e3] [cursor=pointer]:
+          - /url: https://github.com/gaspoorf/curve-gallery
+      - navigation:
+        - link "#gsap" [ref=e4] [cursor=pointer]:
+          - /url: https://tympanus.net/codrops/hub/tag/gsap/
+        - link "#three.js" [ref=e5] [cursor=pointer]:
+          - /url: https://tympanus.net/codrops/hub/tag/three-js/
+        - link "#scroll" [ref=e6] [cursor=pointer]:
+          - /url: https://tympanus.net/codrops/hub/tag/scroll/
+      - link "With Readymag, nothing stands between your ideas and the final result →" [ref=e7] [cursor=pointer]:
+        - /url: https://tympanus.net/codrops/linkout/115897
+    - button "Scroll" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - button "Path 1" [ref=e12] [cursor=pointer]
+      - button "Path 2" [ref=e13] [cursor=pointer]
+      - button "Path 3" [ref=e14] [cursor=pointer]
+      - button "Path 4" [ref=e15] [cursor=pointer]
+      - button "Path 5" [ref=e16] [cursor=pointer]

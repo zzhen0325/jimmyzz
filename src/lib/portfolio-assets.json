@@ -1,0 +1,1081 @@
+{
+  "inner-species": {
+    "nodeId": "500:698",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          616
+        ],
+        "src": "/assets/portfolio/inner-species/cover.webp",
+        "width": 1920,
+        "height": 616
+      },
+      {
+        "name": "brief",
+        "title": "项目背景与目标",
+        "rect": [
+          0,
+          980,
+          1920,
+          400
+        ],
+        "src": "/assets/portfolio/inner-species/brief.webp",
+        "width": 1920,
+        "height": 400
+      },
+      {
+        "name": "strategy",
+        "title": "设计策略与用户路径",
+        "rect": [
+          0,
+          1380,
+          1920,
+          1880
+        ],
+        "src": "/assets/portfolio/inner-species/strategy.webp",
+        "width": 1920,
+        "height": 1880
+      },
+      {
+        "name": "typography",
+        "title": "标题字体",
+        "rect": [
+          0,
+          3260,
+          1920,
+          720
+        ],
+        "src": "/assets/portfolio/inner-species/typography.webp",
+        "width": 1920,
+        "height": 720
+      },
+      {
+        "name": "landing",
+        "title": "主页面与加载",
+        "rect": [
+          0,
+          3980,
+          1920,
+          1320
+        ],
+        "src": "/assets/portfolio/inner-species/landing.webp",
+        "width": 1920,
+        "height": 1320
+      },
+      {
+        "name": "questions",
+        "title": "答题页与情绪角色",
+        "rect": [
+          0,
+          5300,
+          1920,
+          1600
+        ],
+        "src": "/assets/portfolio/inner-species/questions.webp",
+        "width": 1920,
+        "height": 1600
+      },
+      {
+        "name": "results",
+        "title": "物种结果与分享页",
+        "rect": [
+          0,
+          6900,
+          1920,
+          3530
+        ],
+        "src": "/assets/portfolio/inner-species/results.webp",
+        "width": 1920,
+        "height": 3530
+      },
+      {
+        "name": "outcome",
+        "title": "项目成果",
+        "rect": [
+          0,
+          10430,
+          1920,
+          320
+        ],
+        "src": "/assets/portfolio/inner-species/outcome.webp",
+        "width": 1920,
+        "height": 320
+      }
+    ]
+  },
+  "youth-album": {
+    "nodeId": "500:1025",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          1510
+        ],
+        "src": "/assets/portfolio/youth-album/cover.webp",
+        "width": 1920,
+        "height": 1510
+      },
+      {
+        "name": "experience",
+        "title": "青春纪念册 · 歌单、结果与分享",
+        "rect": [
+          0,
+          0,
+          1920,
+          1510
+        ],
+        "src": "/assets/portfolio/youth-album/experience.webp",
+        "width": 1920,
+        "height": 1510
+      }
+    ]
+  },
+  "vinyl-anniversary": {
+    "nodeId": "500:1025",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          3790,
+          1920,
+          1540
+        ],
+        "src": "/assets/portfolio/vinyl-anniversary/cover.webp",
+        "width": 1920,
+        "height": 1540
+      },
+      {
+        "name": "brief",
+        "title": "云村十周年 · 项目背景",
+        "rect": [
+          0,
+          1590,
+          1920,
+          950
+        ],
+        "src": "/assets/portfolio/vinyl-anniversary/brief.webp",
+        "width": 1920,
+        "height": 950
+      },
+      {
+        "name": "strategy",
+        "title": "设计策略",
+        "rect": [
+          0,
+          2540,
+          1920,
+          1190
+        ],
+        "src": "/assets/portfolio/vinyl-anniversary/strategy.webp",
+        "width": 1920,
+        "height": 1190
+      },
+      {
+        "name": "experience",
+        "title": "黑胶墙与纪念凭证",
+        "rect": [
+          0,
+          3730,
+          1920,
+          1660
+        ],
+        "src": "/assets/portfolio/vinyl-anniversary/experience.webp",
+        "width": 1920,
+        "height": 1660
+      },
+      {
+        "name": "outcome",
+        "title": "项目成果",
+        "rect": [
+          0,
+          5390,
+          1920,
+          350
+        ],
+        "src": "/assets/portfolio/vinyl-anniversary/outcome.webp",
+        "width": 1920,
+        "height": 350
+      }
+    ]
+  },
+  "winter-gathering": {
+    "nodeId": "500:1380",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          630
+        ],
+        "src": "/assets/portfolio/winter-gathering/cover.webp",
+        "width": 1920,
+        "height": 630
+      },
+      {
+        "name": "brief",
+        "title": "冬至有酒局 · 背景",
+        "rect": [
+          0,
+          640,
+          1920,
+          760
+        ],
+        "src": "/assets/portfolio/winter-gathering/brief.webp",
+        "width": 1920,
+        "height": 760
+      },
+      {
+        "name": "strategy",
+        "title": "线上线下联动策略",
+        "rect": [
+          0,
+          1400,
+          1920,
+          1070
+        ],
+        "src": "/assets/portfolio/winter-gathering/strategy.webp",
+        "width": 1920,
+        "height": 1070
+      },
+      {
+        "name": "typography",
+        "title": "标题字体",
+        "rect": [
+          0,
+          2470,
+          1920,
+          800
+        ],
+        "src": "/assets/portfolio/winter-gathering/typography.webp",
+        "width": 1920,
+        "height": 800
+      },
+      {
+        "name": "h5",
+        "title": "线上 H5 与抽奖体验",
+        "rect": [
+          0,
+          3270,
+          1920,
+          1760
+        ],
+        "src": "/assets/portfolio/winter-gathering/h5.webp",
+        "width": 1920,
+        "height": 1760
+      },
+      {
+        "name": "offline",
+        "title": "线下物料与现场",
+        "rect": [
+          0,
+          5030,
+          1920,
+          3290
+        ],
+        "src": "/assets/portfolio/winter-gathering/offline.webp",
+        "width": 1920,
+        "height": 3290
+      },
+      {
+        "name": "outcome",
+        "title": "项目成果",
+        "rect": [
+          0,
+          8320,
+          1920,
+          280
+        ],
+        "src": "/assets/portfolio/winter-gathering/outcome.webp",
+        "width": 1920,
+        "height": 280
+      }
+    ]
+  },
+  "miaoshi-brand": {
+    "nodeId": "500:1652",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          615
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/cover.webp",
+        "width": 1920,
+        "height": 615
+      },
+      {
+        "name": "identity",
+        "title": "品牌定位与色彩系统",
+        "rect": [
+          0,
+          700,
+          1920,
+          1580
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/identity.webp",
+        "width": 1920,
+        "height": 1580
+      },
+      {
+        "name": "concept",
+        "title": "箭头符号与概念表达",
+        "rect": [
+          0,
+          2280,
+          1920,
+          1670
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/concept.webp",
+        "width": 1920,
+        "height": 1670
+      },
+      {
+        "name": "guidelines",
+        "title": "品牌规范手册",
+        "rect": [
+          0,
+          3950,
+          1920,
+          980
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/guidelines.webp",
+        "width": 1920,
+        "height": 980
+      },
+      {
+        "name": "posters",
+        "title": "品牌宣传海报",
+        "rect": [
+          0,
+          4930,
+          1920,
+          2070
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/posters.webp",
+        "width": 1920,
+        "height": 2070
+      },
+      {
+        "name": "application",
+        "title": "品牌应用与子品牌",
+        "rect": [
+          0,
+          7000,
+          1920,
+          1300
+        ],
+        "src": "/assets/portfolio/miaoshi-brand/application.webp",
+        "width": 1920,
+        "height": 1300
+      }
+    ]
+  },
+  "meetup-plan": {
+    "nodeId": "500:1962",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          615
+        ],
+        "src": "/assets/portfolio/meetup-plan/cover.webp",
+        "width": 1920,
+        "height": 615
+      },
+      {
+        "name": "brief",
+        "title": "奇妙接头计划 · 背景",
+        "rect": [
+          0,
+          700,
+          1920,
+          1260
+        ],
+        "src": "/assets/portfolio/meetup-plan/brief.webp",
+        "width": 1920,
+        "height": 1260
+      },
+      {
+        "name": "concept",
+        "title": "户外生活方式与视觉概念",
+        "rect": [
+          0,
+          1960,
+          1920,
+          2160
+        ],
+        "src": "/assets/portfolio/meetup-plan/concept.webp",
+        "width": 1920,
+        "height": 2160
+      },
+      {
+        "name": "identity",
+        "title": "标志与字体",
+        "rect": [
+          0,
+          4120,
+          1920,
+          2480
+        ],
+        "src": "/assets/portfolio/meetup-plan/identity.webp",
+        "width": 1920,
+        "height": 2480
+      },
+      {
+        "name": "cycling",
+        "title": "骑行活动应用",
+        "rect": [
+          0,
+          6600,
+          1920,
+          3860
+        ],
+        "src": "/assets/portfolio/meetup-plan/cycling.webp",
+        "width": 1920,
+        "height": 3860
+      },
+      {
+        "name": "materials",
+        "title": "品牌物料",
+        "rect": [
+          0,
+          10460,
+          1920,
+          1410
+        ],
+        "src": "/assets/portfolio/meetup-plan/materials.webp",
+        "width": 1920,
+        "height": 1410
+      }
+    ]
+  },
+  "bandao": {
+    "nodeId": "500:2116",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          640
+        ],
+        "src": "/assets/portfolio/bandao/cover.webp",
+        "width": 1920,
+        "height": 640
+      },
+      {
+        "name": "brief",
+        "title": "大学生蛋仔社区 · 背景",
+        "rect": [
+          0,
+          680,
+          1920,
+          660
+        ],
+        "src": "/assets/portfolio/bandao/brief.webp",
+        "width": 1920,
+        "height": 660
+      },
+      {
+        "name": "strategy",
+        "title": "社区文化与设计策略",
+        "rect": [
+          0,
+          1340,
+          1920,
+          1100
+        ],
+        "src": "/assets/portfolio/bandao/strategy.webp",
+        "width": 1920,
+        "height": 1100
+      },
+      {
+        "name": "ip",
+        "title": "IP 设定",
+        "rect": [
+          0,
+          2440,
+          1920,
+          1050
+        ],
+        "src": "/assets/portfolio/bandao/ip.webp",
+        "width": 1920,
+        "height": 1050
+      },
+      {
+        "name": "family",
+        "title": "IP 家族与社区角色",
+        "rect": [
+          0,
+          3490,
+          1920,
+          1240
+        ],
+        "src": "/assets/portfolio/bandao/family.webp",
+        "width": 1920,
+        "height": 1240
+      },
+      {
+        "name": "identity",
+        "title": "标志与字体",
+        "rect": [
+          0,
+          4730,
+          1920,
+          1370
+        ],
+        "src": "/assets/portfolio/bandao/identity.webp",
+        "width": 1920,
+        "height": 1370
+      },
+      {
+        "name": "aigc",
+        "title": "蛋仔 AIGC 形象生成",
+        "rect": [
+          0,
+          6100,
+          1920,
+          3700
+        ],
+        "src": "/assets/portfolio/bandao/aigc.webp",
+        "width": 1920,
+        "height": 3700
+      },
+      {
+        "name": "application",
+        "title": "社区场景与应用",
+        "rect": [
+          0,
+          9800,
+          1920,
+          2220
+        ],
+        "src": "/assets/portfolio/bandao/application.webp",
+        "width": 1920,
+        "height": 2220
+      }
+    ]
+  },
+  "social-live": {
+    "nodeId": "500:2609",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          620
+        ],
+        "src": "/assets/portfolio/social-live/cover.webp",
+        "width": 1920,
+        "height": 620
+      },
+      {
+        "name": "brief",
+        "title": "社交直播业务群 · 背景",
+        "rect": [
+          0,
+          710,
+          1920,
+          340
+        ],
+        "src": "/assets/portfolio/social-live/brief.webp",
+        "width": 1920,
+        "height": 340
+      },
+      {
+        "name": "strategy",
+        "title": "品牌延续与设计策略",
+        "rect": [
+          0,
+          1050,
+          1920,
+          2020
+        ],
+        "src": "/assets/portfolio/social-live/strategy.webp",
+        "width": 1920,
+        "height": 2020
+      },
+      {
+        "name": "guidelines",
+        "title": "心遇品牌规范",
+        "rect": [
+          0,
+          3070,
+          1920,
+          1910
+        ],
+        "src": "/assets/portfolio/social-live/guidelines.webp",
+        "width": 1920,
+        "height": 1910
+      },
+      {
+        "name": "business",
+        "title": "业务场景与活动玩法",
+        "rect": [
+          0,
+          4980,
+          1920,
+          2490
+        ],
+        "src": "/assets/portfolio/social-live/business.webp",
+        "width": 1920,
+        "height": 2490
+      },
+      {
+        "name": "campaigns",
+        "title": "营收活动与互动场景",
+        "rect": [
+          0,
+          7470,
+          1920,
+          3810
+        ],
+        "src": "/assets/portfolio/social-live/campaigns.webp",
+        "width": 1920,
+        "height": 3810
+      },
+      {
+        "name": "components",
+        "title": "组件库建设",
+        "rect": [
+          0,
+          11280,
+          1920,
+          1270
+        ],
+        "src": "/assets/portfolio/social-live/components.webp",
+        "width": 1920,
+        "height": 1270
+      }
+    ]
+  },
+  "visual-explorations": {
+    "nodeId": "500:3146",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          620
+        ],
+        "src": "/assets/portfolio/visual-explorations/cover.webp",
+        "width": 1920,
+        "height": 620
+      },
+      {
+        "name": "look",
+        "title": "LOOK 直播年度盛典",
+        "rect": [
+          0,
+          690,
+          1920,
+          3070
+        ],
+        "src": "/assets/portfolio/visual-explorations/look.webp",
+        "width": 1920,
+        "height": 3070
+      },
+      {
+        "name": "annual",
+        "title": "社交直播年鉴 · 主视觉",
+        "rect": [
+          0,
+          3760,
+          1920,
+          1690
+        ],
+        "src": "/assets/portfolio/visual-explorations/annual.webp",
+        "width": 1920,
+        "height": 1690
+      },
+      {
+        "name": "annual-chapters",
+        "title": "社交直播年鉴 · 章节设计",
+        "rect": [
+          0,
+          5450,
+          1920,
+          1915
+        ],
+        "src": "/assets/portfolio/visual-explorations/annual-chapters.webp",
+        "width": 1920,
+        "height": 1915
+      },
+      {
+        "name": "annual-scenes",
+        "title": "社交直播年鉴 · 三维场景",
+        "rect": [
+          0,
+          7365,
+          1920,
+          2566
+        ],
+        "src": "/assets/portfolio/visual-explorations/annual-scenes.webp",
+        "width": 1920,
+        "height": 2566
+      },
+      {
+        "name": "annual-detail",
+        "title": "社交直播年鉴 · 视觉细节",
+        "rect": [
+          0,
+          9931,
+          1920,
+          1069
+        ],
+        "src": "/assets/portfolio/visual-explorations/annual-detail.webp",
+        "width": 1920,
+        "height": 1069
+      },
+      {
+        "name": "maps",
+        "title": "马蜂窝旅行地图",
+        "rect": [
+          0,
+          11000,
+          1920,
+          2000
+        ],
+        "src": "/assets/portfolio/visual-explorations/maps.webp",
+        "width": 1920,
+        "height": 2000
+      },
+      {
+        "name": "badges",
+        "title": "马蜂窝成就勋章",
+        "rect": [
+          0,
+          13000,
+          1920,
+          750
+        ],
+        "src": "/assets/portfolio/visual-explorations/badges.webp",
+        "width": 1920,
+        "height": 750
+      },
+      {
+        "name": "stickers",
+        "title": "2024 年贴纸",
+        "rect": [
+          0,
+          13750,
+          1920,
+          2680
+        ],
+        "src": "/assets/portfolio/visual-explorations/stickers.webp",
+        "width": 1920,
+        "height": 2680
+      },
+      {
+        "name": "more",
+        "title": "更多视觉探索",
+        "rect": [
+          0,
+          16430,
+          1920,
+          2319
+        ],
+        "src": "/assets/portfolio/visual-explorations/more.webp",
+        "width": 1920,
+        "height": 2319
+      }
+    ]
+  },
+  "design-operations": {
+    "nodeId": "500:3299",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          616
+        ],
+        "src": "/assets/portfolio/design-operations/cover.webp",
+        "width": 1920,
+        "height": 616
+      },
+      {
+        "name": "brief",
+        "title": "团队背景",
+        "rect": [
+          0,
+          710,
+          1920,
+          330
+        ],
+        "src": "/assets/portfolio/design-operations/brief.webp",
+        "width": 1920,
+        "height": 330
+      },
+      {
+        "name": "strategy",
+        "title": "需求统筹与资源策略",
+        "rect": [
+          0,
+          1040,
+          1920,
+          1470
+        ],
+        "src": "/assets/portfolio/design-operations/strategy.webp",
+        "width": 1920,
+        "height": 1470
+      },
+      {
+        "name": "map",
+        "title": "需求地图拆解",
+        "rect": [
+          0,
+          2510,
+          1920,
+          1230
+        ],
+        "src": "/assets/portfolio/design-operations/map.webp",
+        "width": 1920,
+        "height": 1230
+      },
+      {
+        "name": "requirements",
+        "title": "需求内容拆解",
+        "rect": [
+          0,
+          3740,
+          1920,
+          1240
+        ],
+        "src": "/assets/portfolio/design-operations/requirements.webp",
+        "width": 1920,
+        "height": 1240
+      },
+      {
+        "name": "resources",
+        "title": "设计资源规划",
+        "rect": [
+          0,
+          4980,
+          1920,
+          1270
+        ],
+        "src": "/assets/portfolio/design-operations/resources.webp",
+        "width": 1920,
+        "height": 1270
+      }
+    ]
+  },
+  "lemon8-campaigns": {
+    "nodeId": "4014:45",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          0,
+          0,
+          1920,
+          644
+        ],
+        "src": "/assets/portfolio/lemon8-campaigns/cover.webp",
+        "width": 1920,
+        "height": 644
+      },
+      {
+        "name": "us-jp",
+        "title": "US / JP · 活动视觉",
+        "rect": [
+          0,
+          740,
+          1920,
+          3570
+        ],
+        "src": "/assets/portfolio/lemon8-campaigns/us-jp.webp",
+        "width": 1920,
+        "height": 3570
+      },
+      {
+        "name": "sea",
+        "title": "SEA · 东南亚活动视觉",
+        "rect": [
+          0,
+          4310,
+          1920,
+          2010
+        ],
+        "src": "/assets/portfolio/lemon8-campaigns/sea.webp",
+        "width": 1920,
+        "height": 2010
+      },
+      {
+        "name": "regional",
+        "title": "区域活动延展",
+        "rect": [
+          0,
+          6320,
+          1920,
+          2300
+        ],
+        "src": "/assets/portfolio/lemon8-campaigns/regional.webp",
+        "width": 1920,
+        "height": 2300
+      },
+      {
+        "name": "operations",
+        "title": "日常运营活动",
+        "rect": [
+          0,
+          8620,
+          1920,
+          2955
+        ],
+        "src": "/assets/portfolio/lemon8-campaigns/operations.webp",
+        "width": 1920,
+        "height": 2955
+      }
+    ]
+  },
+  "lemo-ai": {
+    "nodeId": "4014:3256",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "项目封面",
+        "rect": [
+          160,
+          8148,
+          1600,
+          909
+        ],
+        "src": "/assets/portfolio/lemo-ai/cover.webp",
+        "width": 1600,
+        "height": 909
+      },
+      {
+        "name": "workshop",
+        "title": "AI Workshop",
+        "rect": [
+          0,
+          770,
+          1920,
+          2790
+        ],
+        "src": "/assets/portfolio/lemo-ai/workshop.webp",
+        "width": 1920,
+        "height": 2790
+      },
+      {
+        "name": "lora",
+        "title": "LoRA 模型训练",
+        "rect": [
+          0,
+          3560,
+          1920,
+          2780
+        ],
+        "src": "/assets/portfolio/lemo-ai/lora.webp",
+        "width": 1920,
+        "height": 2780
+      },
+      {
+        "name": "playground-v1",
+        "title": "Playground V1",
+        "rect": [
+          0,
+          6340,
+          1920,
+          1070
+        ],
+        "src": "/assets/portfolio/lemo-ai/playground-v1.webp",
+        "width": 1920,
+        "height": 1070
+      },
+      {
+        "name": "playground-v2",
+        "title": "Playground V2",
+        "rect": [
+          0,
+          7410,
+          1920,
+          540
+        ],
+        "src": "/assets/portfolio/lemo-ai/playground-v2.webp",
+        "width": 1920,
+        "height": 540
+      },
+      {
+        "name": "studio",
+        "title": "Lemo AI Studio",
+        "rect": [
+          0,
+          7950,
+          1920,
+          1590
+        ],
+        "src": "/assets/portfolio/lemo-ai/studio.webp",
+        "width": 1920,
+        "height": 1590
+      },
+      {
+        "name": "goodcase",
+        "title": "Goodcase V3",
+        "rect": [
+          0,
+          9540,
+          1920,
+          1048
+        ],
+        "src": "/assets/portfolio/lemo-ai/goodcase.webp",
+        "width": 1920,
+        "height": 1048
+      }
+    ]
+  },
+  "profile": {
+    "nodeId": "500:354",
+    "assets": [
+      {
+        "name": "cover",
+        "title": "张振 · 视觉设计作品集",
+        "rect": [
+          0,
+          0,
+          1920,
+          1080
+        ],
+        "src": "/assets/portfolio/profile/cover.webp",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  }
+}

@@ -1,0 +1,225 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e8]:
+        - link "Jimmy home" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - text: Jimmy™
+        - navigation "Primary navigation" [ref=e10]:
+          - link "Work" [ref=e11] [cursor=pointer]:
+            - /url: /work
+          - link "Reels" [ref=e12] [cursor=pointer]:
+            - /url: /#reels
+          - link "Services" [ref=e13] [cursor=pointer]:
+            - /url: /#services
+          - link "About" [ref=e14] [cursor=pointer]:
+            - /url: /#about
+      - generic [ref=e15]:
+        - generic [ref=e16]: (01) — SERVICES
+        - link "Long-form Edits" [ref=e17] [cursor=pointer]:
+          - /url: "#services"
+        - link "Short-form Reels" [ref=e18] [cursor=pointer]:
+          - /url: "#services"
+        - link "Colour Grade" [ref=e19] [cursor=pointer]:
+          - /url: "#services"
+        - link "Motion & Titles" [ref=e20] [cursor=pointer]:
+          - /url: "#services"
+      - generic [ref=e21]:
+        - button "Noah Reyes Hey, I'm ZZ Creative Designer & Engineer" [ref=e22] [cursor=pointer]:
+          - img "Noah Reyes" [ref=e23]
+          - generic [ref=e24]:
+            - generic [ref=e25]: Hey, I'm ZZ
+            - generic [ref=e26]: Creative Designer & Engineer
+        - paragraph [ref=e29]: 一些自我介绍Cinematic editing for premium creatives and brands — long-form and short-form, cut for retention and graded so it feels like film.
+      - generic [ref=e30]:
+        - generic [ref=e31]: REC 00:14:18:09
+        - emphasis [ref=e33]: (EST. 2026 — REEL v2.4)
+      - generic [aria-hidden] [ref=e34]:
+        - generic [ref=e36]: 00:00
+        - generic [ref=e37]: 00:30
+        - generic [ref=e38]: 01:00
+        - generic [ref=e39]: 01:30
+        - generic [ref=e40]: 02:00
+      - heading "VibeMaking" [level=1] [ref=e41]
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]: (02) — EDITED FOR
+        - generic [ref=e45]: +
+        - time [ref=e46]: 00:02:00:00
+      - generic [ref=e48]:
+        - img "adidas" [ref=e50]
+        - img "Allbirds" [ref=e52]
+        - img "Audi" [ref=e54]
+        - img "Pexels" [ref=e56]
+        - img "Airbnb" [ref=e58]
+        - img "Noah" [ref=e60]
+      - heading "The people who call when it has to feel like film, not content" [level=2] [ref=e73]
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]: "01"
+          - strong [ref=e77]: 120+
+          - generic [ref=e78]: Projects Delivered
+        - generic [ref=e79]:
+          - generic [ref=e80]: "02"
+          - strong [ref=e81]: 48M+
+          - generic [ref=e82]: Views Generated
+        - generic [ref=e83]:
+          - generic [ref=e84]: "03"
+          - strong [ref=e85]: "12"
+          - generic [ref=e86]: Years Editing
+        - generic [ref=e87]:
+          - generic [ref=e88]: "04"
+          - strong [ref=e89]: 24H
+          - generic [ref=e90]: Avg Turnaround
+    - generic [ref=e91]:
+      - link "(01) — SELECTED WORK 2026 Meridian Identity & Launch Film Brand Identity" [ref=e94] [cursor=pointer]:
+        - /url: /work/meridian
+        - generic [ref=e97]:
+          - generic [ref=e98]: (01) — SELECTED WORK
+          - generic [ref=e99]: "2026"
+        - generic [ref=e101]:
+          - generic [ref=e102]: Meridian
+          - generic [aria-hidden] [ref=e103]: Meridian
+          - generic [aria-hidden] [ref=e104]: Meridian
+        - generic [ref=e105]:
+          - generic [ref=e106]: Identity & Launch Film
+          - generic [ref=e107]: Brand Identity
+      - link "(02) — SELECTED WORK 2026 Citadel Nomad Stays Campaign Brand Film" [ref=e110] [cursor=pointer]:
+        - /url: /work/citadel
+        - generic [ref=e113]:
+          - generic [ref=e114]: (02) — SELECTED WORK
+          - generic [ref=e115]: "2026"
+        - generic [ref=e117]:
+          - generic [ref=e118]: Citadel
+          - generic [aria-hidden] [ref=e119]: Citadel
+          - generic [aria-hidden] [ref=e120]: Citadel
+        - generic [ref=e121]:
+          - generic [ref=e122]: Nomad Stays Campaign
+          - generic [ref=e123]: Brand Film
+      - link "(03) — SELECTED WORK 2025 Karama Lumen Field Titles Title Sequence" [ref=e125] [cursor=pointer]:
+        - /url: /work/karama
+        - generic [ref=e128]:
+          - generic [ref=e129]: (03) — SELECTED WORK
+          - generic [ref=e130]: "2025"
+        - generic [ref=e132]:
+          - generic [ref=e133]: Karama
+          - generic [aria-hidden] [ref=e134]: Karama
+          - generic [aria-hidden] [ref=e135]: Karama
+        - generic [ref=e136]:
+          - generic [ref=e137]: Lumen Field Titles
+          - generic [ref=e138]: Title Sequence
+    - generic [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]: (03) — SHORT-FORM REELS
+        - generic [ref=e142]: +
+        - time [ref=e143]: 00:03:00:00
+      - generic [ref=e144]:
+        - heading "Short Form" [level=2] [ref=e145]:
+          - generic [ref=e146]: Short
+          - generic [ref=e147]: Form
+        - generic [ref=e152]:
+          - generic [ref=e153]: EDITOR · COLOURIST
+          - generic [ref=e154]: RUNTIME — 0:15
+          - generic [ref=e155]: RATIO — 9:16
+    - generic [ref=e156]:
+      - generic [ref=e157]:
+        - generic [ref=e158]: (04) — SERVICES
+        - generic [ref=e159]: +
+        - time [ref=e160]: 00:04:00:00
+      - generic [ref=e164]:
+        - article [ref=e165]:
+          - generic [ref=e166]: "01"
+          - heading "Long-form Edits" [level=3] [ref=e167]
+          - paragraph [ref=e168]: Documentaries, essays and brand films cut for the long watch — structured so every beat earns the next.
+        - article [ref=e171]:
+          - generic [ref=e172]: "02"
+          - heading "Short-form Reels" [level=3] [ref=e173]
+          - paragraph [ref=e174]: Vertical cut-downs built to stop the scroll. Hook in the first second, paced for completion, turned around fast.
+        - article [ref=e177]:
+          - generic [ref=e178]: "03"
+          - heading "Colour Grade" [level=3] [ref=e179]
+          - paragraph [ref=e180]: Log footage graded to feel like film — consistent skin, lifted blacks, a look that carries the whole cut.
+        - article [ref=e183]:
+          - generic [ref=e184]: "04"
+          - heading "Motion & Titles" [level=3] [ref=e185]
+          - paragraph [ref=e186]: Titles, lower-thirds and animated type that move with the edit — clean systems that scale across a full series.
+    - generic [ref=e189]:
+      - generic [ref=e190]:
+        - generic [ref=e191]: (05) — ABOUT
+        - generic [ref=e192]: +
+        - time [ref=e193]: 00:05:00:00
+      - heading "Every frame handled by the same person" [level=2] [ref=e194]: Every frame handledby the same person
+      - generic [ref=e195]:
+        - generic [ref=e196]:
+          - paragraph [ref=e197]:
+            - generic [ref=e198]: EDIT
+            - generic [ref=e199]: Noah Reyes
+          - paragraph [ref=e200]:
+            - generic [ref=e201]: GRADE
+            - generic [ref=e202]: Noah Reyes
+          - paragraph [ref=e203]:
+            - generic [ref=e204]: SOUND
+            - generic [ref=e205]: Noah Reyes
+          - paragraph [ref=e206]:
+            - generic [ref=e207]: TITLES
+            - generic [ref=e208]: Noah Reyes
+          - paragraph [ref=e209]:
+            - generic [ref=e210]: MOTION
+            - generic [ref=e211]: Noah Reyes
+          - paragraph [ref=e212]:
+            - generic [ref=e213]: CATERING
+            - generic [ref=e214]: Still Noah
+        - generic [ref=e215]:
+          - img "Noah Reyes working in the editing suite" [ref=e216]
+          - generic [ref=e217]: noah_reyes_master.mov
+          - generic [ref=e218]: 4K · 24 FPS
+        - paragraph [ref=e219]: Same name on every credit. That’s just how I work.Twelve years on documentary, music and branded projects.
+    - generic [ref=e220]:
+      - generic [ref=e221]:
+        - generic [ref=e222]: (06) — CLIENT REVIEWS
+        - generic [ref=e223]: +
+        - time [ref=e224]: 00:06:00:00
+      - generic [ref=e225]:
+        - blockquote [ref=e226]: He sends one cut, not options. Ten episodes in, it’s still the right one. Unbelievable.
+        - paragraph [ref=e227]:
+          - generic [ref=e228]: DANA KOVAC
+          - generic [ref=e229]: SHOWRUNNER — MERIDIAN
+      - generic [ref=e230]:
+        - generic [ref=e231]: 01 / 03
+        - generic [ref=e232]: meridian_master.mp4 · 00:04:12
+        - generic [ref=e233]:
+          - button "Previous review" [ref=e234] [cursor=pointer]
+          - button "Next review" [ref=e237] [cursor=pointer]
+    - generic [ref=e240]:
+      - generic [ref=e241]:
+        - paragraph [ref=e243]: I edit, grade and finish reels, campaigns and title work for creatives and brands.
+        - generic [ref=e244]:
+          - generic [ref=e245]: (01) — NAVIGATION
+          - link "Work" [ref=e246] [cursor=pointer]:
+            - /url: /work
+          - link "Reels" [ref=e247] [cursor=pointer]:
+            - /url: /#reels
+          - link "Services" [ref=e248] [cursor=pointer]:
+            - /url: /#services
+          - link "About" [ref=e249] [cursor=pointer]:
+            - /url: /#about
+          - link "Contact" [ref=e250] [cursor=pointer]:
+            - /url: mailto:noah@Jimmy.studio
+        - generic [ref=e251]:
+          - generic [ref=e252]: (02) — VISIT US
+          - paragraph [ref=e253]: Downtown, Dubai — UAE
+          - paragraph [ref=e254]: "Mon–Fri: 09:00 – 18:00Sat: 10:00 – 16:00"
+          - generic [ref=e255]:
+            - link "X" [ref=e256] [cursor=pointer]:
+              - /url: https://x.com/Jimmy
+            - link "Instagram" [ref=e259] [cursor=pointer]:
+              - /url: https://instagram.com/Jimmy.studio
+            - link "YouTube" [ref=e262] [cursor=pointer]:
+              - /url: https://youtube.com/@Jimmy
+      - generic [ref=e265]: Jimmy
+      - generic [ref=e266]:
+        - generic [ref=e267]: © 2026 Jimmy™
+        - link "Back To Top" [ref=e269] [cursor=pointer]:
+          - /url: "#top"
+  - button "Open Next.js Dev Tools" [ref=e277] [cursor=pointer]
+  - alert [ref=e281]

@@ -1,0 +1,75 @@
+- generic [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e197] [cursor=pointer]
+  - alert [ref=e201]: 全部作品 — ZZ 张振
+  - main [ref=e202]:
+    - generic [ref=e203]:
+      - generic [ref=e204]:
+        - link "ZZ 张振 首页" [ref=e205] [cursor=pointer]:
+          - /url: /
+          - text: ZZ©
+        - navigation "主导航" [ref=e206]:
+          - link "作品" [ref=e207] [cursor=pointer]:
+            - /url: /work
+          - link "设计实践" [ref=e208] [cursor=pointer]:
+            - /url: /#services
+          - link "关于" [ref=e209] [cursor=pointer]:
+            - /url: /#about
+          - link "聊聊项目" [ref=e210] [cursor=pointer]:
+            - /url: mailto:zzhen0325@gmail.com
+      - paragraph [ref=e214]: SELECTED & COLLECTED / 作品索引
+      - heading "Work, with something to say." [level=1] [ref=e215]: Work, withsomething to say.
+      - generic [ref=e216]:
+        - paragraph [ref=e217]: 品牌、体验与创意技术。每一个项目，都是一次把想法做实的过程。
+        - generic [ref=e218]: 12 PROJECTS / 06 PRACTICES
+    - generic [ref=e219]:
+      - generic "按作品类型筛选" [ref=e220]:
+        - button "全部 12" [ref=e221] [cursor=pointer]:
+          - text: 全部
+          - superscript: "12"
+        - button "品牌与 IP 4" [ref=e222] [cursor=pointer]:
+          - text: 品牌与 IP
+          - superscript: "4"
+        - button "H5 营销 4" [ref=e223] [cursor=pointer]:
+          - text: H5 营销
+          - superscript: "4"
+        - button "海外活动 1" [ref=e224] [cursor=pointer]:
+          - text: 海外活动
+          - superscript: "1"
+        - button "AIGC 1" [active] [pressed] [ref=e225] [cursor=pointer]:
+          - text: AIGC
+          - superscript: "1"
+        - button "设计管理 1" [ref=e226] [cursor=pointer]:
+          - text: 设计管理
+          - superscript: "1"
+        - button "视觉探索 1" [ref=e227] [cursor=pointer]:
+          - text: 视觉探索
+          - superscript: "1"
+      - status [ref=e228]: AIGC / 01 个项目
+      - link "All about AIGC项目封面 All about AIGC 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。 AIGC Lemon8" [ref=e230] [cursor=pointer]:
+        - /url: /work/lemo-ai
+        - img "All about AIGC项目封面" [ref=e232]
+        - heading "All about AIGC" [level=2] [ref=e234]
+        - paragraph [ref=e238]: 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。
+        - generic [ref=e239]:
+          - generic [ref=e240]: AIGC
+          - generic [ref=e241]: Lemon8
+    - generic [ref=e374]:
+      - paragraph [ref=e375]: HAVE SOMETHING IN MIND? / 一起创造点什么
+      - link "Let's make it happen." [ref=e376] [cursor=pointer]:
+        - /url: mailto:zzhen0325@gmail.com
+        - text: Let's makeit happen.
+      - generic [ref=e380]:
+        - link "zzhen0325@gmail.com" [ref=e381] [cursor=pointer]:
+          - /url: mailto:zzhen0325@gmail.com
+        - generic [ref=e382]:
+          - link "作品" [ref=e383] [cursor=pointer]:
+            - /url: /work
+          - link "设计实践" [ref=e384] [cursor=pointer]:
+            - /url: /#services
+          - link "关于" [ref=e385] [cursor=pointer]:
+            - /url: /#about
+      - generic [ref=e386]:
+        - generic [ref=e387]: © 2026 ZZ · 张振
+        - generic [ref=e388]: VISUAL DESIGN & CREATIVE TECHNOLOGY
+        - link "回到顶部" [ref=e389] [cursor=pointer]:
+          - /url: "#top"

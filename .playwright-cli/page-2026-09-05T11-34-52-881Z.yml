@@ -1,0 +1,164 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "ZZ 张振 首页" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - text: ZZ©
+        - navigation "主导航" [ref=e6]:
+          - link "作品" [ref=e7] [cursor=pointer]:
+            - /url: /work
+          - link "设计实践" [ref=e8] [cursor=pointer]:
+            - /url: /#services
+          - link "关于" [ref=e9] [cursor=pointer]:
+            - /url: /#about
+          - link "聊聊项目" [ref=e10] [cursor=pointer]:
+            - /url: mailto:zzhen0325@gmail.com
+      - paragraph [ref=e14]: SELECTED & COLLECTED / 作品索引
+      - heading "Work, with something to say." [level=1] [ref=e15]: Work, withsomething to say.
+      - generic [ref=e16]:
+        - paragraph [ref=e17]: 品牌、体验与创意技术。每一个项目，都是一次把想法做实的过程。
+        - generic [ref=e18]: 12 PROJECTS / 06 PRACTICES
+    - generic [ref=e19]:
+      - generic "按作品类型筛选" [ref=e20]:
+        - button "全部 12" [pressed] [ref=e21] [cursor=pointer]:
+          - text: 全部
+          - superscript: "12"
+        - button "品牌与 IP 4" [ref=e22] [cursor=pointer]:
+          - text: 品牌与 IP
+          - superscript: "4"
+        - button "H5 营销 4" [ref=e23] [cursor=pointer]:
+          - text: H5 营销
+          - superscript: "4"
+        - button "海外活动 1" [ref=e24] [cursor=pointer]:
+          - text: 海外活动
+          - superscript: "1"
+        - button "AIGC 1" [ref=e25] [cursor=pointer]:
+          - text: AIGC
+          - superscript: "1"
+        - button "设计管理 1" [ref=e26] [cursor=pointer]:
+          - text: 设计管理
+          - superscript: "1"
+        - button "视觉探索 1" [ref=e27] [cursor=pointer]:
+          - text: 视觉探索
+          - superscript: "1"
+      - status [ref=e28]: 全部 / 12 个项目
+      - generic [ref=e29]:
+        - link "All about AIGC项目封面 All about AIGC 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。 AIGC Lemon8" [ref=e30] [cursor=pointer]:
+          - /url: /work/lemo-ai
+          - img "All about AIGC项目封面" [ref=e32]
+          - heading "All about AIGC" [level=2] [ref=e34]
+          - paragraph [ref=e38]: 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。
+          - generic [ref=e39]:
+            - generic [ref=e40]: AIGC
+            - generic [ref=e41]: Lemon8
+        - link "Lemon8 Campaigns项目封面 Lemon8 Campaigns 面向 US、JP 与 SEA 市场的活动主视觉与日常运营设计。 海外活动 Lemon8" [ref=e42] [cursor=pointer]:
+          - /url: /work/lemon8-campaigns
+          - img "Lemon8 Campaigns项目封面" [ref=e44]
+          - heading "Lemon8 Campaigns" [level=2] [ref=e46]
+          - paragraph [ref=e50]: 面向 US、JP 与 SEA 市场的活动主视觉与日常运营设计。
+          - generic [ref=e51]:
+            - generic [ref=e52]: 海外活动
+            - generic [ref=e53]: Lemon8
+        - link "妙时品牌项目封面 妙时品牌 有人懂，就是奇妙时刻。用箭头、色彩与生活场景建立同频社交品牌。 品牌与 IP 网易云音乐 · 妙时" [ref=e54] [cursor=pointer]:
+          - /url: /work/miaoshi-brand
+          - img "妙时品牌项目封面" [ref=e56]
+          - heading "妙时品牌" [level=2] [ref=e58]
+          - paragraph [ref=e62]: 有人懂，就是奇妙时刻。用箭头、色彩与生活场景建立同频社交品牌。
+          - generic [ref=e63]:
+            - generic [ref=e64]: 品牌与 IP
+            - generic [ref=e65]: 网易云音乐 · 妙时
+        - link "鉴一鉴你的内心物种项目封面 鉴一鉴你的内心物种 把情绪变成角色，用一场有趣的测试找到懂彼此的人。 H5 营销 网易云音乐 · 妙时" [ref=e66] [cursor=pointer]:
+          - /url: /work/inner-species
+          - img "鉴一鉴你的内心物种项目封面" [ref=e68]
+          - heading "鉴一鉴你的内心物种" [level=2] [ref=e70]
+          - paragraph [ref=e74]: 把情绪变成角色，用一场有趣的测试找到懂彼此的人。
+          - generic [ref=e75]:
+            - generic [ref=e76]: H5 营销
+            - generic [ref=e77]: 网易云音乐 · 妙时
+        - link "伴岛项目封面 伴岛 从蛋仔 IP 到社区文化，为大学生建立清爽有趣的共同空间。 品牌与 IP 网易云音乐 · 蛋仔派对" [ref=e78] [cursor=pointer]:
+          - /url: /work/bandao
+          - img "伴岛项目封面" [ref=e80]
+          - heading "伴岛" [level=2] [ref=e82]
+          - paragraph [ref=e86]: 从蛋仔 IP 到社区文化，为大学生建立清爽有趣的共同空间。
+          - generic [ref=e87]:
+            - generic [ref=e88]: 品牌与 IP
+            - generic [ref=e89]: 网易云音乐 · 蛋仔派对
+        - link "奇妙接头计划项目封面 奇妙接头计划 让同频的人在线下相遇，连接骑行、徒步、露营与摄影。 品牌与 IP 妙时" [ref=e90] [cursor=pointer]:
+          - /url: /work/meetup-plan
+          - img "奇妙接头计划项目封面" [ref=e92]
+          - heading "奇妙接头计划" [level=2] [ref=e94]
+          - paragraph [ref=e98]: 让同频的人在线下相遇，连接骑行、徒步、露营与摄影。
+          - generic [ref=e99]:
+            - generic [ref=e100]: 品牌与 IP
+            - generic [ref=e101]: 妙时
+        - link "冬至有酒局项目封面 冬至有酒局 饺子就酒，把冬至夜的温暖带到上海长乐路。 H5 营销 妙时 × 网易云音乐" [ref=e102] [cursor=pointer]:
+          - /url: /work/winter-gathering
+          - img "冬至有酒局项目封面" [ref=e104]
+          - heading "冬至有酒局" [level=2] [ref=e106]
+          - paragraph [ref=e110]: 饺子就酒，把冬至夜的温暖带到上海长乐路。
+          - generic [ref=e111]:
+            - generic [ref=e112]: H5 营销
+            - generic [ref=e113]: 妙时 × 网易云音乐
+        - link "黑胶纪念墙项目封面 黑胶纪念墙 在云村十周年的公共纪念空间，认识跟你合拍的人。 H5 营销 网易云音乐 × 妙时" [ref=e114] [cursor=pointer]:
+          - /url: /work/vinyl-anniversary
+          - img "黑胶纪念墙项目封面" [ref=e116]
+          - heading "黑胶纪念墙" [level=2] [ref=e118]
+          - paragraph [ref=e122]: 在云村十周年的公共纪念空间，认识跟你合拍的人。
+          - generic [ref=e123]:
+            - generic [ref=e124]: H5 营销
+            - generic [ref=e125]: 网易云音乐 × 妙时
+        - link "青春纪念册项目封面 青春纪念册 借一张自选歌单、一份同学录，在毕业季寻找身边同好。 H5 营销 妙时" [ref=e126] [cursor=pointer]:
+          - /url: /work/youth-album
+          - img "青春纪念册项目封面" [ref=e128]
+          - heading "青春纪念册" [level=2] [ref=e130]
+          - paragraph [ref=e134]: 借一张自选歌单、一份同学录，在毕业季寻找身边同好。
+          - generic [ref=e135]:
+            - generic [ref=e136]: H5 营销
+            - generic [ref=e137]: 妙时
+        - link "社交直播业务群项目封面 社交直播业务群 统一多产品品牌表达，让视觉系统支持多样的社交与营收场景。 品牌与 IP 网易云音乐 · 社交直播" [ref=e138] [cursor=pointer]:
+          - /url: /work/social-live
+          - img "社交直播业务群项目封面" [ref=e140]
+          - heading "社交直播业务群" [level=2] [ref=e142]
+          - paragraph [ref=e146]: 统一多产品品牌表达，让视觉系统支持多样的社交与营收场景。
+          - generic [ref=e147]:
+            - generic [ref=e148]: 品牌与 IP
+            - generic [ref=e149]: 网易云音乐 · 社交直播
+        - link "设计团队与资源规划项目封面 设计团队与资源规划 将复杂的多产品需求，转化为清晰的需求地图与资源安排。 设计管理 网易云音乐 · 社交直播" [ref=e150] [cursor=pointer]:
+          - /url: /work/design-operations
+          - img "设计团队与资源规划项目封面" [ref=e152]
+          - heading "设计团队与资源规划" [level=2] [ref=e154]
+          - paragraph [ref=e158]: 将复杂的多产品需求，转化为清晰的需求地图与资源安排。
+          - generic [ref=e159]:
+            - generic [ref=e160]: 设计管理
+            - generic [ref=e161]: 网易云音乐 · 社交直播
+        - link "视觉探索与更多项目封面 视觉探索与更多 从年度盛典到旅行地图、成就勋章和贴纸，探索不同尺度的视觉表达。 视觉探索 LOOK 直播 / 马蜂窝 / 个人探索" [ref=e162] [cursor=pointer]:
+          - /url: /work/visual-explorations
+          - img "视觉探索与更多项目封面" [ref=e164]
+          - heading "视觉探索与更多" [level=2] [ref=e166]
+          - paragraph [ref=e170]: 从年度盛典到旅行地图、成就勋章和贴纸，探索不同尺度的视觉表达。
+          - generic [ref=e171]:
+            - generic [ref=e172]: 视觉探索
+            - generic [ref=e173]: LOOK 直播 / 马蜂窝 / 个人探索
+    - generic [ref=e174]:
+      - paragraph [ref=e175]: HAVE SOMETHING IN MIND? / 一起创造点什么
+      - link "Let's make it happen." [ref=e176] [cursor=pointer]:
+        - /url: mailto:zzhen0325@gmail.com
+        - text: Let's makeit happen.
+      - generic [ref=e180]:
+        - link "zzhen0325@gmail.com" [ref=e181] [cursor=pointer]:
+          - /url: mailto:zzhen0325@gmail.com
+        - generic [ref=e182]:
+          - link "作品" [ref=e183] [cursor=pointer]:
+            - /url: /work
+          - link "设计实践" [ref=e184] [cursor=pointer]:
+            - /url: /#services
+          - link "关于" [ref=e185] [cursor=pointer]:
+            - /url: /#about
+      - generic [ref=e186]:
+        - generic [ref=e187]: © 2026 ZZ · 张振
+        - generic [ref=e188]: VISUAL DESIGN & CREATIVE TECHNOLOGY
+        - link "回到顶部" [ref=e189] [cursor=pointer]:
+          - /url: "#top"
+  - button "Open Next.js Dev Tools" [ref=e197] [cursor=pointer]
+  - alert [ref=e201]

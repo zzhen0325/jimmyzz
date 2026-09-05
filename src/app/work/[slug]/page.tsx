@@ -1,52 +1,128 @@
-import { WorkLink } from "@/components/work-link";
+import "./project.css";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Footer, SectionLabel, Timeline, TopNav } from "@/components/site-chrome";
-import { projects } from "@/lib/site-data";
-
-export function generateStaticParams() { return projects.map((project) => ({ slug: project.slug })); }
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const project = projects.find((item) => item.slug === slug);
-  return project ? { title: project.title, description: `${project.project} — cut, graded and delivered by Jimmy™.` } : { title: "Not Found" };
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { Footer, TopNav } from "@/components/site-chrome";
+import { CaseGallery } from "@/components/case-gallery";
+import { projects, projectAssets, projectCover } from "@/lib/site-data";
+export function generateStaticParams() {
+  return projects.map((p) => ({ slug: p.slug }));
 }
-
-export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const project = projects.find((item) => item.slug === slug);
+  const project = projects.find((p) => p.slug === slug);
+  return project
+    ? { title: project.title, description: project.summary }
+    : { title: "未找到项目" };
+}
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
-  const nextProject = projects.find((item) => item.slug === project.next);
-  const previousProject = projects.find((item) => item.slug === project.previous);
-
+  const assets = projectAssets(slug);
+  const cover = assets.find((a) => a.name === "cover");
+  const chapters = assets.filter((a) => a.name !== "cover");
+  const index = projects.indexOf(project);
+  const next = projects[(index + 1) % projects.length];
   return (
-    <main id="top" className="min-h-svh bg-[#090909] text-[#f4f2ed]">
-      <section className="relative h-svh min-h-[720px] overflow-hidden after:pointer-events-none after:absolute after:z-1 after:content-[''] after:inset-[52px_var(--page-pad)_44px] after:bg-[repeating-linear-gradient(90deg,rgba(255,255,255,.08)_0_1px,transparent_1px_calc(25%_-_1px))] max-[809px]:h-[708px] max-[809px]:min-h-[708px] max-[809px]:after:inset-[68px_16px_40px]">
-        <TopNav/>
-        <video className="size-full object-cover" src={project.video} muted loop autoPlay playsInline poster={project.still}/>
-        <div className="absolute inset-0 bg-black/25"/>
-        <div className="absolute top-[95px] left-[var(--page-pad)] z-3 flex items-center gap-[7px] text-[10px] text-white/70 max-[809px]:top-[116px] max-[809px]:left-4"><i className="block size-1.5 rounded-full bg-[#ef3b1f] shadow-[0_0_8px_#ef3b1f]"/> REC 00:14:13:10</div>
-        <div className="absolute right-[var(--page-pad)] bottom-28 left-[var(--page-pad)] z-2 flex justify-between text-[11px] max-[809px]:bottom-[82px]"><span>{project.kind}</span><span>{project.year}</span></div>
-        <Timeline className="top-[52px] bottom-auto max-[809px]:top-[68px]"/><h1 className="absolute bottom-3.5 left-[var(--page-pad)] z-2 m-0 text-[7.8vw] leading-[.8] font-[450] tracking-[-.07em] max-[809px]:bottom-5 max-[809px]:left-4 max-[809px]:text-[13vw]">{project.title}</h1>
-      </section>
-      <section className="min-h-[650px] max-[809px]:min-h-[700px]">
-        <SectionLabel index="01" title="THE SHEET" time="00:01:00:00"/>
-        <div className="mx-[var(--page-pad)] mt-60 grid grid-cols-4 border-t border-white/16 max-[809px]:mx-4 max-[809px]:mt-[170px] max-[809px]:grid-cols-2">{[["Client", project.client], ["Project", project.project], ["Spec", project.spec], ["Deliverables", project.deliverables]].map(([key, value]) => <div className="flex flex-col gap-3.5 border-r border-white/16 py-[22px] last:border-0 max-[809px]:min-h-[130px] max-[809px]:[&:nth-child(2)]:border-0" key={key}><span className="text-[11px] text-[#666]">{key}</span><strong className="text-lg font-[450]">{value}</strong></div>)}</div>
-      </section>
-      <section className="min-h-[900px] max-[809px]:min-h-[1100px]">
-        <SectionLabel index="02" title="THE MASTER" time="00:02:00:00"/>
-        <div className="mx-auto mt-[120px] mb-[100px] grid w-[71%] grid-cols-[1.45fr_1fr] gap-[70px] max-[1199px]:w-[85%] max-[809px]:mt-[90px] max-[809px]:w-[calc(100%-32px)] max-[809px]:grid-cols-1">
-          <div><div className="aspect-video bg-[#111]"><iframe className="size-full border-0" src="https://www.youtube-nocookie.com/embed/Sgxbx65IDeM?rel=0" title={`${project.title} master film`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/></div><div className="mt-4 flex justify-between text-[9px] text-[#666]"><span>{project.file}</span><span>{project.spec}</span></div></div>
-          <div>{["The Brief", "The Cut", "The Grade", "The Result"].map((title, index) => <article className="mb-[34px]" key={title}><h2 className="mt-0 mb-4 text-2xl font-[450]">{title}</h2><p className="m-0 text-[17px] leading-[1.35] text-[#888] max-[809px]:text-base">{project.copy[index]}</p></article>)}</div>
+    <main id="top" className="case-page">
+      <TopNav />
+      <article className="case-editorial">
+        <header className="case-intro">
+          <Link className="case-back" href="/work">
+            <ArrowLeft size={15} /> 全部作品
+          </Link>
+          <div className="case-kicker">
+            <span>{project.kind}</span>
+            <span>{String(index + 1).padStart(2, "0")} / {projects.length}</span>
+          </div>
+          <h1>{project.title}</h1>
+          <p className="case-english">{project.english}</p>
+        </header>
+        {cover && (
+          <figure className="case-cover" style={{ backgroundColor: project.color }}>
+            <Image
+              src={cover.src}
+              width={cover.width}
+              height={cover.height}
+              alt={`${project.title}主视觉`}
+              priority
+              sizes="(max-width: 1000px) 100vw, 43vw"
+            />
+          </figure>
+        )}
+        <div className="case-story">
+          <section className="case-info case-editorial-section" aria-labelledby="case-info-title">
+            <h2 id="case-info-title" className="case-margin-label">INFO / 信息</h2>
+            <dl className="case-facts">
+              <div><dt>项目 / CLIENT</dt><dd>{project.client}</dd></div>
+              <div><dt>方向 / CATEGORY</dt><dd>{project.kind}</dd></div>
+              <div><dt>标签 / TAGS</dt><dd>{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</dd></div>
+            </dl>
+          </section>
+          <section className="case-overview case-editorial-section" aria-labelledby="case-overview-title">
+            <h2 id="case-overview-title" className="case-margin-label">ABOUT / 背景</h2>
+            <p className="case-summary">{project.summary}</p>
+            <p>{project.description}</p>
+            <h3>设计思路</h3>
+            <p>{project.approach}</p>
+          </section>
+          {project.results && (
+            <section className="case-results case-editorial-section" aria-labelledby="case-results-title">
+              <h2 id="case-results-title" className="case-margin-label">IMPACT / 成果</h2>
+              <dl className="case-facts case-impact">
+                {project.results.map((result) => (
+                  <div key={result.label}><dt>{result.label}</dt><dd>{result.value}</dd></div>
+                ))}
+              </dl>
+              <p>数据来源：作品集原稿中的项目成果记录。</p>
+            </section>
+          )}
+          <section className="case-work case-editorial-section" aria-labelledby="case-work-title">
+            <h2 id="case-work-title" className="case-margin-label">WORK / 展开</h2>
+            <nav className="chapter-nav" aria-label="案例章节">
+              {chapters.map((chapter, i) => (
+                <a key={chapter.name} href={`#${chapter.name}`}>
+                  <span>{String(i + 1).padStart(2, "0")}</span>{chapter.title}
+                </a>
+              ))}
+            </nav>
+            <CaseGallery assets={chapters} projectTitle={project.title} />
+          </section>
         </div>
+      </article>
+      <section className="next-project">
+        <p className="eyebrow">NEXT PROJECT / 继续探索</p>
+        <Link href={`/work/${next.slug}`}>
+          <div>
+            <h2>{next.title}</h2>
+            <p>
+              {next.kind} / {next.client}
+            </p>
+          </div>
+          <div className="next-art">
+            <Image
+              src={projectCover(next.slug)}
+              width={960}
+              height={540}
+              alt={next.title}
+              className="object-contain"
+            />
+          </div>
+          <ArrowUpRight size={36} />
+        </Link>
       </section>
-      <section className="grid min-h-[360px] grid-cols-2 max-[809px]:min-h-[560px] max-[809px]:grid-cols-1">
-        {previousProject && <Link href={`/work/${previousProject.slug}`} className="group relative flex min-h-[360px] flex-col justify-end overflow-hidden border-t border-white/16 bg-[#111] px-[var(--page-pad)] py-[55px] max-[809px]:min-h-[280px]"><small className="relative text-[#888]">PREVIOUS SCREENING</small><b className="relative flex items-center gap-[18px] text-[62px] font-[450] tracking-[-.05em] max-[809px]:text-[46px]"><ArrowLeft/>{previousProject.title}</b></Link>}
-        {nextProject && <WorkLink href={`/work/${nextProject.slug}`} className="group relative col-start-2 flex min-h-[360px] flex-col justify-end overflow-hidden border-t border-white/16 px-[var(--page-pad)] py-[55px] max-[809px]:col-start-1 max-[809px]:min-h-[280px]"><video className="absolute inset-0 size-full object-cover opacity-50" src={nextProject.video} muted loop autoPlay playsInline/><small className="relative text-[#888]">NEXT SCREENING</small><b className="relative flex items-center gap-[18px] text-[62px] font-[450] tracking-[-.05em] max-[809px]:text-[46px]">{nextProject.title}<ArrowRight/></b></WorkLink>}
-      </section>
-      <Footer variant="project"/>
+      <Footer variant="project" />
     </main>
   );
 }

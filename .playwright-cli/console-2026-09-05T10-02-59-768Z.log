@@ -1,0 +1,1838 @@
+[     299ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[     377ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 1348649ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 1348822ms] [LOG] [Fast Refresh] done in 181ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 1449346ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 1449499ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 2970676ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 2972563ms] [LOG] [Fast Refresh] done in 1265ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 2972670ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 2973115ms] [LOG] [Fast Refresh] done in 546ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 3377130ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 3377160ms] [LOG] [Fast Refresh] done in 71ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 3377453ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 3377598ms] [LOG] [Fast Refresh] done in 100ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4083562ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4083631ms] [LOG] [Fast Refresh] done in 61ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4824394ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4824498ms] [LOG] [Fast Refresh] done in 205ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4945804ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 4945824ms] [LOG] [Fast Refresh] done in 122ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5002903ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5002914ms] [LOG] [Fast Refresh] done in 113ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5132873ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5134616ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  Client Component Browser:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5134617ms] [ERROR] ./src/components/home-page.tsx:11:1
+Export reviews doesn't exist in target module
+   9 | import { useRef, useState } from "react";
+  10 | import { Footer, SectionLabel, Stats, Timeline, TopNav } from "./site-...
+> 11 | import { projects, reviews, services } from "@/lib/site-data";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  12 |
+  13 | function EditorCard() {
+  14 |   const [open, setOpen] = useState(false);
+
+The export reviews was not found in module [project]/src/lib/site-data.ts [app-client] (ecmascript).
+Did you mean to import services?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/home-page.tsx
+    ./src/app/page.tsx @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5134617ms] [ERROR] ./src/components/home-page.tsx:11:1
+Export reviews doesn't exist in target module
+   9 | import { useRef, useState } from "react";
+  10 | import { Footer, SectionLabel, Stats, Timeline, TopNav } from "./site-...
+> 11 | import { projects, reviews, services } from "@/lib/site-data";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  12 |
+  13 | function EditorCard() {
+  14 |   const [open, setOpen] = useState(false);
+
+The export reviews was not found in module [project]/src/lib/site-data.ts [app-ssr] (ecmascript).
+Did you mean to import services?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/home-page.tsx
+    ./src/app/page.tsx @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5218695ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5219095ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5219273ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5219335ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5219339ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=q3mOO9BClNZHexY7:0
+[ 5219413ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5219488ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=q3mOO9BClNZHexY7:0
+[ 5219489ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 5219556ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=q3mOO9BClNZHexY7:0
+[ 5219593ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5219837ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[ 5220110ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/02ca_react-dom_0ntjfa7._.js:15305
+[ 5220184ms] Error: ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./src/lib/site-data.ts:1:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at Object.getCompilationErrors (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/hot-reloader-turbopack.js:1186:59)
+    at DevBundlerService.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/lib/dev-bundler-service.js:44:55)
+    at DevServer.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:720:42)
+    at DevServer.findPageComponents (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:690:43)
+    at async DevServer.renderErrorToResponseImpl (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/base-server.js:1753:26)
+[ 5220163ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 5220165ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220166ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  Client Component Browser:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220166ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  Server Component:
+    ./src/lib/site-data.ts
+    ./src/app/work/page.tsx
+
+  Client Component Browser:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220166ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  Server Component:
+    ./src/lib/site-data.ts
+    ./src/app/work/[slug]/page.tsx
+
+  Client Component Browser:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220180ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[ 5220219ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220247ms] [ERROR] ./src/lib/site-data.ts:1:1
+Module not found: Can't resolve './portfolio-assets.json'
+> 1 | import assetManifest from './portfolio-assets.json';
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  2 |
+  3 | export const portfolioSource = 'https://www.figma.com/design/r8qco3DrEw...
+  4 | export const profile = {
+
+Import traces:
+  #1 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #2 [Client Component Browser]:
+    ./src/lib/site-data.ts [Client Component Browser]
+    ./src/components/site-chrome.tsx [Client Component Browser]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  #3 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  #4 [Client Component SSR]:
+    ./src/lib/site-data.ts [Client Component SSR]
+    ./src/components/site-chrome.tsx [Client Component SSR]
+    ./src/components/site-chrome.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 5220321ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 5273560ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 5273789ms] [LOG] [Fast Refresh] done in 76ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 5274687ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5274737ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5275011ms] [WARNING] Image with src "/assets/portfolio/miaoshi-brand/thumbnail.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5275017ms] [WARNING] Image with src "/assets/portfolio/inner-species/thumbnail.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5275017ms] [WARNING] Image with src "/assets/portfolio/lemo-ai/thumbnail.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5275017ms] [WARNING] Image with src "/assets/portfolio/bandao/thumbnail.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5313538ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5313958ms] [LOG] [Fast Refresh] done in 519ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5314083ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5314085ms] [LOG] [Fast Refresh] done in 102ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5458058ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5458103ms] [LOG] [Fast Refresh] done in 117ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5505856ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5505957ms] [LOG] [Fast Refresh] done in 183ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5513095ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5513207ms] [LOG] [Fast Refresh] done in 213ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5525024ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5525024ms] [LOG] [Fast Refresh] done in 102ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5574734ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5574738ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5598351ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5598460ms] [LOG] [Fast Refresh] done in 84ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5708482ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5708551ms] [LOG] [Fast Refresh] done in 77ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5727203ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5727242ms] [LOG] [Fast Refresh] done in 141ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5750657ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5750716ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5750794ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5750882ms] [LOG] [Fast Refresh] done in 76ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5750915ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5751052ms] [LOG] [Fast Refresh] done in 38ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5751312ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5751606ms] [LOG] [Fast Refresh] done in 396ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5751766ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5751915ms] [LOG] [Fast Refresh] done in 251ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5752046ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5752146ms] [LOG] [Fast Refresh] done in 201ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5752648ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5752673ms] [LOG] [Fast Refresh] done in 126ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5805100ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5805103ms] [LOG] [Fast Refresh] done in 104ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5836983ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5836988ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5870401ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5870429ms] [LOG] [Fast Refresh] done in 75ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5987596ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 5987712ms] [LOG] [Fast Refresh] done in 217ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6024457ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6024588ms] [LOG] [Fast Refresh] done in 232ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6027514ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6027525ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6125556ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6125627ms] [LOG] [Fast Refresh] done in 173ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6299246ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6299401ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6299401ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6299552ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6300053ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300053ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300127ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=q3mOO9BClNZHexY7:0
+[ 6300633ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6300636ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300636ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300642ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/?_rsc=q3mOO9BClNZHexY7:0
+[ 6300680ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300680ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300745ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300745ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:3318
+[ 6300781ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[ 6300867ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/02ca_react-dom_0ntjfa7._.js:15305
+[ 6300913ms] Error: ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/curve-gallery.tsx:76:443)
+    at Object.getCompilationErrors (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/hot-reloader-turbopack.js:1186:59)
+    at DevBundlerService.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/lib/dev-bundler-service.js:44:55)
+    at DevServer.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:720:42)
+    at DevServer.findPageComponents (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:690:43)
+    at async DevServer.renderErrorToResponseImpl (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/base-server.js:1753:26)
+[ 6300923ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6300972ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6300972ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301006ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301006ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301053ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6301227ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301227ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301269ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301269ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301329ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6301587ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301587ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6301637ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6303041ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6303042ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6303085ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6304173ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6304173ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6304232ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6304502ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6304503ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6304552ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6386341ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6386371ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6386371ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6388771ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6388844ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6388844ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389044ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389044ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389046ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6389147ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6389157ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389157ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389261ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6389279ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389279ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389291ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[ 6389502ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/02ca_react-dom_0ntjfa7._.js:15305
+[ 6389512ms] Error: ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/curve-gallery.tsx:76:443)
+    at Object.getCompilationErrors (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/hot-reloader-turbopack.js:1186:59)
+    at DevBundlerService.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/lib/dev-bundler-service.js:44:55)
+    at DevServer.getCompilationError (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:720:42)
+    at DevServer.findPageComponents (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/dev/next-dev-server.js:690:43)
+    at async DevServer.renderErrorToResponseImpl (file:///Users/bytedance/Desktop/seeseezz/zz/jimmyzz/node_modules/.pnpm/next@16.2.10_@babel+core@7.29.7_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/server/base-server.js:1753:26)
+[ 6389513ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6389532ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389533ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389572ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389572ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389627ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389627ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6389683ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6390181ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390181ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390238ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390238ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390285ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6390530ms] [ERROR] ./src/components/curve-gallery.tsx:76:443
+Expression expected
+  74 | ...
+  75 | ...
+> 76 | ...+images.length)%images.length);}}>
+     |                                     ^
+  77 | ...wRight size={18}/></button><button onClick={close} aria-label="关闭...
+  78 | ...
+  79 | ...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390530ms] [ERROR] ./src/components/curve-gallery.tsx:78:5
+Unterminated regexp literal
+  76 |    <dialog className="gallery-lightbox" ref={dialog} aria-labelledby="...
+  77 |      <div className="gallery-lightbox-inner" data-lenis-prevent><div c...
+> 78 |    </dialog>
+     |     ^^^^^^^^
+  79 |  </section>;
+  80 | }
+  81 |
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/curve-gallery.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Client Component Browser]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/curve-gallery.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Client Component SSR]
+    ./src/components/home-page.tsx [Server Component]
+    ./src/app/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1945
+[ 6390590ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6420615ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6423551ms] [LOG] [Fast Refresh] done in 1988ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_00mhofs._.js:1226
+[ 6425103ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6425148ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6437322ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6437505ms] [LOG] [Fast Refresh] done in 260ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6460451ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6460474ms] [LOG] [Fast Refresh] done in 123ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6461726ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6461733ms] [LOG] [Fast Refresh] done in 109ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6608034ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6608055ms] [LOG] [Fast Refresh] done in 122ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6693713ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6693737ms] [LOG] [Fast Refresh] done in 97ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 6694079ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3000/_next/image?url=%2Fassets%2Fportfolio%2Flemo-ai%2Ffeature.webp&w=1920&q=75:0
+[ 7014844ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[ 7014897ms] [LOG] [Fast Refresh] done in 131ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17141963ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17143031ms] [LOG] [Fast Refresh] done in 1085ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17143192ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17144147ms] [LOG] [Fast Refresh] done in 1056ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17144500ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17144907ms] [LOG] [Fast Refresh] done in 509ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17584690ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17584877ms] [LOG] [Fast Refresh] done in 223ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17671193ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=ge7C4JX6KMBoudO83NPWH' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_client_1ehwvx3._.js:13422
+[17672196ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=ge7C4JX6KMBoudO83NPWH' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_client_1ehwvx3._.js:13422
+[17673198ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=ge7C4JX6KMBoudO83NPWH' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_client_1ehwvx3._.js:13422
+[17674201ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=ge7C4JX6KMBoudO83NPWH' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_client_1ehwvx3._.js:13422
+[17675203ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=ge7C4JX6KMBoudO83NPWH' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_client_1ehwvx3._.js:13422
+[17680404ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17681005ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17681126ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17681345ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17681424ms] [LOG] [Fast Refresh] done in 190ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17728649ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[17728845ms] [LOG] [Fast Refresh] done in 276ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18716357ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18716803ms] [LOG] [Fast Refresh] done in 545ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18716985ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18717174ms] [LOG] [Fast Refresh] done in 291ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18717757ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18717760ms] [LOG] [Fast Refresh] done in 103ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18793162ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[18793199ms] [LOG] [Fast Refresh] done in 85ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19923324ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19923505ms] [LOG] [Fast Refresh] done in 140ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19923934ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19924012ms] [LOG] [Fast Refresh] done in 155ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19942369ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[19942438ms] [LOG] [Fast Refresh] done in 171ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20190843ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20190938ms] [LOG] [Fast Refresh] done in 160ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20276358ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20276707ms] [LOG] [Fast Refresh] done in 278ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20276911ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20276997ms] [LOG] [Fast Refresh] done in 188ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20277209ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477
+[20277226ms] [LOG] [Fast Refresh] done in 117ms @ http://localhost:3000/_next/static/chunks/0g7g_next_dist_0sw6wv_._.js:2477

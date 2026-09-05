@@ -1,0 +1,314 @@
+[
+  {
+    "name": "inner-species-500-904",
+    "title": "内心物种 1",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:904",
+    "rect": [
+      97,
+      7010,
+      551,
+      459
+    ]
+  },
+  {
+    "name": "inner-species-500-905",
+    "title": "内心物种 2",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:905",
+    "rect": [
+      684,
+      7010,
+      551,
+      459
+    ]
+  },
+  {
+    "name": "inner-species-500-906",
+    "title": "内心物种 3",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:906",
+    "rect": [
+      1271,
+      7010,
+      551,
+      459
+    ]
+  },
+  {
+    "name": "inner-species-500-907",
+    "title": "内心物种 4",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:907",
+    "rect": [
+      97,
+      7586,
+      551,
+      459
+    ]
+  },
+  {
+    "name": "inner-species-500-908",
+    "title": "内心物种 5",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:908",
+    "rect": [
+      1271,
+      7586,
+      551,
+      459
+    ]
+  },
+  {
+    "name": "inner-species-500-909",
+    "title": "内心物种 6",
+    "project": "inner-species",
+    "frameId": "500:698",
+    "nodeId": "500:909",
+    "rect": [
+      684,
+      7586,
+      541,
+      451
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1780",
+    "title": "妙时品牌图形 1",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1780",
+    "rect": [
+      102,
+      2841,
+      859,
+      470
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1781",
+    "title": "妙时品牌图形 2",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1781",
+    "rect": [
+      102,
+      3311,
+      859,
+      498
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1795",
+    "title": "妙时品牌图形 3",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1795",
+    "rect": [
+      961,
+      2841,
+      858,
+      470
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1934",
+    "title": "妙时生活海报 1",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1934",
+    "rect": [
+      1451,
+      6496,
+      227,
+      407
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1935",
+    "title": "妙时生活海报 2",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1935",
+    "rect": [
+      1209,
+      6496,
+      228,
+      407
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1936",
+    "title": "妙时生活海报 3",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1936",
+    "rect": [
+      967,
+      6496,
+      227,
+      407
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1937",
+    "title": "妙时生活海报 4",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1937",
+    "rect": [
+      726,
+      6496,
+      227,
+      407
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1938",
+    "title": "妙时生活海报 5",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1938",
+    "rect": [
+      484,
+      6496,
+      227,
+      407
+    ]
+  },
+  {
+    "name": "miaoshi-brand-500-1939",
+    "title": "妙时生活海报 6",
+    "project": "miaoshi-brand",
+    "frameId": "500:1652",
+    "nodeId": "500:1939",
+    "rect": [
+      242,
+      6496,
+      228,
+      407
+    ]
+  },
+  {
+    "name": "bandao-500-2165",
+    "title": "伴岛社区角色 1",
+    "project": "bandao",
+    "frameId": "500:2116",
+    "nodeId": "500:2165",
+    "rect": [
+      281,
+      3664,
+      235,
+      234
+    ]
+  },
+  {
+    "name": "bandao-500-2166",
+    "title": "伴岛社区角色 2",
+    "project": "bandao",
+    "frameId": "500:2116",
+    "nodeId": "500:2166",
+    "rect": [
+      565,
+      3677,
+      234,
+      234
+    ]
+  },
+  {
+    "name": "bandao-500-2167",
+    "title": "伴岛社区角色 3",
+    "project": "bandao",
+    "frameId": "500:2116",
+    "nodeId": "500:2167",
+    "rect": [
+      847,
+      3664,
+      236,
+      234
+    ]
+  },
+  {
+    "name": "bandao-500-2172",
+    "title": "伴岛社区角色 4",
+    "project": "bandao",
+    "frameId": "500:2116",
+    "nodeId": "500:2172",
+    "rect": [
+      1414,
+      3665,
+      235,
+      234
+    ]
+  },
+  {
+    "name": "bandao-500-2173",
+    "title": "伴岛社区角色 5",
+    "project": "bandao",
+    "frameId": "500:2116",
+    "nodeId": "500:2173",
+    "rect": [
+      1131,
+      3665,
+      234,
+      234
+    ]
+  },
+  {
+    "name": "lemo-model-1",
+    "title": "Lemo IP 模型",
+    "project": "lemo-ai",
+    "frameId": "4014:3256",
+    "nodeId": "4014:3722",
+    "rect": [
+      160,
+      3772,
+      785,
+      392
+    ]
+  },
+  {
+    "name": "lemo-model-2",
+    "title": "3D Lemo 模型",
+    "project": "lemo-ai",
+    "frameId": "4014:3256",
+    "nodeId": "4014:3723",
+    "rect": [
+      974,
+      3772,
+      785,
+      392
+    ]
+  },
+  {
+    "name": "lemo-model-3",
+    "title": "插画风格模型",
+    "project": "lemo-ai",
+    "frameId": "4014:3256",
+    "nodeId": "4014:3724",
+    "rect": [
+      160,
+      4192,
+      785,
+      392
+    ]
+  },
+  {
+    "name": "lemo-model-4",
+    "title": "日本活动视觉模型",
+    "project": "lemo-ai",
+    "frameId": "4014:3256",
+    "nodeId": "4014:3725",
+    "rect": [
+      974,
+      4192,
+      785,
+      392
+    ]
+  }
+]

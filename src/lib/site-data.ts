@@ -1,114 +1,255 @@
-export type Project = {
-  slug: "meridian" | "citadel" | "karama" | "flora";
-  title: string;
-  kind: string;
-  year: string;
-  client: string;
-  project: string;
-  spec: string;
-  deliverables: string;
-  video: string;
-  still: string;
-  file: string;
-  copy: [string, string, string, string];
-  next?: string;
-  previous?: string;
-};
+import assetManifest from "./portfolio-assets.json";
 
+export const portfolioSource =
+  "https://www.figma.com/design/r8qco3DrEwzN7iWP6v6lPk/24new?node-id=500-353";
+export const profile = {
+  name: "张振",
+  alias: "ZZ",
+  role: "视觉设计师 / Creative Designer & Engineer",
+  email: "zzhen0325@gmail.com",
+  introduction:
+    "用视觉建立品牌，用体验连接用户。将插画、字体、三维与动效融入产品，也用 AI 与代码探索设计的新可能。",
+};
+export const categories = [
+  "全部",
+  "品牌与 IP",
+  "H5 营销",
+  "海外活动",
+  "AIGC",
+  "设计管理",
+  "视觉探索",
+] as const;
+export type Category = (typeof categories)[number];
+export type Asset = {
+  name: string;
+  title: string;
+  src: string;
+  width: number;
+  height: number;
+  rect: number[];
+};
+export type Project = {
+  slug: string;
+  title: string;
+  english: string;
+  kind: Category;
+  client: string;
+  summary: string;
+  tags: string[];
+  color: string;
+  description: string;
+  approach: string;
+  results?: { value: string; label: string }[];
+};
 export const projects: Project[] = [
   {
-    slug: "meridian",
-    title: "Meridian",
-    kind: "Brand Identity",
-    year: "2026",
-    client: "Atlas Group",
-    project: "Identity & Launch Film",
-    spec: "RED Komodo 4K 24p",
-    deliverables: "Master and Six Cutdowns",
-    video: "/assets/videos/giTLgTG1Xb4gSWKMSMwml7NXZw.mp4",
-    still: "/assets/images/HUcLlaUYqr6pt7CKzv0P0k10A.png",
-    file: "Jimmy_Meridian_MASTER.MP4",
-    copy: [
-      "A new identity needed a film that could carry it — sixty days from first board to launch, and a name the market hadn’t heard yet.",
-      "We cut to the grade, not around it. Two-frame holds on the wordmark, hard cuts on the beat, nothing that lingers. The launch version ran 02:14; the boardroom sat through it twice.",
-      "Lifted blacks and one warm accent pulled from the wordmark. The whole film sits inside the brand palette before the logo ever appears.",
-      "The film opened the launch event and ran paid for six weeks. Average watch time held above ninety per cent.",
-    ],
-    next: "citadel",
+    slug: "lemo-ai",
+    title: "All about AIGC",
+    english: "From experiments to tools",
+    kind: "AIGC",
+    client: "Lemon8",
+    summary: "从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。",
+    tags: ["AI Workshop", "LoRA", "Creative tools"],
+    color: "#bbc9a5",
+    description:
+      "围绕 Lemon8 的日常设计场景，串联 AI 工具培训、定制化 LoRA 模型训练、工作流封装与团队资产管理。让非设计同学也能理解并使用 AI，让设计团队的生成经验逐步沉淀。",
+    approach:
+      "从 ComfyUI 工作流与简易界面开始，逐步整合提示词优化、模型选择、生成与编辑。Lemo AI Studio 将 Prompt、参考图、参数、工作流及结果汇聚为团队资产；Goodcase 则将图片与生成参数绑定，支持灵感探索与复用。",
   },
   {
-    slug: "citadel",
-    title: "Citadel",
-    kind: "Brand Film",
-    year: "2026",
-    client: "Nomad Stays",
-    project: "Nomad Stays Campaign",
-    spec: "Alexa Mini 4K 25p",
-    deliverables: "Film and Four Cutdowns",
-    video: "/assets/videos/94fUd6REGZb4Oo12LAButtB6VVY.mp4",
-    still: "/assets/images/raQMO0qzYMpy07sY9oXSFdMVHs.png",
-    file: "Jimmy_Citadel_MASTER.MP4",
-    copy: [
-      "Nomad Stays wanted the feeling of arriving somewhere new and unpacking like you own it. Twelve locations, one film, no voiceover.",
-      "The rhythm is built on doors opening — every location enters mid-motion, nothing establishes. The master runs under two minutes; each cutdown opens on a different city.",
-      "Every city graded to the same warm base, so twelve locations read as one brand. No teal, no postcard look.",
-      "Four cutdowns carried the campaign across three markets. The hero film doubled the previous campaign’s completion rate.",
-    ],
-    next: "karama",
-    previous: "meridian",
+    slug: "lemon8-campaigns",
+    title: "Lemon8 Campaigns",
+    english: "Across cultures, beyond borders",
+    kind: "海外活动",
+    client: "Lemon8",
+    summary: "面向 US、JP 与 SEA 市场的活动主视觉与日常运营设计。",
+    tags: ["Campaign", "US / JP / SEA", "Visual design"],
+    color: "#e0d877",
+    description:
+      "围绕 Lemon8 不同区域的活动场景，展开主视觉、插画与运营物料设计。作品覆盖美国、日本及东南亚市场，呈现不同文化语境下的视觉表达。",
+    approach:
+      "以具体活动为单位组织视觉语言，结合区域审美与内容情境，将主题延展到活动页面和运营素材。案例按区域活动与日常运营两条线展开。",
   },
   {
-    slug: "karama",
-    title: "Karama",
-    kind: "Title Sequence",
-    year: "2025",
-    client: "Lumen Field",
-    project: "Lumen Field Titles",
-    spec: "After Effects 2.39:1 24fps",
-    deliverables: "Titles and Lower Thirds",
-    video: "/assets/videos/gI3gSjvQJmrr3qBjdVGqryBlWuc.mp4",
-    still: "/assets/images/4Yt6dkcImNpNqtCCcDHgHUQMTU.png",
-    file: "Jimmy_Karama_MASTER.MP4",
-    copy: [
-      "Open titles for a documentary series about builders. Patient work — it deserved a patient open.",
-      "Fifty-two seconds, eleven cards, one typeface. The pacing borrows from print: hold, breathe, turn the page. Nothing moves faster than it has to.",
-      "Print stock, not screen. Soft highlights and a paper-white base so the type feels set, not rendered.",
-      "The open ran unchanged across all eight episodes. The network asked who cut it.",
-    ],
-    next: "flora",
-    previous: "citadel",
+    slug: "miaoshi-brand",
+    title: "妙时品牌",
+    english: "This way to love",
+    kind: "品牌与 IP",
+    client: "网易云音乐 · 妙时",
+    summary: "有人懂，就是奇妙时刻。用箭头、色彩与生活场景建立同频社交品牌。",
+    tags: ["Brand identity", "Guidelines", "Art direction"],
+    color: "#fb1386",
+    description:
+      "妙时是网易云音乐出品的同频社交 APP，借助音乐元素连接同好，并围绕 Livehouse、音乐节形成线下交友连接点。品牌希望通过音乐与情绪价值，更具体地表达用户的内心世界。",
+    approach:
+      "用箭头表达通向爱情的方向，通过不同方向、颜色和比例指代不同频率的人。红色延续网易云音乐的品牌关联，蓝色与粉色建立成对的视觉关系；规范、海报与子品牌应用共同构成完整系统。",
   },
   {
-    slug: "flora",
-    title: "Flora",
-    kind: "Motion & 3D",
-    year: "2025",
-    client: "Signal",
-    project: "Signal Product Reveal",
-    spec: "C4D Resolve 4K 30p",
-    deliverables: "Reveal Film and Loops",
-    video: "/assets/videos/aU7ayUlJ80M1wHVsniHXxsf4QO0.mp4",
-    still: "/assets/images/hVHqSf90SxrL8TSUE5s5ONxFCRU.png",
-    file: "Jimmy_Flora_MASTER.MP4",
-    copy: [
-      "Signal’s reveal had one rule: show the product before you explain it. Hardware this small is easy to oversell.",
-      "The film opens on the device at true scale and earns every zoom after it. Three loops shipped alongside — the store page runs the twelve-second one.",
-      "Graded like hardware photography, deep neutrals and a single specular pass, so renders and live plates match.",
-      "The reveal held the store page for a full quarter. The twelve-second loop outperformed every static frame.",
+    slug: "inner-species",
+    title: "鉴一鉴你的内心物种",
+    english: "Meet your inner creature",
+    kind: "H5 营销",
+    client: "网易云音乐 · 妙时",
+    summary: "把情绪变成角色，用一场有趣的测试找到懂彼此的人。",
+    tags: ["H5", "Character design", "Social sharing"],
+    color: "#ed96d9",
+    description:
+      "作为妙时新产品的品牌宣传活动，通过不同场景的情绪反应测试，为网易云音乐用户生成物种标签，并引导到妙时进行标签配对，传达“这里都是有趣的人”的产品调性。",
+    approach:
+      "以鉴定中心建立场景，结合专家、答题卡和情绪小人降低参与门槛。将复杂情绪转译成通俗易懂的物种形象，贯穿加载、答题、结果与分享流程，为传播创造动机。",
+    results: [
+      { value: "33.7%", label: "总分享率" },
+      { value: "52.3%", label: "完成测试用户分享率" },
+      { value: "近 100%", label: "五道问答题漏斗留存" },
     ],
-    previous: "karama",
+  },
+  {
+    slug: "bandao",
+    title: "伴岛",
+    english: "A little island, a shared world",
+    kind: "品牌与 IP",
+    client: "网易云音乐 · 蛋仔派对",
+    summary: "从蛋仔 IP 到社区文化，为大学生建立清爽有趣的共同空间。",
+    tags: ["IP design", "Community", "AIGC"],
+    color: "#ffce64",
+    description:
+      "网易云音乐社交业务联合蛋仔派对出品的大学生社区 APP。从学生身份切入，以学校为天然群组，建立年轻、有趣的社区。品牌主张是“来伴岛，和小伙伴一起玩”。",
+    approach:
+      "延续蛋仔品牌元素，以班长、风纪委员、文艺委员等角色建立社区文化。探索 ControlNet 与 LoRA 的形象生成流程，为用户提供专属蛋仔形象，并延展至主页、盲盒池与社区互动场景。",
+  },
+  {
+    slug: "meetup-plan",
+    title: "奇妙接头计划",
+    english: "Take the connection outside",
+    kind: "品牌与 IP",
+    client: "妙时",
+    summary: "让同频的人在线下相遇，连接骑行、徒步、露营与摄影。",
+    tags: ["Sub-brand", "Outdoor", "Campaign"],
+    color: "#ed4b69",
+    description:
+      "妙时线下生活方式子品牌，以骑行、徒步、露营和摄影等活动建立兴趣圈子，通过 H5 承接线上线下联动，并与线下门店联合增加品牌曝光。",
+    approach:
+      "延续红蓝品牌色与箭头元素，用两个箭头的碰撞表达“接头”。从标志、字体到骑行活动与线下物料，让线上社交自然延伸到真实的生活方式场景。",
+  },
+  {
+    slug: "winter-gathering",
+    title: "冬至有酒局",
+    english: "A warm encounter on a cold night",
+    kind: "H5 营销",
+    client: "妙时 × 网易云音乐",
+    summary: "饺子就酒，把冬至夜的温暖带到上海长乐路。",
+    tags: ["Online to offline", "H5", "Event"],
+    color: "#ff604f",
+    description:
+      "妙时与网易云音乐在上海长乐路联合五家小酒馆发起冬至活动，邀请年轻人喝酒、相遇。项目包含线上 H5 与线下物料、品牌周边，拓展真实交友场景。",
+    approach:
+      "将饺子和酒进行轻松有趣的概念包装，以线上 H5 预告并承接抽奖；线下通过红蓝色彩、箭头元素和品牌物料保持鲜明识别。",
+    results: [
+      { value: "9700w+", label: "全网曝光" },
+      { value: "550w+", label: "站内话题阅读" },
+      { value: "3000+", label: "线下活动参与人次" },
+    ],
+  },
+  {
+    slug: "vinyl-anniversary",
+    title: "黑胶纪念墙",
+    english: "Ten years, one shared record",
+    kind: "H5 营销",
+    client: "网易云音乐 × 妙时",
+    summary: "在云村十周年的公共纪念空间，认识跟你合拍的人。",
+    tags: ["Anniversary", "Co-branding", "H5"],
+    color: "#eabc83",
+    description:
+      "网易云音乐十周年之际，以品牌联名形式打造黑胶纪念墙。在纪念主题中融入妙时的社交玩法，让音乐情怀与个性化社交名片产生连接。",
+    approach:
+      "通过黑胶唱片承载音乐属性与周年纪念，设计公共黑胶墙、个人制作流程和分享凭证。将温暖、怀旧的情绪与认识同频用户的动机结合。",
+    results: [
+      { value: "9.5%", label: "入口 CTR" },
+      { value: "30%", label: "总分享率" },
+      { value: "+18.9%", label: "妙时 DAU" },
+      { value: "+21.7%", label: "新客 DAU" },
+    ],
+  },
+  {
+    slug: "youth-album",
+    title: "青春纪念册",
+    english: "The songs we grew up with",
+    kind: "H5 营销",
+    client: "妙时",
+    summary: "借一张自选歌单、一份同学录，在毕业季寻找身边同好。",
+    tags: ["Graduation", "Music", "H5"],
+    color: "#fd496d",
+    description:
+      "在毕业季时间点，以用户自选歌单和同学录的形式，帮助用户寻找身边同好。音乐成为连接青春记忆与社交关系的载体。",
+    approach:
+      "以强品牌色贯穿歌单主页、结果页与分享页，在完整参与流程中强化妙时的视觉记忆点。",
+  },
+  {
+    slug: "social-live",
+    title: "社交直播业务群",
+    english: "One family, many connections",
+    kind: "品牌与 IP",
+    client: "网易云音乐 · 社交直播",
+    summary: "统一多产品品牌表达，让视觉系统支持多样的社交与营收场景。",
+    tags: ["Brand system", "Revenue campaigns", "Components"],
+    color: "#bd82fa",
+    description:
+      "以心遇为主的社交直播业务，覆盖语音房、派对房等模式，并孵化不同版本的产品。面对多变的业务需求，需要保持品牌延续与场景适配。",
+    approach:
+      "以爱心元素统一品牌家族，结合高饱和色彩与情感诉求构建视觉规范。针对榜单、抽奖、任务和互动玩法建立组件库，提高不同产品活动的复用效率。",
+  },
+  {
+    slug: "design-operations",
+    title: "设计团队与资源规划",
+    english: "Make space for better work",
+    kind: "设计管理",
+    client: "网易云音乐 · 社交直播",
+    summary: "将复杂的多产品需求，转化为清晰的需求地图与资源安排。",
+    tags: ["Team", "Design operations", "Planning"],
+    color: "#95c8ef",
+    description:
+      "原稿记录了带领 8 人小组（2 正式员工与 6 外包）承接社交直播业务线视觉需求的实践。产品多、上下游复杂，需要统一整理规划以满足不同业务目标。",
+    approach:
+      "从需求频次、属性、体量、优先级与场景拆解业务，再结合团队成员能力、熟悉度与沟通成本分配资源，将质量和效率放在同一个规划框架中。",
+  },
+  {
+    slug: "visual-explorations",
+    title: "视觉探索与更多",
+    english: "A collection of possibilities",
+    kind: "视觉探索",
+    client: "LOOK 直播 / 马蜂窝 / 个人探索",
+    summary: "从年度盛典到旅行地图、成就勋章和贴纸，探索不同尺度的视觉表达。",
+    tags: ["3D", "Illustration", "Visual experiments"],
+    color: "#8baaf8",
+    description:
+      "收录 LOOK 直播年度盛典、社交直播年鉴视觉、马蜂窝旅行地图与成就勋章体系，以及贴纸和其他视觉探索。",
+    approach:
+      "LOOK 年度盛典以赛博城市高塔与舞台承接预赛、正赛的推进；旅行地图和勋章体系围绕旅行经历与成就感组织信息。不同媒介共同呈现插画、三维与视觉叙事的实践。",
   },
 ];
-
+export function projectAssets(slug: string): Asset[] {
+  return (
+    (assetManifest as Record<string, { assets: Asset[] }>)[slug]?.assets ?? []
+  );
+}
+export function projectCover(slug: string) {
+  return `/assets/portfolio/${slug}/thumbnail.webp`;
+}
 export const services = [
-  { title: "Long-form Edits", text: "Documentaries, essays and brand films cut for the long watch — structured so every beat earns the next.", video: "/assets/videos/08wd5OrAVFV5gXaZFixJBQEYP0.mp4" },
-  { title: "Short-form Reels", text: "Vertical cut-downs built to stop the scroll. Hook in the first second, paced for completion, turned around fast.", video: "/assets/videos/DFI6TcAeyw7Ns8yq5IEfDFBf7tw.mp4" },
-  { title: "Colour Grade", text: "Log footage graded to feel like film — consistent skin, lifted blacks, a look that carries the whole cut.", video: "/assets/videos/xAkTCC9dvMELsLTAr48opuhgJ1I.mp4" },
-  { title: "Motion & Titles", text: "Titles, lower-thirds and animated type that move with the edit — clean systems that scale across a full series.", video: "/assets/videos/OWrnqtJfoEHkOVQasE60wKTDQ.mp4" },
-];
-
-export const reviews = [
-  { quote: "He sends one cut, not options. Ten episodes in, it’s still the right one. Unbelievable.", author: "DANA KOVAC", role: "SHOWRUNNER — MERIDIAN", file: "meridian_master.mp4 · 00:04:12" },
-  { quote: "Retention beat our previous by nineteen per cent. We stopped testing other editors.", author: "SAM OKAFOR", role: "HEAD OF BRAND — CITADEL", file: "citadel_master.mp4 · 00:02:38" },
-  { quote: "The grade alone was worth it. Nobody believes the footage came from our cameras.", author: "LEILA FARES", role: "DIRECTOR — KARAMA", file: "karama_master.mp4 · 00:00:52" },
+  {
+    title: "品牌与 IP",
+    text: "从品牌定位、视觉规范到角色与应用，建立一致且可延展的表达。",
+  },
+  {
+    title: "营销与体验",
+    text: "结合业务目标与用户情绪，把概念落到 H5、活动和线上线下触点。",
+  },
+  {
+    title: "AI 与创意工具",
+    text: "探索定制模型、工作流与创作平台，让设计经验成为可复用的工具。",
+  },
+  {
+    title: "团队与设计系统",
+    text: "梳理需求、规划资源、沉淀组件，帮助团队持续交付。",
+  },
 ];
