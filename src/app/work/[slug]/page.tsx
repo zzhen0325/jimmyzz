@@ -1,3 +1,4 @@
+import { WorkLink } from "@/components/work-link";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -43,7 +44,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       </section>
       <section className="grid min-h-[360px] grid-cols-2 max-[809px]:min-h-[560px] max-[809px]:grid-cols-1">
         {previousProject && <Link href={`/work/${previousProject.slug}`} className="group relative flex min-h-[360px] flex-col justify-end overflow-hidden border-t border-white/16 bg-[#111] px-[var(--page-pad)] py-[55px] max-[809px]:min-h-[280px]"><small className="relative text-[#888]">PREVIOUS SCREENING</small><b className="relative flex items-center gap-[18px] text-[62px] font-[450] tracking-[-.05em] max-[809px]:text-[46px]"><ArrowLeft/>{previousProject.title}</b></Link>}
-        {nextProject && <Link href={`/work/${nextProject.slug}`} className="group relative col-start-2 flex min-h-[360px] flex-col justify-end overflow-hidden border-t border-white/16 px-[var(--page-pad)] py-[55px] max-[809px]:col-start-1 max-[809px]:min-h-[280px]"><video className="absolute inset-0 size-full object-cover opacity-50 transition-[transform,opacity] duration-500 group-hover:scale-105 group-hover:opacity-75" src={nextProject.video} muted loop autoPlay playsInline/><small className="relative text-[#888]">NEXT SCREENING</small><b className="relative flex items-center gap-[18px] text-[62px] font-[450] tracking-[-.05em] max-[809px]:text-[46px]">{nextProject.title}<ArrowRight/></b></Link>}
+        {nextProject && <WorkLink href={`/work/${nextProject.slug}`} className="group relative col-start-2 flex min-h-[360px] flex-col justify-end overflow-hidden border-t border-white/16 px-[var(--page-pad)] py-[55px] max-[809px]:col-start-1 max-[809px]:min-h-[280px]"><video className="absolute inset-0 size-full object-cover opacity-50" src={nextProject.video} muted loop autoPlay playsInline/><small className="relative text-[#888]">NEXT SCREENING</small><b className="relative flex items-center gap-[18px] text-[62px] font-[450] tracking-[-.05em] max-[809px]:text-[46px]">{nextProject.title}<ArrowRight/></b></WorkLink>}
       </section>
       <Footer variant="project"/>
     </main>

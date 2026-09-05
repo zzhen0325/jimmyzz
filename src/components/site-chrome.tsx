@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { gsap, useGSAP, motionConditions } from "@/lib/gsap";
+import { GsapPresence } from "./gsap-presence";
 import { ArrowDown, CircleDot, Menu, Play, Video, X } from "lucide-react";
 import { FaInstagram, FaXTwitter, FaYoutube } from "react-icons/fa6";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const nav = [
   ["Work", "/work", "01"],
@@ -14,11 +15,27 @@ const nav = [
 ] as const;
 
 export function TopNav() {
+  const scope = useRef<HTMLElement>(null);
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add(motionConditions, ({ conditions }) => {
+      const cleanups = Array.from(scope.current!.querySelectorAll("nav a")).map(link => {
+        const hover = gsap.to(link, { opacity: 0.55, duration: conditions?.reduced ? 0 : 0.2, paused: true });
+        const enter = () => { hover.play(); };
+        const leave = () => { hover.reverse(); };
+        link.addEventListener("pointerenter", enter); link.addEventListener("pointerleave", leave);
+        link.addEventListener("focus", enter); link.addEventListener("blur", leave);
+        return () => { link.removeEventListener("pointerenter", enter); link.removeEventListener("pointerleave", leave); link.removeEventListener("focus", enter); link.removeEventListener("blur", leave); };
+      });
+      return () => cleanups.forEach(cleanup => cleanup());
+    }, scope);
+    return () => mm.revert();
+  }, { scope });
   return (
-    <header className="absolute top-0 left-0 z-20 grid w-full grid-cols-[1fr_auto] items-center px-[var(--page-pad)] py-[22px] text-xs max-[809px]:grid-cols-2 max-[809px]:pt-[15px]">
+    <header ref={scope} className="absolute top-0 left-0 z-20 grid w-full grid-cols-[1fr_auto] items-center px-[var(--page-pad)] py-[22px] text-xs max-[809px]:grid-cols-2 max-[809px]:pt-[15px]">
       <Link href="/" className="text-sm font-[650]" aria-label="Jimmy home">Jimmy™</Link>
       <nav className="flex gap-[30px] justify-self-end max-[809px]:hidden" aria-label="Primary navigation">
-        {nav.map(([label, href]) => <Link className="hover:opacity-55" key={label} href={href}>{label}</Link>)}
+        {nav.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}
       </nav>
     </header>
   );
@@ -27,23 +44,36 @@ export function TopNav() {
 function FilmRunner() {
   const [playing, setPlaying] = useState(false);
   const [frame, setFrame] = useState(0);
-  const [jump, setJump] = useState(false);
-  useEffect(() => {
-    if (!playing) return;
-    const id = window.setInterval(() => setFrame((value) => value + 1), 90);
-    return () => window.clearInterval(id);
-  }, [playing]);
+  const board = useRef<HTMLButtonElement>(null);
+  const leapTimeline = useRef<gsap.core.Timeline | null>(null);
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add(motionConditions, ({ conditions }) => {
+      const reduced = conditions?.reduced;
+      gsap.set("[data-obstacle]", { x: 210 });
+      leapTimeline.current = gsap.timeline({ paused: true })
+        .to("[data-runner]", { y: reduced ? 0 : -22, duration: 0.2, ease: "power2.out" })
+        .to("[data-runner]", { y: 0, duration: 0.28, ease: "bounce.out" });
+      if (playing && !reduced) {
+        gsap.fromTo("[data-obstacle]", { x: 220 }, { x: -20, duration: 2.2, repeat: -1, ease: "none" });
+        const counter = { frame: 0 };
+        gsap.to(counter, { frame: 100000, duration: 9000, ease: "none", onUpdate: () => setFrame(Math.floor(counter.frame)) });
+      }
+      if (playing) leapTimeline.current.play();
+      return () => { leapTimeline.current = null; };
+    }, board);
+    return () => mm.revert();
+  }, { scope: board, dependencies: [playing], revertOnUpdate: true });
   const leap = () => {
     if (!playing) setPlaying(true);
-    setJump(true);
-    window.setTimeout(() => setJump(false), 480);
+    else leapTimeline.current?.restart();
   };
   return (
-    <button className="relative h-[82px] w-full overflow-hidden border-t border-white/16 text-left" onClick={leap} aria-label="Film runner game board">
+    <button ref={board} className="relative h-[82px] w-full overflow-hidden border-t border-white/16 text-left" onClick={leap} aria-label="Film runner game board">
       <span className="mt-2.5 flex justify-between text-[9px] text-[#777]"><b className="flex items-center gap-[5px] text-[#aaa]"><i className="block size-1.5 rounded-full bg-current" /> REC</b><em>FRAME {String(frame).padStart(4, "0")}</em></span>
       <span className="absolute right-0 bottom-1 left-0 h-[35px] border-b border-[#3a3a3a]">
-        <motion.span animate={{ y: jump ? -22 : 0 }} transition={{ type: "spring", stiffness: 420, damping: 18 }} className="absolute bottom-px left-[5px]"><Video size={15}/></motion.span>
-        <motion.span className="absolute bottom-px left-0" animate={playing ? { x: [220, -20] } : { x: 210 }} transition={{ repeat: Infinity, duration: 2.2, ease: "linear" }}><CircleDot size={18}/></motion.span>
+        <span data-runner className="absolute bottom-px left-[5px]"><Video size={15}/></span>
+        <span data-obstacle className="absolute bottom-px left-0"><CircleDot size={18}/></span>
       </span>
       {!playing && <span className="absolute right-0 bottom-[5px] grid size-7 place-items-center rounded-full border border-[#555] text-[0px] [&_svg]:w-2.5"><Play size={12} fill="currentColor" /> Play</span>}
     </button>
@@ -53,6 +83,14 @@ function FilmRunner() {
 export function FloatingMenu() {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
+  const toggle = useRef<HTMLDivElement>(null);
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add(motionConditions, ({ conditions }) => {
+      gsap.to(toggle.current, { autoAlpha: visible || open ? 1 : 0, y: visible || open ? 0 : 12, duration: conditions?.reduced ? 0 : 0.25, overwrite: "auto" });
+    });
+    return () => mm.revert();
+  }, { dependencies: [visible, open], revertOnUpdate: true });
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 260);
     onScroll();
@@ -61,14 +99,12 @@ export function FloatingMenu() {
   }, []);
   return (
     <>
-      <motion.div className="pointer-events-auto fixed bottom-[72px] left-10 z-80 flex items-center gap-2.5 max-[809px]:bottom-[22px] max-[809px]:left-4" animate={{ opacity: visible || open ? 1 : 0, y: visible || open ? 0 : 12 }}>
+      <div ref={toggle} inert={!visible && !open} style={{ visibility: "hidden" }} className="pointer-events-auto fixed bottom-[72px] left-10 z-80 flex items-center gap-2.5 max-[809px]:bottom-[22px] max-[809px]:left-4">
         <button className="grid size-12 place-items-center rounded-full border border-white/20 bg-[rgba(8,8,8,.8)] backdrop-blur-[10px] [&_svg]:w-5" onClick={() => setOpen(!open)} aria-label={open ? "Close menu" : "Open menu"}>{open ? <X /> : <Menu />}</button>
-      </motion.div>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.button aria-label="Close menu backdrop" onClick={() => setOpen(false)} className="fixed inset-0 z-70 bg-black/40 backdrop-blur-[10px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-            <motion.aside className="fixed bottom-[130px] left-10 z-81 min-h-[214px] w-[440px] rounded-[14px] border border-white/12 bg-[rgba(13,13,13,.9)] p-6 backdrop-blur-[18px] max-[809px]:right-4 max-[809px]:bottom-[84px] max-[809px]:left-4 max-[809px]:w-auto" initial={{ opacity: 0, y: 26, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20 }}>
+      </div>
+      <GsapPresence open={open}>
+            <button data-presence-fade aria-label="Close menu backdrop" onClick={() => setOpen(false)} className="fixed inset-0 z-70 bg-black/40 backdrop-blur-[10px]" />
+            <aside data-presence-panel className="fixed bottom-[130px] left-10 z-81 min-h-[214px] w-[440px] rounded-[14px] border border-white/12 bg-[rgba(13,13,13,.9)] p-6 backdrop-blur-[18px] max-[809px]:right-4 max-[809px]:bottom-[84px] max-[809px]:left-4 max-[809px]:w-auto">
               <div className="grid grid-cols-[.85fr_1.15fr] gap-[26px] max-[809px]:grid-cols-[1fr_1.2fr] [&>div]:flex [&>div]:flex-col [&>div]:items-start [&_a]:my-0.5 [&_a]:text-base [&_sup]:ml-[7px] [&_sup]:text-[8px] [&_sup]:text-[#666]">
                 <div>
                   <span className="mb-[18px] text-[11px] tracking-[.02em] text-[#777] uppercase">MENU</span>
@@ -81,10 +117,8 @@ export function FloatingMenu() {
                   <FilmRunner />
                 </div>
               </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+            </aside>
+      </GsapPresence>
     </>
   );
 }
