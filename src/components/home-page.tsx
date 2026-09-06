@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { useHomeReveals } from "./home-reveals";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
@@ -9,20 +10,21 @@ import { WaveType } from "./wave-type";
 import { ArrowUpRight } from "lucide-react";
 import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
+import { RisographVideo } from "./risograph-video";
 
 function EditorCard() {
   return (
     <a
       href="#about"
-      className="flex w-[230px] items-center gap-3 rounded-md border border-white/25 bg-black/45 p-3 text-left backdrop-blur-md"
+      className="hero-editor-card"
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#d8fa7c] text-lg font-semibold text-[#172010]">
-        ZZ
+      <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[#f2f2f2] text-lg font-semibold text-[#172010]">
+
       </span>
       <span className="flex-1">
-        <b className="block text-xs">Hey, I&apos;m ZZ / 张振</b>
+        <b className="block text-xs">Hey, I&apos;m ZZ</b>
         <small className="text-[10px] text-white/70">
-          Creative Designer & Engineer
+          Creative Engineer
         </small>
       </span>
       <ArrowUpRight size={16} />
@@ -38,7 +40,8 @@ function Hero() {
   useGSAP(
     () => {
       const video = backgroundVideo.current;
-      if (!video || videoFailed) return;
+      const section = hero.current;
+      if (!video || !section || videoFailed) return;
       const mm = gsap.matchMedia();
       mm.add(
         motionConditions,
@@ -48,58 +51,66 @@ function Hero() {
             video.currentTime = 0;
             return;
           }
-          gsap.from("h1", {
-            autoAlpha: 0,
-            y: 48,
-            duration: 0.85,
-            ease: "power3.out",
-          });
 
+          const frameRate = 24;
+          const holdFrames = 10;
+          const playbackScrollDistance = 240;
+          const lastFrameIndex = () => Math.max(0, Math.round(video.duration * frameRate) - 1);
           const playhead = { progress: 0 };
+          let pendingSeek = 0;
           const seek = () => {
+            pendingSeek = 0;
             if (
               video.readyState < 2 ||
               !Number.isFinite(video.duration) ||
               video.seeking
             )
               return;
-            const lastFrame = Math.max(0, video.duration - 1 / 30);
-            const time = playhead.progress * lastFrame;
+            // Seek to actual frame timestamps, including the final decoded frame.
+            const time = Math.round(playhead.progress * lastFrameIndex()) / frameRate;
             // Finish the current decode before seeking to the latest scroll position.
             if (Math.abs(video.currentTime - time) > 1 / 60)
               video.currentTime = time;
           };
-          video.addEventListener("loadeddata", seek);
-          video.addEventListener("seeked", seek);
-          const playbackScrollDistance = 240;
+          const scheduleSeek = () => {
+            if (!pendingSeek) pendingSeek = requestAnimationFrame(seek);
+          };
+          video.addEventListener("loadeddata", scheduleSeek);
+          video.addEventListener("seeked", scheduleSeek);
           const pin = ScrollTrigger.create({
             id: "hero-video-pin",
-            trigger: hero.current,
+            trigger: section,
             start: "top top",
-            // Release at 95%; the remaining frames play as the hero scrolls away.
-            end: `+=${playbackScrollDistance * 0.95}`,
+            // Append ten held frames to the scroll timeline before releasing.
+            end: () => `+=${playbackScrollDistance * (1 + holdFrames / (Number.isFinite(video.duration) ? Math.max(1, lastFrameIndex()) : 242))}`,
             pin: true,
             anticipatePin: 1,
           });
           gsap.to(playhead, {
             progress: 1,
             ease: "none",
-            onUpdate: seek,
+            onUpdate: scheduleSeek,
             scrollTrigger: {
               id: "hero-video",
-              trigger: hero.current,
+              trigger: section,
               start: () => pin.start,
-              // About two ordinary 120px wheel steps; independent of video length.
               end: () => pin.start + playbackScrollDistance,
               scrub: true,
               invalidateOnRefresh: true,
             },
           });
-          seek();
+          const onMetadata = () => {
+            ScrollTrigger.refresh();
+            scheduleSeek();
+          };
+          video.addEventListener("loadedmetadata", onMetadata);
+          scheduleSeek();
           return () => {
+            cancelAnimationFrame(pendingSeek);
             video.pause();
-            video.removeEventListener("loadeddata", seek);
-            video.removeEventListener("seeked", seek);
+            video.removeEventListener("loadedmetadata", onMetadata);
+            video.removeEventListener("loadeddata", scheduleSeek);
+            video.removeEventListener("seeked", scheduleSeek);
           };
         },
         hero,
@@ -112,24 +123,32 @@ function Hero() {
     <section
       id="top"
       ref={hero}
-      className="relative h-svh min-h-[480px] overflow-hidden bg-[#06141b] min-[810px]:after:pointer-events-none min-[810px]:after:absolute min-[810px]:after:z-1 min-[810px]:after:content-[''] min-[810px]:after:inset-[45px_var(--page-pad)_98px] min-[810px]:after:bg-[repeating-linear-gradient(90deg,rgba(255,255,255,.085)_0_1px,transparent_1px_calc(25%_-_1px))]"
+      className="home-hero"
     >
-      <div className="absolute inset-0">
-        {videoFailed ? (
-          <Image
+      <div className="hero-background">
+        {/* <Image
             className="object-cover"
-            src="/assets/images/hero-studio-poster.jpg"
+            src="/assets/images/bg47.png"
             fill
             priority
             sizes="100vw"
-            alt="Cinematic editing studio"
+            alt="长虹玻璃光影"
+          /> */}
+        {videoFailed ? (
+          <Image
+            className="object-cover"
+            src="/assets/images/hero-glass-poster.jpg"
+            fill
+            priority
+            sizes="100vw"
+            alt="长虹玻璃光影"
           />
         ) : (
           <video
             ref={backgroundVideo}
             className="size-full object-cover"
-            src="/assets/videos/hero-studio-scroll.mp4"
-            poster="/assets/images/hero-studio-poster.jpg"
+            src="/assets/videos/hero-cafe-scroll.mp4"
+            poster="/assets/images/hero-glass-poster.jpg"
             preload="auto"
             muted
             playsInline
@@ -138,34 +157,37 @@ function Hero() {
             onError={() => setVideoFailed(true)}
           />
         )}
+        {!videoFailed && <RisographVideo videoRef={backgroundVideo} />}
       </div>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.28),transparent_45%,rgba(0,0,0,.22))] max-[809px]:bg-[linear-gradient(180deg,rgba(0,0,0,.25),transparent_50%,rgba(0,0,0,.34))]" />
-      <TopNav />
-      <div className="absolute top-[35%] left-[var(--page-pad)] z-3 flex flex-col text-[11px] max-[809px]:hidden">
-        <span className="mb-[18px] text-white/60">(01) — SERVICES</span>
-        {services.map((s) => (
-          <a className="my-0.5" key={s.title} href="#services">
-            {s.title}
+      <div className="hero-grid" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((line) => <span key={line}><i /></span>)}
+      </div>
+      <TopNav english />
+      <div className="hero-services">
+        <span className="hero-kicker">(01) — SERVICES</span>
+        {["Brand & IP", "Marketing & Experiences", "AI & Creative Tools", "Teams & Design Systems"].map((title) => (
+          <a className="my-0.5" key={title} href="#services">
+            {title}
           </a>
         ))}
+        <span className="hero-service-note">VISUAL DESIGN × CREATIVE TECHNOLOGY</span>
       </div>
-      <div className="absolute top-[24%] right-[var(--page-pad)] z-3 flex w-[285px] flex-col items-end gap-[18px] max-[809px]:top-auto max-[809px]:right-4 max-[809px]:bottom-[215px] max-[809px]:left-4 max-[809px]:grid max-[809px]:w-auto max-[809px]:grid-cols-2 max-[809px]:items-end">
+      <div className="hero-profile">
         <EditorCard />
-        <p className="w-[235px] text-right text-xs text-white/82 max-[809px]:col-span-full max-[809px]:col-start-1 max-[809px]:row-start-2 max-[809px]:w-auto max-[809px]:max-w-[340px] max-[809px]:justify-self-center max-[809px]:text-center max-[809px]:text-[13px]">
-          {profile.introduction}
+        <p className="hero-introduction">
+          Building brands through visuals and connecting people through experiences. Exploring illustration, type, 3D and motion — with AI and code.
         </p>
       </div>
-      <div className="absolute top-[92px] left-[var(--page-pad)] z-4 flex gap-7 text-[10px] text-white/70 max-[809px]:top-[116px] max-[809px]:left-4 max-[809px]:w-[calc(100%-32px)] max-[809px]:justify-between">
+      <div className="hero-record">
         <span className="flex items-center gap-[7px]">
           <i className="size-1.5 rounded-full bg-[#f13d19] shadow-[0_0_8px_#f13d19]" />{" "}
           REC&nbsp; 00:14:18:09
         </span>
-        <em className="absolute top-[330px] left-0 w-[180px] not-italic max-[809px]:hidden">
-          (VISUAL DESIGN × CREATIVE TECHNOLOGY)
-        </em>
+
       </div>
-      <Timeline className="top-[52px] bottom-auto max-[809px]:top-[68px]" />
-      <h1 className="absolute right-[2.5vw] bottom-9 left-[2.5vw] z-3 m-0 w-auto origin-bottom-left whitespace-nowrap text-[16.8vw] leading-[.78] font-[480] tracking-normal max-[809px]:bottom-6 max-[809px]:text-[16.4vw]">
+      <Timeline className="hero-timeline" />
+      <h1 className="hero-title tracking-tightest">
         VibeMaking
       </h1>
     </section>
@@ -181,10 +203,10 @@ function Capabilities() {
         time="THINK → MAKE"
       />
       <div className="section-heading">
-        <h2>
+        <h2 aria-label="Think. Plan. Do. Repeat.">
           Think. Plan.
           <br />
-          <span>Do. Repeat.</span>
+          <span className="heading-muted">Do. Repeat.</span>
         </h2>
         <p>
           让设计既有表达，也有方法。
@@ -269,8 +291,10 @@ function About() {
   );
 }
 export function HomePage() {
+  const scope = useRef<HTMLElement>(null);
+  useHomeReveals(scope);
   return (
-    <main>
+    <main ref={scope} className="home-page">
       <Hero />
       <SelectedWork />
       <CurveGallery />

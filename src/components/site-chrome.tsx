@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ArrowUpRight, ArrowUp, Menu, X } from "lucide-react";
@@ -10,16 +11,17 @@ const nav = [
   ["设计实践", "/#services"],
   ["关于", "/#about"],
 ] as const;
-export function TopNav() {
+export function TopNav({ english = false }: { english?: boolean }) {
+  const links = english ? [["Work", "/work"], ["Playground", "/#gallery"], ["Services", "/#services"], ["About", "/#about"]] : nav;
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   return (
-    <header className="site-nav">
+    <header className="site-nav border-b border-white/20">
       <Link href="/" className="site-wordmark" aria-label="ZZ 张振 首页">
-        ZZ<span>©</span>
+        <Image src="/assets/images/logo.svg" alt="ZZ" width={60} height={30} priority />
       </Link>
       <nav aria-label="主导航" className="desktop-nav">
-        {nav.map(([label, href]) => (
+        {links.map(([label, href]) => (
           <Link
             aria-current={pathname === href ? "page" : undefined}
             key={href}
@@ -29,7 +31,7 @@ export function TopNav() {
           </Link>
         ))}
         <a href={`mailto:${profile.email}`}>
-          聊聊项目 <ArrowUpRight size={14} />
+          {english ? "Let’s talk" : "聊聊项目"} <ArrowUpRight size={14} />
         </a>
       </nav>
       <button
@@ -47,14 +49,14 @@ export function TopNav() {
           className="mobile-nav"
           aria-label="移动导航"
         >
-          {nav.map(([label, href]) => (
+          {links.map(([label, href]) => (
             <Link onClick={() => setOpen(false)} key={href} href={href}>
               {label}
               <ArrowUpRight size={20} />
             </Link>
           ))}
           <a href={`mailto:${profile.email}`}>
-            联系我 <ArrowUpRight size={20} />
+            {english ? "Contact" : "联系我"} <ArrowUpRight size={20} />
           </a>
         </nav>
       )}

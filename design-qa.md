@@ -1,3 +1,49 @@
+# Sphere reconstruction QA — 2026-09-06
+
+final result: passed
+
+Scope: the Sphere effect only. Previous full-site QA is retained below.
+
+## Source and implementation evidence
+
+- Source visual truth: `output/sphere-qa/reference.jpg` and the user-provided parameter-panel screenshot; live source https://motion.superopc.app/.
+- Implementation screenshot: `output/sphere-qa/implementation.jpg`; live implementation http://localhost:3000/#gallery.
+- Mobile implementation: `output/sphere-qa/mobile.jpg`.
+- Desktop captures were emitted together in one browser-tool comparison result. Full views include the complete sphere and surrounding context; focused inspection compared overlapping front-center cards and dimmer rear-edge cards.
+- Source capture 1800×890 image pixels; implementation 1785×883 image pixels (browser screenshot output). Browser CSS canvas measured 1785×890. Compared at the same apparent card scale, with the minor viewport-height difference acknowledged. No pixel-equality metric claimed.
+- Mobile CSS viewport 390×844, 375px content width after scrollbar; screenshot 375×812. No horizontal document overflow. Source mobile was inspected with its panel open and sphere clipped laterally; local intentionally fits the sphere within the portfolio layout.
+- State: active 51-card Sphere preset, dark background. Different portfolio assets, random card scales and animation phases prevent identical-frame comparison.
+
+## Findings and fixes
+
+1. [P1, fixed] DOM opacity allowed cards to show through one another. Replaced with a WebGL image shader that blends RGB toward background only behind the center plane. Re-capture shows opaque foreground occlusion, without the previous translucent collage effect.
+2. [P1, fixed] Manual z-index rounding and hover z-index override caused incorrect layer changes. Three.js now sorts parallel image/border planes in camera depth, with no forced hover foreground order. Drag/click inspection confirms front-facing selection and stable occlusion.
+3. [P2, fixed] Rotation order, hover-paused auto-spin, and pointer-follow tilt diverged from source. Reconstructed XYZ view quaternion multiplied by X-axis spin; +0.5 rad/sec, continued spin during hover, drag-controlled orientation.
+4. [P2, fixed] CSS 17% corner radius and fixed gray border differed from source. Shader radius is 8.5% of the side; border width and dominant-image color follow the source rules. Re-capture shows the source's tighter corners and thin colored borders.
+
+## Fidelity surfaces
+
+- Typography/copy: portfolio heading, label and controls retained by scope. Interaction copy now says drag, hover and click; no obsolete wheel/scroll-expansion wording.
+- Layout/spacing: centered spherical volume, 51 square cards, source world dimensions and camera. Portfolio section framing retained. Narrow-screen camera fit is an intentional adaptation.
+- Colors/opacity: sRGB textures, linear-color depth blend, foreground alpha preserved, dominant-color borders. Portfolio background #090909 is intentionally retained.
+- Assets: real local portfolio images, center-cover square crop, native texture decoding; no generated or placeholder imagery.
+- Motion/layers: billboard alignment, world-space depth fade, native transparent sorting, hover smoothing, and local-axis spin verified against the public runtime and rendered reference.
+
+## Interaction and technical checks
+
+- Keyboard Enter on canvas opens a foreground work in the existing lightbox; close restores the gallery.
+- Drag rotates without opening the lightbox; a subsequent click opens a visible foreground work.
+- Flat/grid and sphere switching tested at mobile width. Pause/nudge controls retained; pause state displayed correctly.
+- Desktop and 390px viewport inspected; controls remain visible, no horizontal overflow.
+- Browser reported Three.js r184 on the live canvas. Console inspected: no WebGL or shader compilation errors; unrelated extension-injected hydration/listener diagnostics present.
+- TypeScript, ESLint and `git diff --check` passed.
+
+## Remaining limits
+
+No exact upstream component was identified. The original source runs Three.js r171; the local project uses r184. Random asset sizes/phases and different imagery mean this is a reconstruction of the inspected rendering rules, not a pixel-identical copy. Background and mobile fit are intentional integration differences.
+
+---
+
 # Design QA — Jimmy clone
 
 ## Evidence

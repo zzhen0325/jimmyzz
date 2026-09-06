@@ -11,6 +11,9 @@ const bdo = localFont({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: { url: "/assets/images/favicon.svg", type: "image/svg+xml" },
+  },
   title: { default: "ZZ 张振 — 视觉设计与创意技术", template: "%s — ZZ 张振" },
   description:
     "张振的设计作品集：品牌与 IP、H5 营销、Lemon8 海外活动、AIGC 工具与设计团队实践。",

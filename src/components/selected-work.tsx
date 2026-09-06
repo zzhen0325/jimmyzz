@@ -71,10 +71,10 @@ export function SelectedWork() {
         time="04 SELECTED / 12 TOTAL"
       />
       <div className="section-heading">
-        <h2>
+        <h2 aria-label="Ideas made into experiences.">
           Ideas made
           <br />
-          <span>into experiences.</span>
+          <span className="heading-muted">into experiences.</span>
         </h2>
         <p>
           从品牌到体验，从创意到工具。

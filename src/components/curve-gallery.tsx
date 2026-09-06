@@ -87,7 +87,6 @@ export function CurveGallery() {
                     pin: true,
                     anticipatePin: 1,
                     invalidateOnRefresh: true,
-                    onUpdate: (self) => engine?.setProgress(self.progress),
                   });
                   ScrollTrigger.sort();
                   ScrollTrigger.refresh();
@@ -149,7 +148,7 @@ export function CurveGallery() {
           <p>
             插画、角色、海报与视觉实验。
             <br />
-            移动鼠标倾斜圆环，滚动展开，点击放大。
+            拖动旋转球体，悬停探索，点击查看作品。
           </p>
         </div>
         <div
@@ -181,7 +180,7 @@ export function CurveGallery() {
           </div>
         )}
         <div className="curve-controls">
-          <p className="curve-wheel-caption">3D TILT WHEEL <span>移动倾斜 · 滚动展开</span></p>
+          <p className="curve-sphere-caption">SPHERE IN MOTION <span>拖动旋转 · 悬停放大</span></p>
           <div className="curve-playback">
             {status === "ready" && (
               <>
@@ -209,7 +208,7 @@ export function CurveGallery() {
                 </button>
                 <button onClick={toggleFlat} aria-pressed={flat}>
                   <Grid2X2 size={14} />
-                  <span>{flat ? "圆环浏览" : "平铺浏览"}</span>
+                  <span>{flat ? "球体浏览" : "平铺浏览"}</span>
                 </button>
               </>
             )}
