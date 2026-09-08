@@ -1,0 +1,42 @@
+.ribbon-section { background: #f7f7f2; color: #20231e; }
+.ribbon-stage { position: relative; min-height: 650px; height: 100svh; overflow: hidden; isolation: isolate; }
+.ribbon-top { position: absolute; z-index: 110; top: 28px; left: 32px; right: 32px; display: flex; align-items: flex-start; justify-content: space-between; font-size: 11px; letter-spacing: .07em; }
+.ribbon-top p { font: italic 25px Georgia, serif; text-align: center; }
+.ribbon-top p span { display: block; font: 10px sans-serif; letter-spacing: .09em; margin-top: 10px; }
+.ribbon-guides { position: absolute; inset: 12% 28px; pointer-events: none; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), #20231e14 calc(16.666% - 1px), #20231e14 16.666%); }
+.ribbon-playhead { display: none; position: absolute; left: 38%; inset-block: 95px; width: 1px; background: #20231e30; pointer-events: none; z-index: 105; }
+.ribbon-playhead i { position: absolute; left: -4px; top: 0; border: 4px solid transparent; border-top-color: #20231e; }
+.ribbon-playhead i:last-child { top: auto; bottom: 0; transform: rotate(180deg); }
+.ribbon-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 120px 32px; }
+.ribbon-card { display: block; transform-origin: center; }
+.ribbon-card img { display: block; width: 100%; height: auto; user-select: none; }
+.ribbon-card:focus-visible { outline: 2px solid #20231e; outline-offset: 6px; }
+.ribbon-stage:not(.is-animated) { height: auto; }
+.is-animated .ribbon-images { display: block; position: absolute; inset: 0; padding: 0; touch-action: pan-y; cursor: grab; }
+.is-animated .ribbon-images:active { cursor: grabbing; }
+.is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(24vw, 330px); will-change: transform; }
+.is-animated .ribbon-playhead { display: block; }
+.ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.ribbon-count { font: 20px Georgia, serif; }
+.ribbon-count small { font-size: 12px; color: #777c70; }
+.ribbon-title { text-align: center; }
+.ribbon-title > span { display: block; font-size: clamp(16px, 2vw, 26px); }
+.ribbon-title small { display: block; margin-top: 7px; color: #6c7168; font-size: 11px; }
+.ribbon-actions { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.ribbon-actions button { padding: 10px; cursor: pointer; }
+.ribbon-actions button:disabled { opacity: .25; cursor: default; }
+.ribbon-actions a { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
+@media (max-width: 809px) {
+  .ribbon-stage { min-height: 520px; }
+  .ribbon-top { left: 18px; right: 18px; }
+  .ribbon-top > span { max-width: 90px; line-height: 1.7; font-size: 8px; }
+  .ribbon-top p { font-size: 21px; }
+  .ribbon-top > a { font-size: 10px; }
+  .ribbon-footer { left: 18px; right: 18px; flex-wrap: wrap; bottom: 20px; gap: 14px; }
+  .ribbon-title { max-width: 65%; text-align: right; }
+  .ribbon-actions { width: 100%; justify-content: flex-end; }
+  .ribbon-images { grid-template-columns: repeat(2, 1fr); padding-inline: 18px; }
+}
+
+.is-animated .ribbon-card .motion-image { height: 100%; }
+.is-animated .ribbon-card img { height: 100%; object-fit: cover; }

@@ -3,10 +3,17 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { createRisographRenderer, risographSettings } from "@/lib/risograph";
 
-export function RisographVideo({ videoRef }: { videoRef: RefObject<HTMLVideoElement | null> }) {
+export function RisographVideo({
+  videoRef,
+  enabled = risographSettings.enabled,
+}: {
+  videoRef: RefObject<HTMLVideoElement | null>;
+  enabled?: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
@@ -132,7 +139,8 @@ export function RisographVideo({ videoRef }: { videoRef: RefObject<HTMLVideoElem
       reducedMotion.removeEventListener("change", onMotionChange);
       renderer?.dispose();
     };
-  }, [videoRef]);
+  }, [videoRef, enabled]);
 
+  if (!enabled) return null;
   return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 size-full opacity-0" data-effect="risograph" />;
 }

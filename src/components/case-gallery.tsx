@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { MotionImage } from "./motion-image";
 import { useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -54,7 +55,7 @@ export function CaseGallery({
               onClick={() => show(index)}
               aria-label={`查看${asset.title}大图`}
             >
-              <Image
+              <MotionImage
                 src={asset.src}
                 width={asset.width}
                 height={asset.height}

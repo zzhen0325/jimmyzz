@@ -5,6 +5,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Footer, TopNav } from "@/components/site-chrome";
+import { MotionImage } from "@/components/motion-image";
 import { CaseGallery } from "@/components/case-gallery";
 import { projects, projectAssets, projectCover } from "@/lib/site-data";
 export function generateStaticParams() {
@@ -51,7 +52,7 @@ export default async function ProjectPage({
         </header>
         {cover && (
           <figure className="case-cover" style={{ backgroundColor: project.color }}>
-            <Image
+            <MotionImage
               src={cover.src}
               width={cover.width}
               height={cover.height}

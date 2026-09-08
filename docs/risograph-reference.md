@@ -6,6 +6,8 @@
 
 ## 对应参数
 
+总开关：在 `src/lib/risograph.ts` 中设置 `risographSettings.enabled`，`true`（默认）开启效果，`false` 显示原视频且不创建滤镜画布、WebGL 资源或颗粒动画。组件也支持通过 `enabled` 属性覆盖默认值；运行时关闭会清理已有渲染资源。
+
 | 参数 | 参考值 |
 | --- | --- |
 | Paper color | #f5f2e8 |

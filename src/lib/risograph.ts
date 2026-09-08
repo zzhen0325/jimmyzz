@@ -1,6 +1,8 @@
 // Reconstructed from the visible Effect.app Risograph + Exposure controls.
 // Grain and ink blending approximate the reference preview.
 export const risographSettings = {
+  // Set to false to show the original homepage video without the effect.
+  "enabled": true,
   "paper": "#f5f2e8",
   "grainScale": 0.23,
   "grainOpacity": 0.85,
@@ -55,7 +57,9 @@ vec2 coverUV(vec2 p) {
   float videoAspect = sourceSize.x / sourceSize.y;
   vec2 scale = vec2(min(viewAspect / videoAspect, 1.0),
     min(videoAspect / viewAspect, 1.0));
-  return (p - 0.5) * scale + 0.5;
+  // Match object-position: center top; the flipped video texture has its top at y=1.
+  vec2 anchor = vec2(0.5, 1.0);
+  return (p - anchor) * scale + anchor;
 }
 float separation(vec3 c, vec3 primary, vec3 secondary) {
   float base = min(c.r, min(c.g, c.b));

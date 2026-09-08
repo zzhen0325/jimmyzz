@@ -1355,8 +1355,8 @@ button {
 
 /* Editorial grid: shared gutters, quiet rules, and timeline registration marks. */
 .home-page {
-  --line: rgba(244, 242, 237, 0.22);
-  --grid-line: rgba(244, 242, 237, 0.25);
+  --line: rgba(244, 242, 237, 0.01);
+  --grid-line: rgba(244, 242, 237, 0.1);
 }
 .home-hero {
   position: relative;
@@ -1386,6 +1386,7 @@ button {
   max-width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center top;
 }
 .hero-grid {
   position: absolute;
@@ -1498,6 +1499,9 @@ button {
   white-space: nowrap;
   transform-origin: bottom left;
 }
+.scanner-type { position: relative; display: inline-block; }
+.scanner-type-filters { position: absolute; width: 0; height: 0; pointer-events: none; }
+.scanner-type-ink { display: inline-block; }
 .home-page .section-label {
   position: relative;
   display: grid;
@@ -1561,4 +1565,12 @@ button {
   .home-page .capability-list article > span { padding-top: 5px; }
   .home-page .about-layout { gap: 44px; }
   .home-page .footer-title { font-size: clamp(48px, 14vw, 80px); }
+}
+
+/* Shared GPU brush surface; image links retain their normal hit targets. */
+.motion-image { display: block; position: relative; overflow: hidden; width: 100%; }
+.motion-image > img { display: block; width: 100%; height: auto; }
+.pointer-smear-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .pointer-smear-canvas { display: none; }
 }

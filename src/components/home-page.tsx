@@ -11,6 +11,19 @@ import { ArrowUpRight } from "lucide-react";
 import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
+import { ScannerType } from "./scanner-type";
+
+const heroVideoSettings: {
+  controlMode: "scroll" | "mouse";
+  playbackSpeed: number;
+} = {
+  // scroll：滚动控制；mouse：鼠标左右控制（左侧首帧，右侧末帧）。
+  // 触屏设备在 mouse 模式下自动使用滚动控制。
+  controlMode: "mouse",
+  // 1 = 原速，0.5 = 半速，0.25 = 四分之一速度；必须大于 0。
+  // 滚动模式：越小，滚动距离越长。鼠标模式：越小，追随越缓慢。
+  playbackSpeed: 0.5,
+};
 
 function EditorCard() {
   return (
@@ -44,7 +57,7 @@ function Hero() {
       if (!video || !section || videoFailed) return;
       const mm = gsap.matchMedia();
       mm.add(
-        motionConditions,
+        { ...motionConditions, finePointer: "(hover: hover) and (pointer: fine)" },
         ({ conditions }) => {
           // Reduced-motion users see the opening frame and scroll normally.
           if (conditions?.reduced) {
@@ -54,7 +67,7 @@ function Hero() {
 
           const frameRate = 24;
           const holdFrames = 10;
-          const playbackScrollDistance = 240;
+          const playbackScrollDistance = 240 / Math.max(0.01, heroVideoSettings.playbackSpeed);
           const lastFrameIndex = () => Math.max(0, Math.round(video.duration * frameRate) - 1);
           const playhead = { progress: 0 };
           let pendingSeek = 0;
@@ -77,6 +90,28 @@ function Hero() {
           };
           video.addEventListener("loadeddata", scheduleSeek);
           video.addEventListener("seeked", scheduleSeek);
+          if (heroVideoSettings.controlMode === "mouse" && conditions?.finePointer) {
+            const follow = gsap.quickTo(playhead, "progress", {
+              duration: 0.18 / Math.max(0.01, heroVideoSettings.playbackSpeed),
+              ease: "power2.out",
+              onUpdate: scheduleSeek,
+            });
+            const onPointerMove = (event: PointerEvent) => {
+              if (event.pointerType === "touch") return;
+              const bounds = section.getBoundingClientRect();
+              follow(Math.max(0, Math.min(1, (event.clientX - bounds.left) / Math.max(1, bounds.width))));
+            };
+            section.addEventListener("pointermove", onPointerMove);
+            scheduleSeek();
+            return () => {
+              follow.tween.kill();
+              cancelAnimationFrame(pendingSeek);
+              video.pause();
+              section.removeEventListener("pointermove", onPointerMove);
+              video.removeEventListener("loadeddata", scheduleSeek);
+              video.removeEventListener("seeked", scheduleSeek);
+            };
+          }
           const pin = ScrollTrigger.create({
             id: "hero-video-pin",
             trigger: section,
@@ -128,7 +163,7 @@ function Hero() {
       <div className="hero-background">
         {/* <Image
             className="object-cover"
-            src="/assets/images/bg47.png"
+            src="/assets/images/bg52.png"
             fill
             priority
             sizes="100vw"
@@ -137,7 +172,7 @@ function Hero() {
         {videoFailed ? (
           <Image
             className="object-cover"
-            src="/assets/images/hero-glass-poster.jpg"
+            src="/assets/images/bg52.png"
             fill
             priority
             sizes="100vw"
@@ -147,8 +182,8 @@ function Hero() {
           <video
             ref={backgroundVideo}
             className="size-full object-cover"
-            src="/assets/videos/hero-cafe-scroll.mp4"
-            poster="/assets/images/hero-glass-poster.jpg"
+            src="/assets/videos/10.mp4"
+            poster="/assets/images/bg52.png"
             preload="auto"
             muted
             playsInline
@@ -188,7 +223,7 @@ function Hero() {
       </div>
       <Timeline className="hero-timeline" />
       <h1 className="hero-title tracking-tightest">
-        VibeMaking
+        <ScannerType enabled={false}>VibeMaking</ScannerType>
       </h1>
     </section>
   );
