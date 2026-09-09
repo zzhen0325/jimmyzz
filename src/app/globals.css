@@ -1366,7 +1366,7 @@ button {
   height: 100svh;
   min-height: 480px;
   overflow: hidden;
-  background: #06141b;
+  background: #000;
   isolation: isolate;
 }
 /* Keep intrinsic media dimensions and pinned inline sizes within the viewport. */
@@ -1377,10 +1377,18 @@ button {
   max-width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #000;
 }
-.hero-background > video,
-.hero-background > img,
-.hero-background > canvas {
+.hero-video-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+.hero-video-frame > video,
+.hero-video-frame > img,
+.hero-video-frame > canvas {
   display: block;
   width: 100%;
   max-width: 100%;

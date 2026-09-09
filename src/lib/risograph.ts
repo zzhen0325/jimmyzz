@@ -5,11 +5,14 @@ export const risographSettings = {
   "enabled": true,
   "paper": "#f5f2e8",
   "grainScale": 0.23,
-  "grainOpacity": 0.85,
+  "grainOpacity": 0.55,
   "grainSoftness": 0.5,
   "grainContrast": 1,
   "grainAnimationFps": 12,
   "grainAnimationStrength": 0.35,
+  "paperTextureStrength": 0.24,
+  "paperCreaseStrength": 0.16,
+  "paperChangeEveryFrames": 8,
   "coolColorRecovery": 0.38,
   "shadowDepth": 0.65,
   "shadowNeutrality": 1,
@@ -22,6 +25,20 @@ export const risographSettings = {
     { "color": "#ffae3b", "weights": [0.54, -2, 3, 3, 3, 1.87], "shift": [0.003, 0.001] }
   ]
 } as const;
+
+// Independent ink/paper treatment for the drifting rectangular windows.
+export const risographWindowSettings = {
+  paper: "#f2ddff",
+  grainScale: 0.42,
+  grainOpacity: 0.92,
+  grainSoftness: 0.18,
+  grainContrast: 1.3,
+  exposure: 0.18,
+  gamma: 1.85,
+  inks: ["#c05be8", "#36a68d", "#ff754c"],
+} as const;
+
+const risographWindowCount = 3;
 
 const vertexSource = `#version 300 es
 
@@ -43,6 +60,8 @@ uniform vec3 paper;
 uniform vec4 grain;
 uniform highp sampler2DArray animatedGrain;
 uniform vec2 grainAnimation;
+uniform vec2 paperTexture;
+uniform float paperFrame;
 uniform vec3 shadows;
 uniform float coolColorRecovery;
 uniform vec2 exposureGamma;
@@ -50,6 +69,12 @@ uniform vec3 inkColor[3];
 uniform vec3 primaryWeights[3];
 uniform vec3 secondaryWeights[3];
 uniform vec2 inkShift[3];
+uniform vec4 windows[${risographWindowCount}];
+uniform vec2 borderPixel;
+uniform vec3 windowPaper;
+uniform vec4 windowGrain;
+uniform vec2 windowExposureGamma;
+uniform vec3 windowInk[3];
 in vec2 uv;
 out vec4 outputColor;
 vec2 coverUV(vec2 p) {
@@ -68,11 +93,44 @@ float separation(vec3 c, vec3 primary, vec3 secondary) {
   float gray = base + dot(primaries, primary) + dot(secondaries, secondary);
   return 1.0 - clamp(gray, 0.0, 1.0);
 }
+// Paper relief in CSS pixels, held steady between paper animation steps.
+float paperRelief(vec2 p) {
+  float tooth = texture(grainPattern, p / 620.0 + vec2(0.31, 0.67)).r - 0.5;
+  float fibers = texture(grainPattern, p / vec2(1350.0, 105.0)).r - 0.5;
+  float mottling = texture(grainPattern, p / 2800.0 + vec2(0.57, 0.19)).r - 0.5;
+  return tooth * 0.45 + fibers * 0.8 + mottling * 0.65;
+}
+float paperCrease(vec2 p, vec2 direction, float offset) {
+  float along = dot(p, vec2(-direction.y, direction.x));
+  float d = dot(p, direction) - offset + sin(along * 0.012) * 1.8
+    + sin(along * 0.037) * 0.45;
+  // Uneven paired shadow/highlight gives a shallow fold with a worn edge.
+  float wear = 0.45 + 0.55 * texture(grainPattern, p / 410.0).r;
+  return (exp(-pow((d - 1.4) / 2.0, 2.0)) * 0.55
+    - exp(-pow(d / 1.2, 2.0)) * 0.7
+    - exp(-pow(d / 8.0, 2.0)) * 0.16) * wear;
+}
 void main() {
-  vec3 printColor = paper;
-  vec2 grainUV = uv * resolution / (grain.x * 1920.0);
+  bool inWindow = false;
+  float border = 0.0;
+  for (int i = 0; i < ${risographWindowCount}; i++) {
+    vec2 d = abs(uv - windows[i].xy) - windows[i].zw * 0.5;
+    if (max(d.x, d.y) <= 0.0) {
+      inWindow = true;
+      // Subpixel white rule, measured in CSS pixels at every render scale.
+      vec2 inside = -d / borderPixel;
+      border = max(border, 1.0 - smoothstep(0.35, 1.05, min(inside.x, inside.y)));
+    }
+  }
+  vec4 activeGrain = inWindow ? windowGrain : grain;
+  vec2 activeExposure = inWindow ? windowExposureGamma : exposureGamma;
+  vec3 printColor = inWindow ? windowPaper : paper;
+  vec2 grainUV = uv * resolution / (activeGrain.x * 1920.0);
   for (int i = 0; i < 3; i++) {
     vec3 source = texture(frame, coverUV(uv) - inkShift[i]).rgb;
+    // A negative separation turns the dark background into lilac paper and
+    // prints its lights in saturated ink, instead of a pale tint of the base.
+    if (inWindow) source = smoothstep(vec3(0.08), vec3(0.92), 1.0 - source);
     float density = separation(source, primaryWeights[i], secondaryWeights[i]);
     vec2 offset = vec2(float(i) * 0.173, float(i) * 0.317);
     // Keep the scanned paper fixed. Independent noise layers change the ink
@@ -80,21 +138,21 @@ void main() {
     float changingNoise = texture(animatedGrain, vec3(gl_FragCoord.xy / 256.0,
       mod(grainAnimation.x + float(i) * 5.0, 16.0))).r - 0.5;
     float speckle = clamp((texture(grainPattern, grainUV + offset).r - 0.5)
-      * grain.w + 0.5 + changingNoise * grainAnimation.y, 0.0, 1.0);
-    float softness = max(grain.z, 0.001);
+      * activeGrain.w + 0.5 + changingNoise * grainAnimation.y, 0.0, 1.0);
+    float softness = max(activeGrain.z, 0.001);
     float coverage = smoothstep(speckle - softness, speckle + softness, density);
-    coverage = mix(density, coverage, grain.y);
-    printColor *= mix(vec3(1.0), inkColor[i], coverage * 0.98);
+    coverage = mix(density, coverage, activeGrain.y);
+    printColor *= mix(vec3(1.0), (inWindow ? windowInk[i] : inkColor[i]), coverage * 0.98);
   }
-  float fiber = (texture(grainPattern, grainUV).r - 0.5) * grain.w;
-  printColor *= 1.0 + fiber * 0.3 * grain.y;
-  printColor = pow(max(printColor * exp2(exposureGamma.x), 0.0),
-    vec3(1.0 / exposureGamma.y));
+  float fiber = (texture(grainPattern, grainUV).r - 0.5) * activeGrain.w;
+  printColor *= 1.0 + fiber * 0.3 * activeGrain.y;
+  printColor = pow(max(printColor * exp2(activeExposure.x), 0.0),
+    vec3(1.0 / activeExposure.y));
   // Neutralize only the deepest overprint; keep the red/blue midtones intact.
   float luminance = dot(printColor, vec3(0.2126, 0.7152, 0.0722));
   float shadow = 1.0 - smoothstep(0.04, shadows.z, luminance);
-  printColor = mix(printColor, vec3(luminance), shadow * shadows.y);
-  printColor *= 1.0 - shadow * shadows.x;
+  printColor = mix(printColor, vec3(luminance), shadow * (inWindow ? 0.15 : shadows.y));
+  printColor *= 1.0 - shadow * (inWindow ? 0.08 : shadows.x);
   // Restore some original green/blue hue at the printed luminance so paper,
   // animated grain and shadow depth remain visible in those areas.
   vec3 original = texture(frame, coverUV(uv)).rgb;
@@ -102,7 +160,20 @@ void main() {
   float originalLuma = dot(original, vec3(0.2126, 0.7152, 0.0722));
   float printedLuma = dot(printColor, vec3(0.2126, 0.7152, 0.0722));
   vec3 recovered = clamp(original * printedLuma / max(originalLuma, 0.025), 0.0, 1.0);
-  printColor = mix(printColor, recovered, coolMask * coolColorRecovery);
+  printColor = mix(printColor, recovered, coolMask * (inWindow ? 0.08 : coolColorRecovery));
+  vec2 paperPixel = uv / borderPixel;
+  // Change the sheet only every eight grain frames; share its phase across windows.
+  vec2 paperOffset = fract(sin(vec2(paperFrame + 1.0, paperFrame + 7.0)
+    * vec2(127.1, 311.7)) * 43758.5453);
+  paperPixel += (paperOffset - 0.5) * vec2(420.0, 260.0);
+  float relief = paperRelief(paperPixel);
+  float creases = paperCrease(paperPixel, normalize(vec2(1.0, 0.16)), 286.0)
+    + paperCrease(paperPixel, normalize(vec2(-0.09, 1.0)), 394.0);
+  float paperMark = relief * paperTexture.x + creases * paperTexture.y;
+  // A little exposed paper keeps fibers visible in ink without washing out blacks.
+  printColor *= 1.0 + paperMark;
+  printColor += paper * max(paperMark, 0.0) * 0.12;
+  printColor = mix(printColor, vec3(1.0), border * 0.8);
   outputColor = vec4(clamp(printColor, 0.0, 1.0), 1.0);
 }`;
 
@@ -170,6 +241,24 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   const uniform = (name: string) => gl.getUniformLocation(program, name);
   const settings = risographSettings;
+  const windowSettings = risographWindowSettings;
+  gl.uniform3fv(uniform("windowPaper"), linearRgb(windowSettings.paper));
+  gl.uniform4f(uniform("windowGrain"), windowSettings.grainScale, windowSettings.grainOpacity, windowSettings.grainSoftness, windowSettings.grainContrast);
+  gl.uniform2f(uniform("windowExposureGamma"), windowSettings.exposure, windowSettings.gamma);
+  windowSettings.inks.forEach((ink, index) => gl.uniform3fv(uniform(`windowInk[${index}]`), linearRgb(ink)));
+  const windowUniform = uniform("windows[0]");
+  const borderPixel = uniform("borderPixel");
+  const windowPositions = new Float32Array(risographWindowCount * 4);
+  const windowLayout = [
+    [0.22, 0.46, 0.09, 0.095],
+    [0.51, 0.72, 0.028, 0.12],
+    [0.79, 0.43, 0.038, 0.065],
+  ];
+  // Random phases/speeds per mount; continuous translation without jumping cuts.
+  const drift = windowLayout.map(() => [Math.random() * Math.PI * 2, 0.12 + Math.random() * 0.08]);
+  let motionTime = 0;
+  let draggedWindow = -1;
+  const clampCenter = (value: number, size: number) => Math.max(size / 2 + 0.025, Math.min(1 - size / 2 - 0.025, value));
   gl.uniform1i(uniform("frame"), 0);
   gl.uniform1i(uniform("grainPattern"), 1);
   gl.uniform3fv(uniform("paper"), linearRgb(settings.paper));
@@ -177,7 +266,10 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   gl.uniform2f(uniform("exposureGamma"), settings.exposure, settings.gamma);
   gl.uniform3f(uniform("shadows"), settings.shadowDepth, settings.shadowNeutrality, settings.shadowThreshold);
   gl.uniform1f(uniform("coolColorRecovery"), settings.coolColorRecovery);
+  gl.uniform2f(uniform("paperTexture"), settings.paperTextureStrength, settings.paperCreaseStrength);
   const grainAnimation = uniform("grainAnimation");
+  const paperFrame = uniform("paperFrame");
+  gl.uniform1f(paperFrame, 0);
   gl.uniform2f(grainAnimation, 0, settings.grainAnimationStrength);
   gl.uniform1i(uniform("animatedGrain"), 2);
   // Allocate independent noise frames once (1 MiB). Animation only switches a
@@ -229,10 +321,28 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   let lastSource = "";
   return {
     ready,
+    getWindowPositions() { return windowPositions; },
+    beginDrag(index: number) { draggedWindow = index; },
+    dragTo(x: number, y: number) {
+      if (draggedWindow < 0) return;
+      const offset = draggedWindow * 4;
+      windowPositions[offset] = clampCenter(x, windowPositions[offset + 2]);
+      windowPositions[offset + 1] = clampCenter(y, windowPositions[offset + 3]);
+    },
+    endDrag() {
+      if (draggedWindow < 0) return;
+      const [phase, speed] = drift[draggedWindow];
+      // Rebase the drift orbit at the release point, with no snap back.
+      windowLayout[draggedWindow][0] = windowPositions[draggedWindow * 4] - Math.sin(motionTime * speed + phase) * 0.075;
+      windowLayout[draggedWindow][1] = windowPositions[draggedWindow * 4 + 1] - Math.sin(motionTime * speed * 0.73 + phase * 1.7) * 0.09;
+      draggedWindow = -1;
+    },
     setGrainFrame(frame: number) {
       if (disposed || gl.isContextLost()) return;
       gl.uniform2f(grainAnimation, frame % 16, settings.grainAnimationStrength);
+      gl.uniform1f(paperFrame, Math.floor(frame / settings.paperChangeEveryFrames) % 256);
     },
+    setMotionTime(time: number) { motionTime = time; },
     resize() { sizeDirty = true; },
     draw(video: HTMLVideoElement, forceUpload = false) {
       if (disposed || !grainReady || gl.isContextLost() || video.readyState < 2 || !video.videoWidth) return false;
@@ -247,6 +357,7 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         }
         gl.viewport(0, 0, width, height);
         gl.uniform2f(resolution, width, height);
+        gl.uniform2f(borderPixel, 1 / Math.max(bounds.width, 1), 1 / Math.max(bounds.height, 1));
         sizeDirty = false;
       }
       // currentTime changes before decoding completes. Keep the last uploaded
@@ -259,6 +370,16 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         lastTime = video.currentTime;
         lastSource = video.currentSrc;
       }
+      windowLayout.forEach(([x, y, width, height], index) => {
+        if (index === draggedWindow) return;
+        const [phase, speed] = drift[index];
+        windowPositions.set([
+          clampCenter(x + Math.sin(motionTime * speed + phase) * 0.075, width),
+          clampCenter(y + Math.sin(motionTime * speed * 0.73 + phase * 1.7) * 0.09, height),
+          width, height,
+        ], index * 4);
+      });
+      gl.uniform4fv(windowUniform, windowPositions);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
     },

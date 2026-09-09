@@ -12,6 +12,7 @@ import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
 import { ScannerType } from "./scanner-type";
+import { HeroStoneReveal } from "./hero-stone-reveal";
 
 const heroVideoSettings: {
   controlMode: "scroll" | "mouse";
@@ -19,7 +20,7 @@ const heroVideoSettings: {
 } = {
   // scroll：滚动控制；mouse：鼠标左右控制（左侧首帧，右侧末帧）。
   // 触屏设备在 mouse 模式下自动使用滚动控制。
-  controlMode: "mouse",
+  controlMode: "scroll",
   // 1 = 原速，0.5 = 半速，0.25 = 四分之一速度；必须大于 0。
   // 滚动模式：越小，滚动距离越长。鼠标模式：越小，追随越缓慢。
   playbackSpeed: 0.5,
@@ -163,12 +164,13 @@ function Hero() {
       <div className="hero-background">
         {/* <Image
             className="object-cover"
-            src="/assets/images/bg52.png"
+            src="/assets/images/bg53.png"
             fill
             priority
             sizes="100vw"
             alt="长虹玻璃光影"
           /> */}
+        <div className="hero-video-frame">
         {videoFailed ? (
           <Image
             className="object-cover"
@@ -179,20 +181,24 @@ function Hero() {
             alt="长虹玻璃光影"
           />
         ) : (
-          <video
-            ref={backgroundVideo}
-            className="size-full object-cover"
-            src="/assets/videos/10.mp4"
-            poster="/assets/images/bg52.png"
-            preload="auto"
-            muted
-            playsInline
-            disablePictureInPicture
-            aria-hidden="true"
-            onError={() => setVideoFailed(true)}
-          />
+          <>
+            <video
+              ref={backgroundVideo}
+              className="size-full object-cover"
+              src="/assets/videos/11.mp4"
+              poster="/assets/images/bg52.png"
+              preload="auto"
+              muted
+              playsInline
+              disablePictureInPicture
+              aria-hidden="true"
+              onError={() => setVideoFailed(true)}
+            />
+            <RisographVideo videoRef={backgroundVideo} />
+            <HeroStoneReveal videoRef={backgroundVideo} />
+          </>
         )}
-        {!videoFailed && <RisographVideo videoRef={backgroundVideo} />}
+        </div>
       </div>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.28),transparent_45%,rgba(0,0,0,.22))] max-[809px]:bg-[linear-gradient(180deg,rgba(0,0,0,.25),transparent_50%,rgba(0,0,0,.34))]" />
       <div className="hero-grid" aria-hidden="true">
@@ -267,7 +273,7 @@ function About() {
       <SectionLabel index="04" title="ABOUT / 关于我" time="HELLO, I'M ZZ" />
       <div className="about-layout">
         <div>
-          <p className="eyebrow">张振 / VISUAL DESIGNER</p>
+          <p className="eyebrow">ZZ / VISUAL DESIGNER</p>
           <h2>
             保持好奇，
             <br />
