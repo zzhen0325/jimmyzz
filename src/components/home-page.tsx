@@ -23,7 +23,14 @@ const heroVideoSettings: {
   controlMode: "scroll",
   // 1 = 原速，0.5 = 半速，0.25 = 四分之一速度；必须大于 0。
   // 滚动模式：越小，滚动距离越长。鼠标模式：越小，追随越缓慢。
-  playbackSpeed: 0.5,
+  playbackSpeed: 0.25,
+};
+
+// Exit motion starts when the final-frame hold releases the hero.
+const heroExitSettings = {
+  scale: 0.76,
+  subjectRise: 0.18, // Fraction of the hero height, in addition to page scrolling.
+  scrollDistance: 0.85,
 };
 
 function EditorCard() {
@@ -135,6 +142,34 @@ function Hero() {
               invalidateOnRefresh: true,
             },
           });
+          const exit = gsap.timeline({
+            defaults: { duration: 1, ease: "none" },
+            scrollTrigger: {
+              id: "hero-exit",
+              trigger: section,
+              start: () => pin.end,
+              end: () => pin.end + section.offsetHeight * heroExitSettings.scrollDistance,
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          });
+          exit.fromTo(".hero-video-frame", { scale: 1, y: 0 }, {
+            scale: heroExitSettings.scale,
+            y: () => -section.offsetHeight * heroExitSettings.subjectRise,
+            transformOrigin: "50% 43%",
+          }, 0);
+          // CSS adds entrance and exit offsets without competing transform owners.
+          for (const [selector, rise] of [
+            [".hero-title", 0.08],
+            [".hero-services", 0.04],
+            [".hero-profile", 0.11],
+            [".hero-record, .hero-timeline", 0.06],
+            [".hero-grid", 0.025],
+          ] as const) {
+            exit.fromTo(selector, { "--hero-exit-y": "0px" }, {
+              "--hero-exit-y": () => `${-section.offsetHeight * rise}px`,
+            }, 0);
+          }
           const onMetadata = () => {
             ScrollTrigger.refresh();
             scheduleSeek();
@@ -185,7 +220,7 @@ function Hero() {
             <video
               ref={backgroundVideo}
               className="size-full object-cover"
-              src="/assets/videos/11.mp4"
+              src="/assets/videos/13.mp4"
               poster="/assets/images/bg52.png"
               preload="auto"
               muted

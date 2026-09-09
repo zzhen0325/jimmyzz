@@ -31,7 +31,7 @@ export function HeroStoneReveal({ videoRef }: { videoRef: RefObject<HTMLVideoEle
     const atEnd = () => Number.isFinite(video.duration) && video.readyState >= 2 &&
       !video.seeking && video.currentTime >= video.duration - 1 / 24 - 0.005;
     const boxes = () => {
-      const bounds = canvas.getBoundingClientRect();
+      const bounds = { width: canvas.clientWidth, height: canvas.clientHeight };
       const scale = Math.max(bounds.width / (video.videoWidth || 1920), bounds.height / (video.videoHeight || 1080));
       const width = (video.videoWidth || 1920) * scale;
       const height = (video.videoHeight || 1080) * scale;
@@ -42,8 +42,9 @@ export function HeroStoneReveal({ videoRef }: { videoRef: RefObject<HTMLVideoEle
       hovered = -1;
       if (!pointer || !atEnd()) return;
       const bounds = canvas.getBoundingClientRect();
-      const x = pointer.x - bounds.left;
-      const y = pointer.y - bounds.top;
+      if (!bounds.width || !bounds.height) return;
+      const x = (pointer.x - bounds.left) * canvas.clientWidth / bounds.width;
+      const y = (pointer.y - bounds.top) * canvas.clientHeight / bounds.height;
       hovered = boxes().findIndex(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
     };
     const draw = (now: number) => {
@@ -51,7 +52,7 @@ export function HeroStoneReveal({ videoRef }: { videoRef: RefObject<HTMLVideoEle
       const dt = previous ? Math.min(now - previous, 50) : 16;
       previous = now;
       detect();
-      const bounds = canvas.getBoundingClientRect();
+      const bounds = { width: canvas.clientWidth, height: canvas.clientHeight };
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.round(bounds.width * dpr), height = Math.round(bounds.height * dpr);
       if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }

@@ -14,14 +14,14 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       if (conditions?.reduced || !scope.current) return;
 
       gsap.fromTo(".hero-title", {
-        opacity: 0, y: 32, filter: "blur(12px)",
+        opacity: 0, "--hero-entry-y": "32px", filter: "blur(12px)",
       }, {
-        opacity: 1, y: 0, filter: "blur(0px)", duration: 1.3,
-        ease: "power3.out", clearProps: "opacity,transform,filter",
+        opacity: 1, "--hero-entry-y": "0px", filter: "blur(0px)", duration: 1.3,
+        ease: "power3.out", clearProps: "opacity,--hero-entry-y,filter",
       });
       gsap.from(".hero-services, .hero-profile, .hero-record", {
-        opacity: 0, y: 12, duration: 0.9, stagger: 0.12,
-        delay: 0.2, ease: "power3.out", clearProps: "opacity,transform",
+        opacity: 0, "--hero-entry-y": "12px", duration: 0.9, stagger: 0.12,
+        delay: 0.2, ease: "power3.out", clearProps: "opacity,--hero-entry-y",
       });
 
       const headings = scope.current.querySelectorAll(

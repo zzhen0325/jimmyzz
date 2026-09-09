@@ -1396,6 +1396,10 @@ button {
   object-fit: cover;
   object-position: center top;
 }
+.home-hero :is(.hero-title, .hero-services, .hero-profile, .hero-record, .hero-timeline, .hero-grid) {
+  --hero-entry-y: 0px;
+  translate: 0 calc(var(--hero-entry-y) + var(--hero-exit-y, 0px));
+}
 .hero-grid {
   position: absolute;
   inset: 104px var(--page-pad) 24px;
@@ -1500,7 +1504,7 @@ button {
   inset: auto 2.5vw 36px;
   z-index: 3;
   margin: 0;
-  font-size: 16.8vw;
+  font-size: 10vw;
   line-height: 0.78;
   font-weight: 480;
   letter-spacing: -0.045em;
