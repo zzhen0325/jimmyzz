@@ -12,7 +12,6 @@ import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
 import { ScannerType } from "./scanner-type";
-import { HeroStoneReveal } from "./hero-stone-reveal";
 
 const heroVideoSettings: {
   controlMode: "scroll" | "mouse";
@@ -26,9 +25,11 @@ const heroVideoSettings: {
   playbackSpeed: 0.25,
 };
 
-// Exit motion starts when the final-frame hold releases the hero.
+// Scale during playback; continue rising after the final-frame hold releases the hero.
 const heroExitSettings = {
-  scale: 0.76,
+  aspectRatio: 16 / 9,
+  playbackScale: 0.65,
+  scale: 0.5,
   subjectRise: 0.18, // Fraction of the hero height, in addition to page scrolling.
   scrollDistance: 0.85,
 };
@@ -57,6 +58,7 @@ function Hero() {
   const hero = useRef<HTMLElement>(null);
   const backgroundVideo = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   useGSAP(
     () => {
@@ -129,10 +131,8 @@ function Hero() {
             pin: true,
             anticipatePin: 1,
           });
-          gsap.to(playhead, {
-            progress: 1,
-            ease: "none",
-            onUpdate: scheduleSeek,
+          const playback = gsap.timeline({
+            defaults: { duration: 1, ease: "none" },
             scrollTrigger: {
               id: "hero-video",
               trigger: section,
@@ -142,6 +142,23 @@ function Hero() {
               invalidateOnRefresh: true,
             },
           });
+          playback.to(playhead, {
+            progress: 1,
+            onUpdate: scheduleSeek,
+          }, 0);
+          playback.fromTo(".hero-video-frame", { scale: 1 }, {
+            scale: heroExitSettings.playbackScale,
+            transformOrigin: "50% 43%",
+          }, 0);
+          playback.fromTo(".hero-video-frame", {
+            width: "100%", height: "100%", left: 0, top: 0, "--hero-fit-progress": 0,
+          }, {
+            width: () => Math.min(section.clientWidth, section.clientHeight * heroExitSettings.aspectRatio),
+            height: () => Math.min(section.clientWidth / heroExitSettings.aspectRatio, section.clientHeight),
+            left: () => (section.clientWidth - Math.min(section.clientWidth, section.clientHeight * heroExitSettings.aspectRatio)) / 2,
+            top: () => (section.clientHeight - Math.min(section.clientWidth / heroExitSettings.aspectRatio, section.clientHeight)) / 2,
+            "--hero-fit-progress": 1,
+          }, 0);
           const exit = gsap.timeline({
             defaults: { duration: 1, ease: "none" },
             scrollTrigger: {
@@ -153,8 +170,9 @@ function Hero() {
               invalidateOnRefresh: true,
             },
           });
-          exit.fromTo(".hero-video-frame", { scale: 1, y: 0 }, {
+          exit.fromTo(".hero-video-frame", { y: 0, scale: heroExitSettings.playbackScale }, {
             scale: heroExitSettings.scale,
+            immediateRender: false,
             y: () => -section.offsetHeight * heroExitSettings.subjectRise,
             transformOrigin: "50% 43%",
           }, 0);
@@ -196,7 +214,7 @@ function Hero() {
       ref={hero}
       className="home-hero"
     >
-      <div className="hero-background">
+      <div className="hero-background" data-ready={videoReady || videoFailed}>
         {/* <Image
             className="object-cover"
             src="/assets/images/bg53.png"
@@ -220,17 +238,17 @@ function Hero() {
             <video
               ref={backgroundVideo}
               className="size-full object-cover"
-              src="/assets/videos/13.mp4"
+              src="/assets/videos/11.mp4"
               poster="/assets/images/bg52.png"
               preload="auto"
               muted
               playsInline
               disablePictureInPicture
               aria-hidden="true"
+              onLoadedData={() => setVideoReady(true)}
               onError={() => setVideoFailed(true)}
             />
             <RisographVideo videoRef={backgroundVideo} />
-            <HeroStoneReveal videoRef={backgroundVideo} />
           </>
         )}
         </div>
@@ -264,7 +282,7 @@ function Hero() {
       </div>
       <Timeline className="hero-timeline" />
       <h1 className="hero-title tracking-tightest">
-        <ScannerType enabled={false}>VibeMaking</ScannerType>
+        <ScannerType enabled={false}>Jimmy</ScannerType>
       </h1>
     </section>
   );

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
-import { createRisographRenderer, risographSettings } from "@/lib/risograph";
+import { createLatticeCollage } from "@/lib/lattice-collage";
+import { heroVideoRect } from "@/lib/hero-video-geometry";
+import { collagePanels, createRisographRenderer, risographSettings } from "@/lib/risograph";
 
 export function RisographVideo({
   videoRef,
@@ -20,8 +22,10 @@ export function RisographVideo({
     const labels = labelsRef.current;
     if (!video || !canvas || !labels) return;
     const labelContext = labels.getContext("2d");
+    const collage = labelContext ? createLatticeCollage(labelContext) : null;
     let labelWidth = canvas.clientWidth;
     let labelHeight = canvas.clientHeight;
+    let fitProgress = 0;
     const drawLabels = () => {
       if (!labelContext || !renderer || !labelWidth || !labelHeight) return;
       if (labels.width !== canvas.width || labels.height !== canvas.height) {
@@ -33,6 +37,7 @@ export function RisographVideo({
       labelContext.font = `${labelWidth < 600 ? 7 : 8}px monospace`;
       labelContext.textBaseline = "top";
       const positions = renderer.getWindowPositions();
+      collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress);
       const caption = (text: string, x: number, y: number, right = false) => {
         const width = labelContext.measureText(text).width;
         const left = right ? x - width : x;
@@ -43,23 +48,24 @@ export function RisographVideo({
       };
       for (let i = 0; i < positions.length / 4; i++) {
         const [cx, cy, width, height] = positions.subarray(i * 4, i * 4 + 4);
+        if (width * labelWidth < 8 || height * labelHeight < 8) continue;
         // Convert bottom-origin shader coordinates to top-origin display coordinates.
         const left = cx - width / 2;
         const top = 1 - cy - height / 2;
-        caption(`S0${i + 1}`, left * labelWidth, top * labelHeight - 14);
+        caption(labelWidth < 600 ? `S0${i + 1}` : collagePanels[i].label,
+          left * labelWidth, top * labelHeight - 14);
         [[left, top], [left + width, top], [left + width, top + height], [left, top + height]].forEach(([x, y], corner) => {
           const px = x * labelWidth;
           const py = y * labelHeight;
           const right = corner === 1 || corner === 2;
-          labelContext.fillStyle = "rgba(255,255,255,0.95)";
+          labelContext.fillStyle = collagePanels[i].color;
           labelContext.fillRect(px - 1.5, py - 1.5, 3, 3);
           if (width * labelWidth < 145 && (corner === 1 || corner === 3)) return;
           const availableWidth = width * labelWidth - 10;
           const availableHeight = height * labelHeight - 10;
           const fits = (text: string) => labelContext.measureText(text).width + 4 <= availableWidth;
-          const full = `C${corner + 1} ${(x * 100).toFixed(1)},${(y * 100).toFixed(1)}`;
           const compact = `${Math.round(x * 100)},${Math.round(y * 100)}`;
-          const lines = i !== 0 && fits(full) ? [full] : fits(compact) ? [compact] : [
+          const lines = fits(compact) ? [compact] : [
             `${Math.round(x * 100)}`,
             `${Math.round(y * 100)}`,
           ];
@@ -89,7 +95,13 @@ export function RisographVideo({
       const now = performance.now();
       if (!reducedMotion.matches && lastDrawTime) motionTime += Math.min((now - lastDrawTime) / 1000, 0.1);
       lastDrawTime = now;
-      renderer?.setMotionTime(motionTime);
+      fitProgress = Number(getComputedStyle(canvas.parentElement!).getPropertyValue("--hero-fit-progress")) || 0;
+      renderer?.setFitProgress(fitProgress);
+      if (video.videoWidth && video.videoHeight) {
+        const rect = heroVideoRect(canvas.clientWidth, canvas.clientHeight, video.videoWidth, video.videoHeight, fitProgress);
+        Object.assign(video.style, { position: "absolute", maxWidth: "none", width: `${rect.w}px`, height: `${rect.h}px`, left: `${rect.x}px`, top: `${rect.y}px` });
+      }
+      renderer?.setMotionTime(motionTime, reducedMotion.matches);
       renderer?.setGrainFrame(Math.floor(motionTime * risographSettings.grainAnimationFps));
       try {
         if (renderer?.draw(video, newFrame)) {
@@ -120,7 +132,7 @@ export function RisographVideo({
       if (event.pointerType !== "mouse" || canvas.style.opacity !== "1" ||
           (event.target instanceof Element && event.target.closest("a, button, input, textarea, select"))) return -1;
       const positions = renderer?.getWindowPositions();
-      if (!positions) return -1;
+      if (!positions || !renderer?.canDrag()) return -1;
       const [x, y] = point(event);
       for (let i = positions.length / 4 - 1; i >= 0; i--) {
         if (Math.abs(x - positions[i * 4]) <= positions[i * 4 + 2] / 2 &&
@@ -233,6 +245,7 @@ export function RisographVideo({
       // Invalidate old resources while lost; their handles cannot be deleted
       // against the restored context, which would raise INVALID_OPERATION.
       renderer?.dispose();
+      for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
       renderer = null;
     };
     const restored = () => {
@@ -277,6 +290,7 @@ export function RisographVideo({
       document.removeEventListener("visibilitychange", resume);
       reducedMotion.removeEventListener("change", onMotionChange);
       renderer?.dispose();
+      for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
     };
   }, [videoRef, enabled]);
 

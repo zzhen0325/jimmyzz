@@ -1,3 +1,6 @@
+import { createHeroSubjectTracker } from "./hero-subject-tracker";
+import { heroVideoRect } from "./hero-video-geometry";
+
 // Reconstructed from the visible Effect.app Risograph + Exposure controls.
 // Grain and ink blending approximate the reference preview.
 export const risographSettings = {
@@ -38,7 +41,20 @@ export const risographWindowSettings = {
   inks: ["#c05be8", "#36a68d", "#ff754c"],
 } as const;
 
-const risographWindowCount = 3;
+// Five evenly spaced panels on one upper-left to lower-right diagonal.
+// Coordinates use the shader's bottom-left origin; effects follow this order.
+export const collagePanels = [
+  { label: "S01 / PASTEL", color: "#a6b8ff", bounds: [0.24, 0.80, 0.0775, 0.10] },
+  { label: "S02 / RISO", color: "#f4bcac", bounds: [0.37, 0.65, 0.0775, 0.10] },
+  { label: "S03 / ORIGINAL", color: "#ade4d0", bounds: [0.50, 0.50, 0.0775, 0.10] },
+  { label: "S04 / DUOTONE GRID", color: "#ff8e30", bounds: [0.63, 0.35, 0.0775, 0.10] },
+  { label: "S05 / SOFT PASTEL", color: "#ffd4e8", bounds: [0.76, 0.20, 0.0775, 0.10] },
+] as const;
+const risographWindowCount = collagePanels.length;
+const driftAmplitude = [0.0045, 0.00625] as const;
+// Source-space monitor centre in the opening frame of the current hero clip.
+// Follow its displacement so the authored layout matches the reference at rest.
+const subjectRestPosition = { x: 0.531, y: 0.428 };
 
 const vertexSource = `#version 300 es
 
@@ -56,6 +72,7 @@ uniform sampler2D frame;
 uniform sampler2D grainPattern;
 uniform vec2 resolution;
 uniform vec2 sourceSize;
+uniform vec4 videoRect;
 uniform vec3 paper;
 uniform vec4 grain;
 uniform highp sampler2DArray animatedGrain;
@@ -69,8 +86,8 @@ uniform vec3 inkColor[3];
 uniform vec3 primaryWeights[3];
 uniform vec3 secondaryWeights[3];
 uniform vec2 inkShift[3];
-uniform vec4 windows[${risographWindowCount}];
 uniform vec2 borderPixel;
+uniform vec4 risoWindow;
 uniform vec3 windowPaper;
 uniform vec4 windowGrain;
 uniform vec2 windowExposureGamma;
@@ -78,13 +95,7 @@ uniform vec3 windowInk[3];
 in vec2 uv;
 out vec4 outputColor;
 vec2 coverUV(vec2 p) {
-  float viewAspect = resolution.x / resolution.y;
-  float videoAspect = sourceSize.x / sourceSize.y;
-  vec2 scale = vec2(min(viewAspect / videoAspect, 1.0),
-    min(videoAspect / viewAspect, 1.0));
-  // Match object-position: center top; the flipped video texture has its top at y=1.
-  vec2 anchor = vec2(0.5, 1.0);
-  return (p - anchor) * scale + anchor;
+  return (p - videoRect.xy) / videoRect.zw;
 }
 float separation(vec3 c, vec3 primary, vec3 secondary) {
   float base = min(c.r, min(c.g, c.b));
@@ -111,25 +122,19 @@ float paperCrease(vec2 p, vec2 direction, float offset) {
     - exp(-pow(d / 8.0, 2.0)) * 0.16) * wear;
 }
 void main() {
-  bool inWindow = false;
-  float border = 0.0;
-  for (int i = 0; i < ${risographWindowCount}; i++) {
-    vec2 d = abs(uv - windows[i].xy) - windows[i].zw * 0.5;
-    if (max(d.x, d.y) <= 0.0) {
-      inWindow = true;
-      // Subpixel white rule, measured in CSS pixels at every render scale.
-      vec2 inside = -d / borderPixel;
-      border = max(border, 1.0 - smoothstep(0.35, 1.05, min(inside.x, inside.y)));
-    }
+  vec2 sourceUV = coverUV(uv);
+  if (min(sourceUV.x, sourceUV.y) < 0.0 || max(sourceUV.x, sourceUV.y) > 1.0) {
+    outputColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
   }
+  vec2 windowDistance = abs(uv - risoWindow.xy) - risoWindow.zw * 0.5;
+  bool inWindow = max(windowDistance.x, windowDistance.y) <= 0.0;
   vec4 activeGrain = inWindow ? windowGrain : grain;
   vec2 activeExposure = inWindow ? windowExposureGamma : exposureGamma;
   vec3 printColor = inWindow ? windowPaper : paper;
   vec2 grainUV = uv * resolution / (activeGrain.x * 1920.0);
   for (int i = 0; i < 3; i++) {
     vec3 source = texture(frame, coverUV(uv) - inkShift[i]).rgb;
-    // A negative separation turns the dark background into lilac paper and
-    // prints its lights in saturated ink, instead of a pale tint of the base.
     if (inWindow) source = smoothstep(vec3(0.08), vec3(0.92), 1.0 - source);
     float density = separation(source, primaryWeights[i], secondaryWeights[i]);
     vec2 offset = vec2(float(i) * 0.173, float(i) * 0.317);
@@ -173,7 +178,6 @@ void main() {
   // A little exposed paper keeps fibers visible in ink without washing out blacks.
   printColor *= 1.0 + paperMark;
   printColor += paper * max(paperMark, 0.0) * 0.12;
-  printColor = mix(printColor, vec3(1.0), border * 0.8);
   outputColor = vec4(clamp(printColor, 0.0, 1.0), 1.0);
 }`;
 
@@ -242,23 +246,31 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   const uniform = (name: string) => gl.getUniformLocation(program, name);
   const settings = risographSettings;
   const windowSettings = risographWindowSettings;
+  const risoWindow = uniform("risoWindow");
   gl.uniform3fv(uniform("windowPaper"), linearRgb(windowSettings.paper));
   gl.uniform4f(uniform("windowGrain"), windowSettings.grainScale, windowSettings.grainOpacity, windowSettings.grainSoftness, windowSettings.grainContrast);
   gl.uniform2f(uniform("windowExposureGamma"), windowSettings.exposure, windowSettings.gamma);
   windowSettings.inks.forEach((ink, index) => gl.uniform3fv(uniform(`windowInk[${index}]`), linearRgb(ink)));
-  const windowUniform = uniform("windows[0]");
   const borderPixel = uniform("borderPixel");
   const windowPositions = new Float32Array(risographWindowCount * 4);
-  const windowLayout = [
-    [0.22, 0.46, 0.09, 0.095],
-    [0.51, 0.72, 0.028, 0.12],
-    [0.79, 0.43, 0.038, 0.065],
-  ];
-  // Random phases/speeds per mount; continuous translation without jumping cuts.
-  const drift = windowLayout.map(() => [Math.random() * Math.PI * 2, 0.12 + Math.random() * 0.08]);
+  const windowLayout: number[][] = collagePanels.map(panel => [...panel.bounds]);
+  // Bounded drift keeps the authored panels separated throughout their orbits.
+  const drift = windowLayout.map(() => [0, 0.36]);
   let motionTime = 0;
+  let fitProgress = 0;
+  let reducedMotion = false;
+  let entranceStart: number | null = null;
+  let entranceComplete = false;
+  const easeOut = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
   let draggedWindow = -1;
-  const clampCenter = (value: number, size: number) => Math.max(size / 2 + 0.025, Math.min(1 - size / 2 - 0.025, value));
+  const tracker = createHeroSubjectTracker();
+  let subject: { x: number; y: number } | null = null;
+  const follow = { x: 0, y: 0 };
+  let previousMotionTime = 0;
+  let followReady = false;
+  let imageBounds = { left: 0, right: 1, bottom: 0, top: 1 };
+  const projection = { x: 0, y: 0, width: 1, height: 1 };
+  const clampCenter = (value: number, size: number, lo = 0, hi = 1) => Math.max(lo + size / 2 + 0.025, Math.min(hi - size / 2 - 0.025, value));
   gl.uniform1i(uniform("frame"), 0);
   gl.uniform1i(uniform("grainPattern"), 1);
   gl.uniform3fv(uniform("paper"), linearRgb(settings.paper));
@@ -300,6 +312,7 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   });
   const resolution = uniform("resolution");
   const sourceSize = uniform("sourceSize");
+  const videoRectUniform = uniform("videoRect");
   let grainReady = false;
   const ready = loadGrainImage().then((image) => {
     if (disposed || gl.isContextLost()) return;
@@ -322,19 +335,19 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   return {
     ready,
     getWindowPositions() { return windowPositions; },
-    beginDrag(index: number) { draggedWindow = index; },
+    canDrag() { return entranceComplete; },
+    beginDrag(index: number) { if (entranceComplete) draggedWindow = index; },
     dragTo(x: number, y: number) {
       if (draggedWindow < 0) return;
       const offset = draggedWindow * 4;
-      windowPositions[offset] = clampCenter(x, windowPositions[offset + 2]);
-      windowPositions[offset + 1] = clampCenter(y, windowPositions[offset + 3]);
+      windowPositions[offset] = clampCenter(x, windowPositions[offset + 2], imageBounds.left, imageBounds.right);
+      windowPositions[offset + 1] = clampCenter(y, windowPositions[offset + 3], imageBounds.bottom, imageBounds.top);
     },
     endDrag() {
       if (draggedWindow < 0) return;
-      const [phase, speed] = drift[draggedWindow];
       // Rebase the drift orbit at the release point, with no snap back.
-      windowLayout[draggedWindow][0] = windowPositions[draggedWindow * 4] - Math.sin(motionTime * speed + phase) * 0.075;
-      windowLayout[draggedWindow][1] = windowPositions[draggedWindow * 4 + 1] - Math.sin(motionTime * speed * 0.73 + phase * 1.7) * 0.09;
+      windowLayout[draggedWindow][0] = (windowPositions[draggedWindow * 4] - projection.x) / projection.width;
+      windowLayout[draggedWindow][1] = (windowPositions[draggedWindow * 4 + 1] - projection.y) / projection.height;
       draggedWindow = -1;
     },
     setGrainFrame(frame: number) {
@@ -342,7 +355,8 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
       gl.uniform2f(grainAnimation, frame % 16, settings.grainAnimationStrength);
       gl.uniform1f(paperFrame, Math.floor(frame / settings.paperChangeEveryFrames) % 256);
     },
-    setMotionTime(time: number) { motionTime = time; },
+    setMotionTime(time: number, reduced = false) { motionTime = time; reducedMotion = reduced; },
+    setFitProgress(progress: number) { fitProgress = progress; },
     resize() { sizeDirty = true; },
     draw(video: HTMLVideoElement, forceUpload = false) {
       if (disposed || !grainReady || gl.isContextLost() || video.readyState < 2 || !video.videoWidth) return false;
@@ -367,19 +381,93 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         gl.uniform2f(sourceSize, video.videoWidth, video.videoHeight);
         // RGBA follows the browser's native video upload path; only upload new frames.
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+        if (lastSource !== video.currentSrc) { subject = null; followReady = false; }
+        // Detect only when a new decoded video frame is uploaded, not on grain ticks.
+        subject = tracker.sample(video) ?? subject;
         lastTime = video.currentTime;
         lastSource = video.currentSrc;
       }
+      const videoRect = heroVideoRect(canvas.width, canvas.height, video.videoWidth, video.videoHeight, fitProgress);
+      gl.uniform4f(videoRectUniform, videoRect.x / canvas.width,
+        1 - (videoRect.y + videoRect.h) / canvas.height, videoRect.w / canvas.width, videoRect.h / canvas.height);
+      if (subject) {
+        const cover = videoRect.scale;
+        const targetX = (subject.x - subjectRestPosition.x) * video.videoWidth * cover / canvas.width;
+        const targetY = (subjectRestPosition.y - subject.y) * video.videoHeight * cover / canvas.height;
+        const dt = Math.max(0, Math.min(motionTime - previousMotionTime, 0.1));
+        const blend = followReady ? 1 - Math.exp(-dt / 0.24) : 1;
+        follow.x += (targetX - follow.x) * blend;
+        follow.y += (targetY - follow.y) * blend;
+        followReady = true;
+      }
+      previousMotionTime = motionTime;
+      entranceStart ??= motionTime;
+      // Let the bottom-up film reveal establish the image before panels unfold.
+      const entranceTime = reducedMotion ? 10 : motionTime - entranceStart - 1.1;
+      entranceComplete = entranceTime >= 1.65;
+      // Counter the parent's scale only for panel dimensions. At video scale 0.5,
+      // panels retain 0.65 of their initial size: 30% larger than the old minimum.
+      const videoScale = Math.max(0.01, canvas.getBoundingClientRect().width / Math.max(1, canvas.clientWidth));
+      const panelScale = Math.max(0.65, Math.min(1, 0.3 + 0.7 * videoScale));
+      const sizeCompensation = panelScale / videoScale;
+      const section = canvas.closest('section');
+      const widthCompensation = (section?.clientWidth || canvas.clientWidth) / Math.max(1, canvas.clientWidth);
+      const heightCompensation = (section?.clientHeight || canvas.clientHeight) / Math.max(1, canvas.clientHeight);
+      imageBounds = {
+        left: Math.max(0, videoRect.x / canvas.width),
+        right: Math.min(1, (videoRect.x + videoRect.w) / canvas.width),
+        bottom: Math.max(0, 1 - (videoRect.y + videoRect.h) / canvas.height),
+        top: Math.min(1, 1 - videoRect.y / canvas.height),
+      };
+      const [phase, speed] = drift[0];
+      const settle = 1 - fitProgress;
+      projection.width = imageBounds.right - imageBounds.left;
+      projection.height = imageBounds.top - imageBounds.bottom;
+      const imageWidth = projection.width;
+      const imageHeight = projection.height;
+      const maxPanelWidth = Math.max(...windowLayout.map(([, , w]) => w * sizeCompensation * widthCompensation));
+      const maxPanelHeight = Math.max(...windowLayout.map(([, , , h]) => h * sizeCompensation * heightCompensation));
+      const spanX = Math.max(...windowLayout.map(([x]) => x)) - Math.min(...windowLayout.map(([x]) => x));
+      const spanY = Math.max(...windowLayout.map(([, y]) => y)) - Math.min(...windowLayout.map(([, y]) => y));
+      // On a narrow viewport, tighten the diagonal's spacing without shrinking its panels.
+      const spreadFit = Math.max(0, Math.min(1,
+        (imageWidth - 0.05 - maxPanelWidth) / Math.max(0.001, spanX * imageWidth),
+        (imageHeight - 0.05 - maxPanelHeight) / Math.max(0.001, spanY * imageHeight)));
+      projection.width *= spreadFit;
+      projection.height *= spreadFit;
+      // Bound the whole diagonal using its compensated sizes, not each panel separately.
+      const minX = Math.min(...windowLayout.map(([x, , w]) => x * projection.width - w * sizeCompensation * widthCompensation / 2));
+      const maxX = Math.max(...windowLayout.map(([x, , w]) => x * projection.width + w * sizeCompensation * widthCompensation / 2));
+      const minY = Math.min(...windowLayout.map(([, y, , h]) => y * projection.height - h * sizeCompensation * heightCompensation / 2));
+      const maxY = Math.max(...windowLayout.map(([, y, , h]) => y * projection.height + h * sizeCompensation * heightCompensation / 2));
+      const offsetX = (follow.x + Math.sin(motionTime * speed + phase) * driftAmplitude[0]) * settle;
+      const offsetY = (follow.y + Math.sin(motionTime * speed * 0.73 + phase * 1.7) * driftAmplitude[1]) * settle;
+      projection.x = imageBounds.left + Math.max(0.025 - minX, Math.min(imageWidth - 0.025 - maxX, (imageWidth - projection.width) / 2 + offsetX));
+      projection.y = imageBounds.bottom + Math.max(0.025 - minY, Math.min(imageHeight - 0.025 - maxY, (imageHeight - projection.height) / 2 + offsetY));
+      const centerX = (imageBounds.left + imageBounds.right) / 2;
+      const centerY = (imageBounds.bottom + imageBounds.top) / 2;
       windowLayout.forEach(([x, y, width, height], index) => {
-        if (index === draggedWindow) return;
-        const [phase, speed] = drift[index];
+        const central = index === 2;
+        const delay = central ? 0 : 0.55 + (Math.abs(index - 2) - 1) * 0.12;
+        const reveal = easeOut((entranceTime - delay) / (central ? 0.5 : 0.28));
+        const spread = easeOut((entranceTime - delay) / 0.85);
+        const w = width * sizeCompensation * widthCompensation * reveal;
+        const h = height * sizeCompensation * heightCompensation * reveal;
+        const targetX = projection.x + x * projection.width;
+        const targetY = projection.y + y * projection.height;
+        if (index === draggedWindow) {
+          windowPositions[index * 4 + 2] = w;
+          windowPositions[index * 4 + 3] = h;
+          return;
+        }
         windowPositions.set([
-          clampCenter(x + Math.sin(motionTime * speed + phase) * 0.075, width),
-          clampCenter(y + Math.sin(motionTime * speed * 0.73 + phase * 1.7) * 0.09, height),
-          width, height,
+          centerX + (targetX - centerX) * spread,
+          centerY + (targetY - centerY) * spread,
+          w, h,
         ], index * 4);
       });
-      gl.uniform4fv(windowUniform, windowPositions);
+      // S02 shares the background's video texture and UV mapping.
+      gl.uniform4fv(risoWindow, windowPositions.subarray(4, 8));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
     },
