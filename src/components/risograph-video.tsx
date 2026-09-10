@@ -8,9 +8,11 @@ import { collagePanels, createRisographRenderer, risographSettings } from "@/lib
 export function RisographVideo({
   videoRef,
   enabled = risographSettings.enabled,
+  secretTriggerRef,
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
   enabled?: boolean;
+  secretTriggerRef?: RefObject<HTMLButtonElement | null>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef<HTMLCanvasElement>(null);
@@ -37,6 +39,13 @@ export function RisographVideo({
       labelContext.font = `${labelWidth < 600 ? 7 : 8}px monospace`;
       labelContext.textBaseline = "top";
       const positions = renderer.getWindowPositions();
+      const secret = secretTriggerRef?.current;
+      if (secret) {
+        const [cx, cy, w, h] = positions.subarray(12, 16);
+        const rect = canvas.getBoundingClientRect();
+        const heroRect = canvas.closest("section")!.getBoundingClientRect();
+        Object.assign(secret.style, { left: `${rect.left - heroRect.left + (cx - w / 2) * rect.width}px`, top: `${rect.top - heroRect.top + (1 - cy - h / 2) * rect.height}px`, width: `${w * rect.width}px`, height: `${h * rect.height}px` });
+      }
       collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress);
       const caption = (text: string, x: number, y: number, right = false) => {
         const width = labelContext.measureText(text).width;
@@ -292,7 +301,7 @@ export function RisographVideo({
       renderer?.dispose();
       for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
     };
-  }, [videoRef, enabled]);
+  }, [videoRef, enabled, secretTriggerRef]);
 
   if (!enabled) return null;
   return <>

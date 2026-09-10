@@ -11,6 +11,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
+import { HeroMinesweeper } from "./hero-minesweeper";
 import { ScannerType } from "./scanner-type";
 
 const heroVideoSettings: {
@@ -56,7 +57,9 @@ function EditorCard() {
 
 function Hero() {
   const hero = useRef<HTMLElement>(null);
+  const secretTrigger = useRef<HTMLButtonElement>(null);
   const backgroundVideo = useRef<HTMLVideoElement>(null);
+  const [secret, setSecret] = useState<{ x: number; y: number } | null>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
@@ -212,7 +215,7 @@ function Hero() {
     <section
       id="top"
       ref={hero}
-      className="home-hero"
+      className={`home-hero${secret ? " is-playing" : ""}`}
     >
       <div className="hero-background" data-ready={videoReady || videoFailed}>
         {/* <Image
@@ -248,11 +251,13 @@ function Hero() {
               onLoadedData={() => setVideoReady(true)}
               onError={() => setVideoFailed(true)}
             />
-            <RisographVideo videoRef={backgroundVideo} />
+            <RisographVideo videoRef={backgroundVideo} secretTriggerRef={secretTrigger} />
           </>
         )}
+        {secret && <HeroMinesweeper origin={secret} onClose={() => setSecret(null)} />}
         </div>
       </div>
+      <div className="hero-scene" inert={!!secret}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.28),transparent_45%,rgba(0,0,0,.22))] max-[809px]:bg-[linear-gradient(180deg,rgba(0,0,0,.25),transparent_50%,rgba(0,0,0,.34))]" />
       <div className="hero-grid" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((line) => <span key={line}><i /></span>)}
@@ -284,6 +289,12 @@ function Hero() {
       <h1 className="hero-title tracking-tightest">
         <ScannerType enabled={false}>Jimmy</ScannerType>
       </h1>
+      </div>
+      <button ref={secretTrigger} type="button" className="hero-secret-trigger" aria-label="S04：进入隐藏扫雷游戏" onClick={(event) => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const surface = hero.current!.querySelector(".hero-video-frame")!.getBoundingClientRect();
+        setSecret({ x: (bounds.left + bounds.width / 2 - surface.left) / surface.width * 100, y: (bounds.top + bounds.height / 2 - surface.top) / surface.height * 100 });
+      }} />
     </section>
   );
 }

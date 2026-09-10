@@ -10,10 +10,16 @@ export function SmoothScroll() {
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const lenis = new Lenis({ duration: 1.05, smoothWheel: true });
+      const onGameChange = (event: Event) => {
+        if ((event as CustomEvent<boolean>).detail) lenis.stop();
+        else lenis.start();
+      };
+      window.addEventListener("hero-game-change", onGameChange);
       const tick = (time: number) => lenis.raf(time * 1000);
       lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add(tick);
       return () => {
+        window.removeEventListener("hero-game-change", onGameChange);
         gsap.ticker.remove(tick);
         lenis.off("scroll", ScrollTrigger.update);
         lenis.destroy();
