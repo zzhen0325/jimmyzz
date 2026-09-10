@@ -7,7 +7,7 @@ import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import images from "@/lib/curve-gallery-assets.json";
 import { projects } from "@/lib/site-data";
 import { SectionLabel } from "./site-chrome";
-import { MotionImage } from "./motion-image";
+import Image from "next/image";
 import "./ribbon-gallery.css";
 
 export function CurveGallery() {
@@ -113,9 +113,9 @@ export function CurveGallery() {
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
           {images.map((item, i) => (
-            <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`}
+            <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label="view"
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
-              <MotionImage src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 330px" draggable={false} />
+              <span className="motion-image"><Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 330px" draggable={false} /></span>
             </Link>
           ))}
         </div>

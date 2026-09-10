@@ -13,6 +13,7 @@ import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
 import { HeroMinesweeper } from "./hero-minesweeper";
 import { ScannerType } from "./scanner-type";
+import { HoverLabel } from "./hover-label";
 
 const heroVideoSettings: {
   controlMode: "scroll" | "mouse";
@@ -23,13 +24,13 @@ const heroVideoSettings: {
   controlMode: "scroll",
   // 1 = 原速，0.5 = 半速，0.25 = 四分之一速度；必须大于 0。
   // 滚动模式：越小，滚动距离越长。鼠标模式：越小，追随越缓慢。
-  playbackSpeed: 0.25,
+  playbackSpeed: 0.1,
 };
 
-// Scale during playback; continue rising after the final-frame hold releases the hero.
+// Release the pinned hero at 90% of the video frames; playback finishes during exit.
 const heroExitSettings = {
+  releaseProgress: 0.9,
   aspectRatio: 16 / 9,
-  playbackScale: 0.65,
   scale: 0.5,
   subjectRise: 0.18, // Fraction of the hero height, in addition to page scrolling.
   scrollDistance: 0.85,
@@ -62,31 +63,42 @@ function Hero() {
   const [secret, setSecret] = useState<{ x: number; y: number } | null>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
 
   useGSAP(
     () => {
       const video = backgroundVideo.current;
       const section = hero.current;
       if (!video || !section || videoFailed) return;
+      // Cached media may finish loading before React attaches onLoadedData.
+      if (video.readyState >= 2) gsap.delayedCall(0, () => setVideoReady(true));
       const mm = gsap.matchMedia();
       mm.add(
         { ...motionConditions, finePointer: "(hover: hover) and (pointer: fine)" },
         ({ conditions }) => {
           // Reduced-motion users see the opening frame and scroll normally.
           if (conditions?.reduced) {
+            gsap.delayedCall(0, () => setIntroComplete(true));
+            video.pause();
             video.currentTime = 0;
             return;
           }
 
           const frameRate = 24;
-          const holdFrames = 10;
           const playbackScrollDistance = 240 / Math.max(0.01, heroVideoSettings.playbackSpeed);
           const lastFrameIndex = () => Math.max(0, Math.round(video.duration * frameRate) - 1);
           const playhead = { progress: 0 };
           let pendingSeek = 0;
           const seek = () => {
             pendingSeek = 0;
+            // Scrolling can hand off early; the intro never shares its playhead
+            // with the scroll-controlled clip.
+            if (!introComplete) {
+              if (playhead.progress > 0) setIntroComplete(true);
+              return;
+            }
             if (
+              !video.currentSrc.endsWith("/11.mp4") ||
               video.readyState < 2 ||
               !Number.isFinite(video.duration) ||
               video.seeking
@@ -125,17 +137,19 @@ function Hero() {
               video.removeEventListener("seeked", scheduleSeek);
             };
           }
+          // power1.in maps scroll progress to video progress as p².
+          // Invert it so release is tied to 90% of frames, not 90% of scroll distance.
+          const releaseScrollDistance = playbackScrollDistance * Math.sqrt(heroExitSettings.releaseProgress);
           const pin = ScrollTrigger.create({
             id: "hero-video-pin",
             trigger: section,
             start: "top top",
-            // Append ten held frames to the scroll timeline before releasing.
-            end: () => `+=${playbackScrollDistance * (1 + holdFrames / (Number.isFinite(video.duration) ? Math.max(1, lastFrameIndex()) : 242))}`,
+            end: () => `+=${releaseScrollDistance}`,
             pin: true,
             anticipatePin: 1,
           });
           const playback = gsap.timeline({
-            defaults: { duration: 1, ease: "none" },
+            defaults: { duration: 1, ease: "power1.in" },
             scrollTrigger: {
               id: "hero-video",
               trigger: section,
@@ -150,7 +164,7 @@ function Hero() {
             onUpdate: scheduleSeek,
           }, 0);
           playback.fromTo(".hero-video-frame", { scale: 1 }, {
-            scale: heroExitSettings.playbackScale,
+            scale: heroExitSettings.scale,
             transformOrigin: "50% 43%",
           }, 0);
           playback.fromTo(".hero-video-frame", {
@@ -163,21 +177,16 @@ function Hero() {
             "--hero-fit-progress": 1,
           }, 0);
           const exit = gsap.timeline({
-            defaults: { duration: 1, ease: "none" },
+            defaults: { duration: 1, ease: "power1.in" },
             scrollTrigger: {
-              id: "hero-exit",
-              trigger: section,
+              id: "hero-exit", trigger: section,
               start: () => pin.end,
               end: () => pin.end + section.offsetHeight * heroExitSettings.scrollDistance,
-              scrub: true,
-              invalidateOnRefresh: true,
+              scrub: true, invalidateOnRefresh: true,
             },
           });
-          exit.fromTo(".hero-video-frame", { y: 0, scale: heroExitSettings.playbackScale }, {
-            scale: heroExitSettings.scale,
-            immediateRender: false,
+          exit.fromTo(".hero-video-frame", { y: 0 }, {
             y: () => -section.offsetHeight * heroExitSettings.subjectRise,
-            transformOrigin: "50% 43%",
           }, 0);
           // CSS adds entrance and exit offsets without competing transform owners.
           for (const [selector, rise] of [
@@ -209,7 +218,7 @@ function Hero() {
       );
       return () => mm.revert();
     },
-    { scope: hero, dependencies: [videoFailed], revertOnUpdate: true },
+    { scope: hero, dependencies: [videoFailed, introComplete], revertOnUpdate: true },
   );
   return (
     <section
@@ -217,7 +226,15 @@ function Hero() {
       ref={hero}
       className={`home-hero${secret ? " is-playing" : ""}`}
     >
-      <div className="hero-background" data-ready={videoReady || videoFailed}>
+      <div className="hero-background" data-ready={videoReady || videoFailed}
+        onAnimationEnd={(event) => {
+          if (event.animationName !== "hero-film-reveal") return;
+          const section = hero.current;
+          if (!section) return;
+          section.dataset.filmRevealed = "true";
+          section.dispatchEvent(new Event("hero-film-revealed"));
+          if (videoFailed) section.dispatchEvent(new Event("hero-panels-ready"));
+        }}>
         {/* <Image
             className="object-cover"
             src="/assets/images/bg53.png"
@@ -226,7 +243,7 @@ function Hero() {
             sizes="100vw"
             alt="长虹玻璃光影"
           /> */}
-        <div className="hero-video-frame">
+        <div className="hero-video-frame" data-hover-label={secret ? undefined : "scroll"}>
         {videoFailed ? (
           <Image
             className="object-cover"
@@ -241,15 +258,22 @@ function Hero() {
             <video
               ref={backgroundVideo}
               className="size-full object-cover"
-              src="/assets/videos/11.mp4"
+              src={introComplete ? "/assets/videos/11.mp4" : "/assets/videos/15.mp4"}
               poster="/assets/images/bg52.png"
               preload="auto"
               muted
+              autoPlay={!introComplete}
               playsInline
               disablePictureInPicture
               aria-hidden="true"
-              onLoadedData={() => setVideoReady(true)}
-              onError={() => setVideoFailed(true)}
+              onLoadedData={(event) => {
+                setVideoReady(true);
+                if (!introComplete && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                  void event.currentTarget.play().catch(() => setIntroComplete(true));
+                }
+              }}
+              onEnded={() => setIntroComplete(true)}
+              onError={() => introComplete ? setVideoFailed(true) : setIntroComplete(true)}
             />
             <RisographVideo videoRef={backgroundVideo} secretTriggerRef={secretTrigger} />
           </>
@@ -400,6 +424,7 @@ export function HomePage() {
   useHomeReveals(scope);
   return (
     <main ref={scope} className="home-page">
+      <HoverLabel />
       <Hero />
       <SelectedWork />
       <CurveGallery />

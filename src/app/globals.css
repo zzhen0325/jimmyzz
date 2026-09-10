@@ -1048,15 +1048,46 @@ button {
   color: #fff;
   font-size: 10px;
 }
-.work-row-link:is(:hover, :focus-visible) .work-row-index {
+.work-row-link:focus-visible .work-row-index {
   color: #172010;
   background: var(--accent);
 }
-.work-row-link:is(:hover, :focus-visible) .work-row-cta {
+.work-row-link:focus-visible .work-row-cta {
   color: var(--accent);
 }
 .work-row-link:focus-visible {
   outline-offset: -4px;
+}
+.hover-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  pointer-events: none;
+  user-select: none;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  transform-origin: 20% 50%;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  will-change: transform;
+}
+.hover-label[data-visible="true"] { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  [data-hover-label-active], [data-hover-label-active] * { cursor: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hover-label { transition: none; }
+}
+@media (hover: none), (pointer: coarse) {
+  .hover-label { display: none; }
 }
 @media (max-width: 809px) {
   .work-row { position: relative; }
@@ -1410,7 +1441,7 @@ button {
   position: absolute;
   inset: 104px var(--page-pad) 24px;
   z-index: 1;
-  display: flex;
+  display: none;
   justify-content: space-between;
   pointer-events: none;
 }
@@ -1642,3 +1673,9 @@ button {
 }
 @container (max-width: 359px) { .mines-board { top: 78px; } }
 @media (prefers-reduced-motion: reduce) { .hero-minesweeper { animation: none; } .mines-cell { transition: none; } }
+
+/* Paired glyphs share a clipped cell, matching the Cucumber2 TextRoll motion. */
+.hero-roll-word { display: inline-block; white-space: nowrap; }
+.hero-roll-char { display: inline-block; overflow: hidden; vertical-align: bottom; position: relative; padding-block: 0.15em; margin-block: -0.15em; }
+.hero-roll-outgoing { display: inline-block; }
+.hero-roll-incoming { position: absolute; inset: 0; display: inline-block; padding-block: 0.15em; }

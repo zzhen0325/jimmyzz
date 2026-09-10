@@ -33,7 +33,7 @@ export function SelectedWork() {
       <div className="selected-work-list">
         {selected.map((project, index) => (
           <article className="work-row" key={project.slug}>
-            <Link href={`/work/${project.slug}`} className="work-row-link">
+            <Link href={`/work/${project.slug}`} className="work-row-link" data-hover-label="view">
               <span className="work-row-index">
                 <i aria-hidden="true" />
                 Nº{String(index + 1).padStart(3, "0")}

@@ -9,7 +9,7 @@ export function SmoothScroll() {
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const lenis = new Lenis({ duration: 1.05, smoothWheel: true });
+      const lenis = new Lenis({ lerp: 0.085, smoothWheel: true, syncTouch: false });
       const onGameChange = (event: Event) => {
         if ((event as CustomEvent<boolean>).detail) lenis.stop();
         else lenis.start();

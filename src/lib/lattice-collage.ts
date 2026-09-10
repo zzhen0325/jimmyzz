@@ -12,18 +12,28 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
   const sampleContext = sample.getContext('2d', { willReadFrequently: true });
   if (!sourceContext || !sampleContext) return null;
   let time = 0;
+  const gridUpdatesPerSecond = 6;
+  let drawingGrid = false;
+  let gridSample: { cols: number; rows: number; time: number; data: Uint8ClampedArray } | null = null;
   const sampleGrid = (_source: number, _width: number, _height: number, cols: number, rows: number) => {
+    // Hold S04's sampled colours between updates while its geometry stays smooth.
+    if (drawingGrid && gridSample && gridSample.cols === cols && gridSample.rows === rows &&
+        time >= gridSample.time && time - gridSample.time < 1000 / gridUpdatesPerSecond) {
+      return gridSample.data;
+    }
     sample.width = cols;
     sample.height = rows;
     sampleContext.drawImage(source, 0, 0, cols, rows);
-    return sampleContext.getImageData(0, 0, cols, rows).data;
+    const data = sampleContext.getImageData(0, 0, cols, rows).data;
+    if (drawingGrid) gridSample = { cols, rows, time, data };
+    return data;
   };
   const filters = createLatticeFilters(context, {
     sampleGrid,
     echoSlot: () => ({ cv: source }),
     time: () => time,
   });
-  const gridPlate = { f: [32, 96, 255], k: [255, 142, 48] };
+  const gridPlate = { f: [46, 140, 222], k: [242, 182, 221] };
   const softPastelGrade = {
     stops: [
       [0, [92, 76, 156]],
@@ -36,7 +46,7 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
     w1: [255, 221, 201],
   };
   return {
-    draw(video: HTMLVideoElement, positions: Float32Array, width: number, height: number, seconds: number, fitProgress = 0) {
+    draw(video: HTMLVideoElement, positions: Float32Array, width: number, height: number, seconds: number, fitProgress = 0, rotations = new Float32Array(positions.length / 4)) {
       time = seconds * 1000;
       const boxes = Array.from({ length: positions.length / 4 }, (_, i) => {
         const [cx, cy, w, h] = positions.subarray(i * 4, i * 4 + 4);
@@ -57,6 +67,10 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
         if (box.w < 1 || box.h < 1) return;
         if (i !== 1) capture(box);
         context.save();
+        const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+        context.translate(cx, cy);
+        context.rotate(rotations[i]);
+        context.translate(-cx, -cy);
         context.beginPath();
         context.rect(box.x, box.y, box.w, box.h);
         context.clip();
@@ -68,18 +82,25 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
         } else if (i === 2) {
           context.drawImage(source, box.x, box.y, box.w, box.h);
         } else if (i === 4) {
+          filters.configure({ bloomFocus: 2, bloomRadius: 6 });
           filters.drawEchoGrade(0, box.x, box.y, box.w, box.h, softPastelGrade, 0.5);
+          filters.configure({ bloomFocus: 2, bloomRadius: 6 });
         } else {
-          // Map the live footage to blue shadows and orange highlights on a cell grid.
+          // Apply the two-colour plate at a slower sampling cadence.
           filters.configure({ annotations: false, stretch: 1 });
-          filters.runFilter('mosaic', gridPlate, box.x, box.y, box.w, box.h,
-            0, source.width, source.height);
+          drawingGrid = true;
+          try {
+            filters.runFilter('mosaic', gridPlate, box.x, box.y, box.w, box.h,
+              0, source.width, source.height);
+          } finally {
+            drawingGrid = false;
+          }
           filters.configure();
         }
-        context.restore();
         context.strokeStyle = 'rgba(255,255,255,0.7)';
-        context.lineWidth = 0.75;
+        context.lineWidth = 1.75;
         context.strokeRect(box.x, box.y, box.w, box.h);
+        context.restore();
       });
     },
   };

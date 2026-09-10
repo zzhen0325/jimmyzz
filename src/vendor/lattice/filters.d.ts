@@ -7,7 +7,7 @@ export function createLatticeFilters(context: CanvasRenderingContext2D, deps: {
 }): {
   GRADES: typeof PASTEL_GRADES;
   PLATES: Plate[];
-  configure(options?: { annotations?: boolean; contrast?: number; stretch?: number; floor?: number; exponent?: number }): void;
+  configure(options?: { bloomFocus?: number; bloomRadius?: number; annotations?: boolean; contrast?: number; stretch?: number; floor?: number; exponent?: number }): void;
   begin(): void;
   drawMosaicAnnotations(): void;
   runFilter(name: string, plate: Plate, x: number, y: number, width: number, height: number, source: number, sourceWidth: number, sourceHeight: number): void;

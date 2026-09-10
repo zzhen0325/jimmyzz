@@ -1,3 +1,4 @@
+import { sampleCollageMotion } from "./collage-motion";
 import { createHeroSubjectTracker } from "./hero-subject-tracker";
 import { heroVideoRect } from "./hero-video-geometry";
 
@@ -6,6 +7,9 @@ import { heroVideoRect } from "./hero-video-geometry";
 export const risographSettings = {
   // Set to false to show the original homepage video without the effect.
   "enabled": true,
+  "duotone": false,
+  "duotoneThreshold": 0.4225,
+  "duotoneSoftness": 0.3975,
   "paper": "#f5f2e8",
   "grainScale": 0.23,
   "grainOpacity": 0.55,
@@ -29,6 +33,38 @@ export const risographSettings = {
   ]
 } as const;
 
+export type RisographStyle = {
+  [K in keyof typeof risographSettings]: K extends "inks"
+    ? readonly { color: string; weights: readonly number[]; shift: readonly [number, number] }[]
+    : K extends "paper" ? string : K extends "enabled" | "duotone" ? boolean : number;
+};
+
+const duotoneStyle = (dark: string, light: string, overrides: Partial<RisographStyle> = {}): RisographStyle => ({
+  ...risographSettings,
+  duotone: true,
+  paper: light,
+  grainOpacity: 0.65,
+  grainSoftness: 0.4,
+  paperTextureStrength: 0.16,
+  paperCreaseStrength: 0.08,
+  ...overrides,
+  inks: [dark, light].map((color, i) => ({ ...risographSettings.inks[i], color })),
+});
+
+export const risographPresets: { name: string; description: string; settings: RisographStyle }[] = [
+  { name: "钴蓝米白", description: "保留加强 · 钴蓝 × 米白 · 高反差分色", settings: duotoneStyle("#123cbb", "#fff5df", { duotoneThreshold: 0.4, duotoneSoftness: 0.08, grainOpacity: 0.45 }) },
+  { name: "群青荧粉", description: "群青 × 荧粉 · 中低阈值 · 跳色海报", settings: duotoneStyle("#192480", "#ff83d5", { duotoneThreshold: 0.27, duotoneSoftness: 0.035, grainOpacity: 0.55 }) },
+  { name: "紫墨薄荷", description: "紫墨 × 薄荷 · 低阈值 · 亮色铺开", settings: duotoneStyle("#45216e", "#a8ffd6", { duotoneThreshold: 0.2, duotoneSoftness: 0.045, grainOpacity: 0.5 }) },
+  { name: "绯红纸白", description: "绯红 × 纸白 · 中阈值硬切 · 版画感", settings: duotoneStyle("#c82036", "#fff9eb", { duotoneThreshold: 0.36, duotoneSoftness: 0.015, grainOpacity: 0.65 }) },
+  { name: "深蓝蜜橙", description: "深蓝 × 蜜橙 · 高阈值 · 浓墨高光", settings: duotoneStyle("#132c62", "#ffab37", { duotoneThreshold: 0.52, duotoneSoftness: 0.065, grainOpacity: 0.5 }) },
+  { name: "电蓝酸橙", description: "电蓝 × 酸橙 · 轻柔分色 · 保留鲜明对比", settings: duotoneStyle("#1833bc", "#d7ff58", { duotoneThreshold: 0.18, duotoneSoftness: 0.035, grainOpacity: 0.4 }) },
+  { name: "孔雀蓝桃", description: "孔雀蓝 × 桃粉 · 中低阈值 · 柔硬平衡", settings: duotoneStyle("#075873", "#ffb7a5", { duotoneThreshold: 0.28, duotoneSoftness: 0.085, grainOpacity: 0.55 }) },
+  { name: "黑墨电绿", description: "黑墨 × 电绿 · 中高阈值 · 大块荧光", settings: duotoneStyle("#18251b", "#b9ff32", { duotoneThreshold: 0.43, duotoneSoftness: 0.025, grainOpacity: 0.6 }) },
+  { name: "葡萄冰紫", description: "葡萄 × 冰紫 · 高阈值 · 深紫留白", settings: duotoneStyle("#40147d", "#d6d0ff", { duotoneThreshold: 0.58, duotoneSoftness: 0.04, grainOpacity: 0.5 }) },
+  { name: "深棕天蓝", description: "深棕 × 天蓝 · 中阈值 · 冷暖撞色", settings: duotoneStyle("#472621", "#8addff", { duotoneThreshold: 0.33, duotoneSoftness: 0.035, grainOpacity: 0.6 }) },
+  { name: "雾粉珊瑚", description: "参考粉色 · 淡紫粉 × 珊瑚桃粉 · 柔和雾面", settings: duotoneStyle("#d9b9fa", "#ff947f", { duotoneThreshold: 0.36, duotoneSoftness: 0.34, grainOpacity: 0.3, grainAnimationStrength: 0.15, paperTextureStrength: 0.09, paperCreaseStrength: 0.02 }) },
+];
+
 // Independent ink/paper treatment for the drifting rectangular windows.
 export const risographWindowSettings = {
   paper: "#f2ddff",
@@ -38,7 +74,7 @@ export const risographWindowSettings = {
   grainContrast: 1.3,
   exposure: 0.18,
   gamma: 1.85,
-  inks: ["#c05be8", "#36a68d", "#ff754c"],
+  inks: ["#c05be8", "#2371B2", "#ff754c"],
 } as const;
 
 // Five evenly spaced panels on one upper-left to lower-right diagonal.
@@ -50,8 +86,24 @@ export const collagePanels = [
   { label: "S04 / DUOTONE GRID", color: "#ff8e30", bounds: [0.63, 0.35, 0.0775, 0.10] },
   { label: "S05 / SOFT PASTEL", color: "#ffd4e8", bounds: [0.76, 0.20, 0.0775, 0.10] },
 ] as const;
+// Black workflow cards in the final shot: [centre X, centre Y, width, height]
+// in source-video coordinates, with a top-left origin.
+const workflowCards = [
+  [0.183, 0.492, 0.148, 0.450],
+  [0.341, 0.491, 0.148, 0.455],
+  [0.499, 0.491, 0.149, 0.455],
+  [0.657, 0.491, 0.149, 0.453],
+  [0.815, 0.492, 0.147, 0.449],
+] as const;
+const alignedCardScale = 1.04;
+const panelSizeMultiplier = 1.5;
 const risographWindowCount = collagePanels.length;
-const driftAmplitude = [0.0045, 0.00625] as const;
+// Opening-frame person and computer, in top-origin source-video coordinates.
+const openingSubjectFrame = { x: 0.423, y: 0.37, width: 0.152, height: 0.18 };
+const panelEntranceStagger = 0.18;
+const panelEntranceTweenDuration = 0.72;
+const panelEntranceDuration = (risographWindowCount - 1) * panelEntranceStagger + panelEntranceTweenDuration;
+const driftHoldDuration = 1;
 // Source-space monitor centre in the opening frame of the current hero clip.
 // Follow its displacement so the authored layout matches the reference at rest.
 const subjectRestPosition = { x: 0.531, y: 0.428 };
@@ -74,6 +126,8 @@ uniform vec2 resolution;
 uniform vec2 sourceSize;
 uniform vec4 videoRect;
 uniform vec3 paper;
+uniform bool duotone;
+uniform vec2 duotoneRange;
 uniform vec4 grain;
 uniform highp sampler2DArray animatedGrain;
 uniform vec2 grainAnimation;
@@ -88,6 +142,7 @@ uniform vec3 secondaryWeights[3];
 uniform vec2 inkShift[3];
 uniform vec2 borderPixel;
 uniform vec4 risoWindow;
+uniform float risoRotation;
 uniform vec3 windowPaper;
 uniform vec4 windowGrain;
 uniform vec2 windowExposureGamma;
@@ -127,7 +182,10 @@ void main() {
     outputColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
   }
-  vec2 windowDistance = abs(uv - risoWindow.xy) - risoWindow.zw * 0.5;
+  vec2 delta = (uv - risoWindow.xy) * resolution;
+  float c = cos(risoRotation), s = sin(risoRotation);
+  vec2 local = vec2(c * delta.x - s * delta.y, s * delta.x + c * delta.y) / resolution;
+  vec2 windowDistance = abs(local) - risoWindow.zw * 0.5;
   bool inWindow = max(windowDistance.x, windowDistance.y) <= 0.0;
   vec4 activeGrain = inWindow ? windowGrain : grain;
   vec2 activeExposure = inWindow ? windowExposureGamma : exposureGamma;
@@ -166,6 +224,18 @@ void main() {
   float printedLuma = dot(printColor, vec3(0.2126, 0.7152, 0.0722));
   vec3 recovered = clamp(original * printedLuma / max(originalLuma, 0.025), 0.0, 1.0);
   printColor = mix(printColor, recovered, coolMask * (inWindow ? 0.08 : coolColorRecovery));
+  if (duotone && !inWindow) {
+    // Map source lightness to exactly two authored inks; retain printed texture.
+    float tone = smoothstep(duotoneRange.x - duotoneRange.y,
+      duotoneRange.x + duotoneRange.y, originalLuma);
+    float noise = texture(grainPattern, grainUV).r - 0.5;
+    float moving = texture(animatedGrain, vec3(gl_FragCoord.xy / 256.0,
+      mod(grainAnimation.x, 16.0))).r - 0.5;
+    tone = clamp(tone + (noise + moving * grainAnimation.y) * grain.y
+      * 0.48 * (0.3 + sin(tone * 3.14159) * 0.7), 0.0, 1.0);
+    printColor = mix(pow(inkColor[0], vec3(1.0 / 2.2)),
+      pow(inkColor[1], vec3(1.0 / 2.2)), tone);
+  }
   vec2 paperPixel = uv / borderPixel;
   // Change the sheet only every eight grain frames; share its phase across windows.
   vec2 paperOffset = fract(sin(vec2(paperFrame + 1.0, paperFrame + 7.0)
@@ -244,7 +314,7 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   const uniform = (name: string) => gl.getUniformLocation(program, name);
-  const settings = risographSettings;
+  let settings: RisographStyle = risographSettings;
   const windowSettings = risographWindowSettings;
   const risoWindow = uniform("risoWindow");
   gl.uniform3fv(uniform("windowPaper"), linearRgb(windowSettings.paper));
@@ -254,13 +324,15 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   const borderPixel = uniform("borderPixel");
   const windowPositions = new Float32Array(risographWindowCount * 4);
   const windowLayout: number[][] = collagePanels.map(panel => [...panel.bounds]);
-  // Bounded drift keeps the authored panels separated throughout their orbits.
-  const drift = windowLayout.map(() => [0, 0.36]);
+  const windowRotations = new Float32Array(risographWindowCount);
+  const motionOffsets = windowLayout.map(() => [0, 0]);
+  let rowAlignment = 0;
   let motionTime = 0;
   let fitProgress = 0;
   let reducedMotion = false;
   let entranceStart: number | null = null;
   let entranceComplete = false;
+  let entranceEnabled = false;
   const easeOut = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
   let draggedWindow = -1;
   const tracker = createHeroSubjectTracker();
@@ -273,12 +345,6 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   const clampCenter = (value: number, size: number, lo = 0, hi = 1) => Math.max(lo + size / 2 + 0.025, Math.min(hi - size / 2 - 0.025, value));
   gl.uniform1i(uniform("frame"), 0);
   gl.uniform1i(uniform("grainPattern"), 1);
-  gl.uniform3fv(uniform("paper"), linearRgb(settings.paper));
-  gl.uniform4f(uniform("grain"), settings.grainScale, settings.grainOpacity, settings.grainSoftness, settings.grainContrast);
-  gl.uniform2f(uniform("exposureGamma"), settings.exposure, settings.gamma);
-  gl.uniform3f(uniform("shadows"), settings.shadowDepth, settings.shadowNeutrality, settings.shadowThreshold);
-  gl.uniform1f(uniform("coolColorRecovery"), settings.coolColorRecovery);
-  gl.uniform2f(uniform("paperTexture"), settings.paperTextureStrength, settings.paperCreaseStrength);
   const grainAnimation = uniform("grainAnimation");
   const paperFrame = uniform("paperFrame");
   gl.uniform1f(paperFrame, 0);
@@ -304,12 +370,25 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.R8, 256, 256, 16, 0, gl.RED, gl.UNSIGNED_BYTE, noiseFrames);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.activeTexture(gl.TEXTURE0);
+  const setStyle = (next: RisographStyle) => {
+    settings = next;
+    gl.useProgram(program);
+    gl.uniform1i(uniform("duotone"), settings.duotone ? 1 : 0);
+    gl.uniform2f(uniform("duotoneRange"), settings.duotoneThreshold, Math.max(settings.duotoneSoftness, 0.001));
+  gl.uniform3fv(uniform("paper"), linearRgb(settings.paper));
+  gl.uniform4f(uniform("grain"), settings.grainScale, settings.grainOpacity, settings.grainSoftness, settings.grainContrast);
+  gl.uniform2f(uniform("exposureGamma"), settings.exposure, settings.gamma);
+  gl.uniform3f(uniform("shadows"), settings.shadowDepth, settings.shadowNeutrality, settings.shadowThreshold);
+  gl.uniform1f(uniform("coolColorRecovery"), settings.coolColorRecovery);
+  gl.uniform2f(uniform("paperTexture"), settings.paperTextureStrength, settings.paperCreaseStrength);
   settings.inks.forEach((ink, index) => {
     gl.uniform3fv(uniform(`inkColor[${index}]`), linearRgb(ink.color));
     gl.uniform3fv(uniform(`primaryWeights[${index}]`), [ink.weights[0], ink.weights[2], ink.weights[4]]);
     gl.uniform3fv(uniform(`secondaryWeights[${index}]`), [ink.weights[1], ink.weights[3], ink.weights[5]]);
     gl.uniform2fv(uniform(`inkShift[${index}]`), ink.shift);
   });
+  };
+  setStyle(settings);
   const resolution = uniform("resolution");
   const sourceSize = uniform("sourceSize");
   const videoRectUniform = uniform("videoRect");
@@ -334,9 +413,13 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   let lastSource = "";
   return {
     ready,
+    setStyle,
+    beginEntrance() { entranceEnabled = true; },
+    isEntranceComplete() { return entranceComplete; },
     getWindowPositions() { return windowPositions; },
-    canDrag() { return entranceComplete; },
-    beginDrag(index: number) { if (entranceComplete) draggedWindow = index; },
+    getWindowRotations() { return windowRotations; },
+    canDrag() { return entranceComplete && rowAlignment === 0; },
+    beginDrag(index: number) { if (entranceComplete && rowAlignment === 0) draggedWindow = index; },
     dragTo(x: number, y: number) {
       if (draggedWindow < 0) return;
       const offset = draggedWindow * 4;
@@ -345,9 +428,9 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
     },
     endDrag() {
       if (draggedWindow < 0) return;
-      // Rebase the drift orbit at the release point, with no snap back.
-      windowLayout[draggedWindow][0] = (windowPositions[draggedWindow * 4] - projection.x) / projection.width;
-      windowLayout[draggedWindow][1] = (windowPositions[draggedWindow * 4 + 1] - projection.y) / projection.height;
+      // Rebase the composition at the release point, with no snap back.
+      windowLayout[draggedWindow][0] = (windowPositions[draggedWindow * 4] - projection.x - motionOffsets[draggedWindow][0]) / Math.max(0.001, projection.width);
+      windowLayout[draggedWindow][1] = (windowPositions[draggedWindow * 4 + 1] - projection.y - motionOffsets[draggedWindow][1]) / Math.max(0.001, projection.height);
       draggedWindow = -1;
     },
     setGrainFrame(frame: number) {
@@ -401,10 +484,12 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         followReady = true;
       }
       previousMotionTime = motionTime;
-      entranceStart ??= motionTime;
-      // Let the bottom-up film reveal establish the image before panels unfold.
-      const entranceTime = reducedMotion ? 10 : motionTime - entranceStart - 1.1;
-      entranceComplete = entranceTime >= 1.65;
+      if (entranceEnabled) entranceStart ??= motionTime;
+      // The film reveal explicitly releases the panel sequence.
+      const entranceTime = reducedMotion ? 10 : entranceStart === null ? -10 : motionTime - entranceStart;
+      entranceComplete = entranceTime >= panelEntranceDuration;
+      const driftTime = Math.max(0, entranceTime - panelEntranceDuration - driftHoldDuration);
+      const driftBlend = reducedMotion ? 0 : easeOut(driftTime / 0.8);
       // Counter the parent's scale only for panel dimensions. At video scale 0.5,
       // panels retain 0.65 of their initial size: 30% larger than the old minimum.
       const videoScale = Math.max(0.01, canvas.getBoundingClientRect().width / Math.max(1, canvas.clientWidth));
@@ -419,14 +504,22 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         bottom: Math.max(0, 1 - (videoRect.y + videoRect.h) / canvas.height),
         top: Math.min(1, 1 - videoRect.y / canvas.height),
       };
-      const [phase, speed] = drift[0];
       const settle = 1 - fitProgress;
       projection.width = imageBounds.right - imageBounds.left;
       projection.height = imageBounds.top - imageBounds.bottom;
       const imageWidth = projection.width;
       const imageHeight = projection.height;
-      const maxPanelWidth = Math.max(...windowLayout.map(([, , w]) => w * sizeCompensation * widthCompensation));
-      const maxPanelHeight = Math.max(...windowLayout.map(([, , , h]) => h * sizeCompensation * heightCompensation));
+      // A square is measured in rendered pixels, not equal normalized UV dimensions.
+      const panelSizes = windowLayout.map(([, , w, h], index) => {
+        if (index === 2) return [
+          videoRect.w * openingSubjectFrame.width / canvas.width,
+          videoRect.h * openingSubjectFrame.height / canvas.height,
+        ];
+        const side = Math.min(w * widthCompensation * canvas.width, h * heightCompensation * canvas.height) * sizeCompensation * panelSizeMultiplier;
+        return [side / canvas.width, side / canvas.height];
+      });
+      const maxPanelWidth = Math.max(...panelSizes.map(([w]) => w));
+      const maxPanelHeight = Math.max(...panelSizes.map(([, h]) => h));
       const spanX = Math.max(...windowLayout.map(([x]) => x)) - Math.min(...windowLayout.map(([x]) => x));
       const spanY = Math.max(...windowLayout.map(([, y]) => y)) - Math.min(...windowLayout.map(([, y]) => y));
       // On a narrow viewport, tighten the diagonal's spacing without shrinking its panels.
@@ -436,38 +529,61 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
       projection.width *= spreadFit;
       projection.height *= spreadFit;
       // Bound the whole diagonal using its compensated sizes, not each panel separately.
-      const minX = Math.min(...windowLayout.map(([x, , w]) => x * projection.width - w * sizeCompensation * widthCompensation / 2));
-      const maxX = Math.max(...windowLayout.map(([x, , w]) => x * projection.width + w * sizeCompensation * widthCompensation / 2));
-      const minY = Math.min(...windowLayout.map(([, y, , h]) => y * projection.height - h * sizeCompensation * heightCompensation / 2));
-      const maxY = Math.max(...windowLayout.map(([, y, , h]) => y * projection.height + h * sizeCompensation * heightCompensation / 2));
-      const offsetX = (follow.x + Math.sin(motionTime * speed + phase) * driftAmplitude[0]) * settle;
-      const offsetY = (follow.y + Math.sin(motionTime * speed * 0.73 + phase * 1.7) * driftAmplitude[1]) * settle;
-      projection.x = imageBounds.left + Math.max(0.025 - minX, Math.min(imageWidth - 0.025 - maxX, (imageWidth - projection.width) / 2 + offsetX));
-      projection.y = imageBounds.bottom + Math.max(0.025 - minY, Math.min(imageHeight - 0.025 - maxY, (imageHeight - projection.height) / 2 + offsetY));
-      const centerX = (imageBounds.left + imageBounds.right) / 2;
-      const centerY = (imageBounds.bottom + imageBounds.top) / 2;
-      windowLayout.forEach(([x, y, width, height], index) => {
-        const central = index === 2;
-        const delay = central ? 0 : 0.55 + (Math.abs(index - 2) - 1) * 0.12;
-        const reveal = easeOut((entranceTime - delay) / (central ? 0.5 : 0.28));
-        const spread = easeOut((entranceTime - delay) / 0.85);
-        const w = width * sizeCompensation * widthCompensation * reveal;
-        const h = height * sizeCompensation * heightCompensation * reveal;
-        const targetX = projection.x + x * projection.width;
-        const targetY = projection.y + y * projection.height;
+      const minX = Math.min(...windowLayout.map(([x], i) => x * projection.width - panelSizes[i][0] / 2));
+      const maxX = Math.max(...windowLayout.map(([x], i) => x * projection.width + panelSizes[i][0] / 2));
+      const minY = Math.min(...windowLayout.map(([, y], i) => y * projection.height - panelSizes[i][1] / 2));
+      const maxY = Math.max(...windowLayout.map(([, y], i) => y * projection.height + panelSizes[i][1] / 2));
+      const offsetX = follow.x * settle * driftBlend;
+      const offsetY = follow.y * settle * driftBlend;
+      const subjectFrameX = (videoRect.x + (openingSubjectFrame.x + openingSubjectFrame.width / 2) * videoRect.w) / canvas.width;
+      const subjectFrameY = 1 - (videoRect.y + (openingSubjectFrame.y + openingSubjectFrame.height / 2) * videoRect.h) / canvas.height;
+      projection.x = imageBounds.left + Math.max(0.025 - minX, Math.min(imageWidth - 0.025 - maxX, subjectFrameX - imageBounds.left - windowLayout[2][0] * projection.width + offsetX));
+      projection.y = imageBounds.bottom + Math.max(0.025 - minY, Math.min(imageHeight - 0.025 - maxY, subjectFrameY - imageBounds.bottom - windowLayout[2][1] * projection.height + offsetY));
+      // The five workflow cards finish appearing around 9 seconds in 11.mp4.
+      // Use the shared scroll playhead so seeking and reversing remain continuous.
+      const playheadTime = fitProgress * Math.max(0, video.duration - 1 / 24);
+      const alignmentProgress = Math.max(0, Math.min(1, (playheadTime - 7.5) / 1.5));
+      rowAlignment = alignmentProgress * alignmentProgress * (3 - 2 * alignmentProgress);
+      if (rowAlignment > 0) draggedWindow = -1;
+      windowLayout.forEach(([x, y], index) => {
+        // The authored diagonal is ordered from upper left to lower right.
+        const delay = index * panelEntranceStagger;
+        const reveal = easeOut((entranceTime - delay) / panelEntranceTweenDuration);
+        const entranceLift = imageHeight * 0.075 * (1 - reveal);
+        const [cardX, cardY, cardWidth, cardHeight] = workflowCards[index];
+        const alignedWidth = videoRect.w * cardWidth * alignedCardScale / canvas.width;
+        const alignedHeight = videoRect.h * cardHeight * alignedCardScale / canvas.height;
+        const [shiftX, shiftY, scaleX, scaleY] = sampleCollageMotion(reducedMotion ? 0 : driftTime, index);
+        const w = (panelSizes[index][0] * scaleX * (1 - rowAlignment) + alignedWidth * rowAlignment) * reveal;
+        const h = (panelSizes[index][1] * scaleY * (1 - rowAlignment) + alignedHeight * rowAlignment) * reveal;
+        let targetX = projection.x + x * projection.width;
+        let targetY = projection.y + y * projection.height;
+        // Keep frames upright; only the authored composition owns idle geometry.
+        // Use the fitted image so the same choreography works after hero scaling.
+        windowRotations[index] = 0;
+        targetX = clampCenter(targetX + shiftX * projection.width, w, imageBounds.left, imageBounds.right);
+        targetY = clampCenter(targetY + shiftY * projection.height, h, imageBounds.bottom, imageBounds.top);
+        const alignedX = (videoRect.x + cardX * videoRect.w) / canvas.width;
+        const alignedY = 1 - (videoRect.y + cardY * videoRect.h) / canvas.height;
+        targetX += (alignedX - targetX) * rowAlignment;
+        targetY += (alignedY - targetY) * rowAlignment;
+        motionOffsets[index][0] = targetX - (projection.x + x * projection.width);
+        motionOffsets[index][1] = targetY - (projection.y + y * projection.height);
         if (index === draggedWindow) {
           windowPositions[index * 4 + 2] = w;
           windowPositions[index * 4 + 3] = h;
           return;
         }
         windowPositions.set([
-          centerX + (targetX - centerX) * spread,
-          centerY + (targetY - centerY) * spread,
+          targetX,
+          // Shader Y points upward: start below the destination and rise into it.
+          targetY - entranceLift,
           w, h,
         ], index * 4);
       });
       // S02 shares the background's video texture and UV mapping.
       gl.uniform4fv(risoWindow, windowPositions.subarray(4, 8));
+      gl.uniform1f(uniform("risoRotation"), windowRotations[1]);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
     },

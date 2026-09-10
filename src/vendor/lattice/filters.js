@@ -869,7 +869,7 @@ export function createLatticeFilters(sctx, deps) {
       );
     else cx.drawImage(slot.cv, 0, 0, 160, 120);
     mapFrame(crop, gradeBuf, g);
-    softBloom(gradeBuf, blurBuf, 6, 18, 2.1, 0.74, GRADE_W / pw);
+    softBloom(gradeBuf, blurBuf, options.bloomFocus ?? 6, options.bloomRadius ?? 18, 2.1, 0.74, GRADE_W / pw);
     sctx.drawImage(blurBuf, 0, 0, 160, 120, px - 8, py - 8, pw + 16, ph + 16);
     colourLeak(px, py, pw, ph, g, ang || 0.5);
     grain(px, py, pw, ph, 0.34);

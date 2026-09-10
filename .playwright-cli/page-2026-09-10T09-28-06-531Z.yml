@@ -1,0 +1,363 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic:
+        - generic:
+          - link "ZZ 张振 首页" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - img "ZZ" [ref=e8]
+          - navigation "主导航":
+            - link "Work" [ref=e9] [cursor=pointer]:
+              - /url: /work
+            - link "Playground" [ref=e10] [cursor=pointer]:
+              - /url: /#gallery
+            - link "Services" [ref=e11] [cursor=pointer]:
+              - /url: /#services
+            - link "About" [ref=e12] [cursor=pointer]:
+              - /url: /#about
+            - link "Let’s talk" [ref=e13] [cursor=pointer]:
+              - /url: mailto:zzhen0325@gmail.com
+        - generic:
+          - generic: (01) — SERVICES
+          - link "Brand & IP" [ref=e17] [cursor=pointer]:
+            - /url: "#services"
+          - link "Marketing & Experiences" [ref=e18] [cursor=pointer]:
+            - /url: "#services"
+          - link "AI & Creative Tools" [ref=e19] [cursor=pointer]:
+            - /url: "#services"
+          - link "Teams & Design Systems" [ref=e20] [cursor=pointer]:
+            - /url: "#services"
+          - generic: VISUAL DESIGN × CREATIVE TECHNOLOGY
+        - generic:
+          - link "Hey, I'm ZZ Creative Engineer" [ref=e21] [cursor=pointer]:
+            - /url: "#about"
+            - generic [ref=e23]:
+              - generic [ref=e24]: Hey, I'm ZZ
+              - text: Creative Engineer
+          - paragraph: Building brands through visuals and connecting people through experiences. Exploring illustration, type, 3D and motion — with AI and code.
+        - generic: REC 00:14:18:09
+        - heading "Jimmy" [level=1]
+      - button "S04：进入隐藏扫雷游戏"
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: (01) — SELECTED WORK / 精选作品
+        - generic [ref=e31]: +
+        - generic [ref=e32]: 04 SELECTED / 12 TOTAL
+      - generic [ref=e33]:
+        - heading "Worksinto experiences." [level=2] [ref=e34]:
+          - generic [ref=e35]: Works
+          - generic [ref=e36]:
+            - generic [ref=e37]: into
+            - generic [ref=e38]: experiences.
+        - paragraph [ref=e39]: 从品牌到体验，从创意到工具。选择一个项目，看看它如何发生。
+      - generic [ref=e40]:
+        - article [ref=e41]:
+          - link "Nº001 All about AIGC 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。 AI Workshop / LoRA / Creative tools 查看项目 All about AIGC项目视觉 AIGC" [ref=e42] [cursor=pointer]:
+            - /url: /work/lemo-ai
+            - generic [ref=e43]: Nº001
+            - generic [ref=e45]:
+              - heading "All about AIGC" [level=3] [ref=e46]
+              - generic [ref=e47]:
+                - paragraph [ref=e48]: 从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。
+                - generic [ref=e49]: AI Workshop / LoRA / Creative tools
+                - generic [ref=e50]: 查看项目
+            - generic [ref=e54]:
+              - img "All about AIGC项目视觉" [ref=e55]
+              - generic [ref=e56]: AIGC
+        - article [ref=e57]:
+          - link "Nº002 妙时品牌 有人懂，就是奇妙时刻。用箭头、色彩与生活场景建立同频社交品牌。 Brand identity / Guidelines / Art direction 查看项目 妙时品牌项目视觉 品牌与 IP" [ref=e58] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - generic [ref=e59]: Nº002
+            - generic [ref=e61]:
+              - heading "妙时品牌" [level=3] [ref=e62]
+              - generic [ref=e63]:
+                - paragraph [ref=e64]: 有人懂，就是奇妙时刻。用箭头、色彩与生活场景建立同频社交品牌。
+                - generic [ref=e65]: Brand identity / Guidelines / Art direction
+                - generic [ref=e66]: 查看项目
+            - generic [ref=e70]:
+              - img "妙时品牌项目视觉" [ref=e71]
+              - generic [ref=e72]: 品牌与 IP
+        - article [ref=e73]:
+          - link "Nº003 鉴一鉴你的内心物种 把情绪变成角色，用一场有趣的测试找到懂彼此的人。 H5 / Character design / Social sharing 查看项目 鉴一鉴你的内心物种项目视觉 H5 营销" [ref=e74] [cursor=pointer]:
+            - /url: /work/inner-species
+            - generic [ref=e75]: Nº003
+            - generic [ref=e77]:
+              - heading "鉴一鉴你的内心物种" [level=3] [ref=e78]
+              - generic [ref=e79]:
+                - paragraph [ref=e80]: 把情绪变成角色，用一场有趣的测试找到懂彼此的人。
+                - generic [ref=e81]: H5 / Character design / Social sharing
+                - generic [ref=e82]: 查看项目
+            - generic [ref=e86]:
+              - img "鉴一鉴你的内心物种项目视觉" [ref=e87]
+              - generic [ref=e88]: H5 营销
+        - article [ref=e89]:
+          - link "Nº004 伴岛 从蛋仔 IP 到社区文化，为大学生建立清爽有趣的共同空间。 IP design / Community / AIGC 查看项目 伴岛项目视觉 品牌与 IP" [ref=e90] [cursor=pointer]:
+            - /url: /work/bandao
+            - generic [ref=e91]: Nº004
+            - generic [ref=e93]:
+              - heading "伴岛" [level=3] [ref=e94]
+              - generic [ref=e95]:
+                - paragraph [ref=e96]: 从蛋仔 IP 到社区文化，为大学生建立清爽有趣的共同空间。
+                - generic [ref=e97]: IP design / Community / AIGC
+                - generic [ref=e98]: 查看项目
+            - generic [ref=e102]:
+              - img "伴岛项目视觉" [ref=e103]
+              - generic [ref=e104]: 品牌与 IP
+      - link "浏览全部 12 个项目" [ref=e105] [cursor=pointer]:
+        - /url: /work
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - generic [ref=e111]: (02) — VISUAL PLAYGROUND / 视觉漫游
+        - generic [ref=e112]: +
+        - generic [ref=e113]: 24 IMAGES / IN MOTION
+      - generic "滚动画廊" [ref=e115]:
+        - generic [ref=e116]:
+          - generic [ref=e117]: A COLLECTION OF LITTLE THINGS
+          - paragraph [ref=e118]:
+            - text: Scroll to explore
+            - generic [ref=e119]: 滚动探索 · 左右拖动
+          - link "继续浏览 ↘" [ref=e120] [cursor=pointer]:
+            - /url: "#services"
+        - generic [ref=e121]:
+          - link "查看内心物种 1" [ref=e122] [cursor=pointer]:
+            - /url: /work/inner-species
+            - img "内心物种 1" [ref=e124]
+          - link "查看妙时品牌图形 2" [ref=e125] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时品牌图形 2" [ref=e127]
+          - link "查看妙时生活海报 6" [ref=e128] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时生活海报 6" [ref=e130]
+          - link "查看3D Lemo 模型" [ref=e131] [cursor=pointer]:
+            - /url: /work/lemo-ai
+            - img "3D Lemo 模型" [ref=e133]
+          - link "查看内心物种 5" [ref=e134] [cursor=pointer]:
+            - /url: /work/inner-species
+            - img "内心物种 5" [ref=e136]
+          - link "查看妙时生活海报 3" [ref=e137] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时生活海报 3" [ref=e139]
+          - link "查看伴岛社区角色 4" [ref=e140] [cursor=pointer]:
+            - /url: /work/bandao
+            - img "伴岛社区角色 4" [ref=e142]
+          - link "查看内心物种 2" [ref=e143] [cursor=pointer]:
+            - /url: /work/inner-species
+            - img "内心物种 2" [ref=e145]
+          - link "查看妙时品牌图形 3" [ref=e146] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时品牌图形 3" [ref=e148]
+          - link "查看伴岛社区角色 1" [ref=e149] [cursor=pointer]:
+            - /url: /work/bandao
+            - img "伴岛社区角色 1" [ref=e151]
+          - link "查看插画风格模型" [ref=e152] [cursor=pointer]:
+            - /url: /work/lemo-ai
+            - img "插画风格模型" [ref=e154]
+          - link "查看内心物种 6" [ref=e155] [cursor=pointer]:
+            - /url: /work/inner-species
+            - img "内心物种 6" [ref=e157]
+          - link "查看妙时生活海报 4" [ref=e158] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时生活海报 4" [ref=e160]
+          - link "查看伴岛社区角色 5" [ref=e161] [cursor=pointer]:
+            - /url: /work/bandao
+            - img "伴岛社区角色 5" [ref=e163]
+          - link "查看内心物种 3" [ref=e164] [cursor=pointer]:
+            - /url: /work/inner-species
+            - img "内心物种 3" [ref=e166]
+          - link "查看妙时生活海报 1" [ref=e167] [cursor=pointer]:
+            - /url: /work/miaoshi-brand
+            - img "妙时生活海报 1" [ref=e169]
+          - link "查看伴岛社区角色 2" [ref=e170] [cursor=pointer]:
+            - /url: /work/bandao
+            - img "伴岛社区角色 2" [ref=e172]
+          - link "查看日本活动视觉模型" [ref=e173] [cursor=pointer]:
+            - /url: /work/lemo-ai
+            - img "日本活动视觉模型" [ref=e175]
+        - generic [ref=e176]:
+          - generic [ref=e177]:
+            - text: "01"
+            - generic [ref=e178]: / 24
+          - generic [ref=e179]:
+            - generic [ref=e180]: ▸ 鉴一鉴你的内心物种
+            - generic [ref=e181]: 内心物种 1
+          - generic [ref=e182]:
+            - button "上一张" [disabled] [ref=e183]
+            - button "下一张" [ref=e186] [cursor=pointer]
+            - link "查看项目" [ref=e189] [cursor=pointer]:
+              - /url: /work/inner-species
+    - region [ref=e193]:
+      - generic [ref=e194]:
+        - generic [ref=e195]: (02 / B) — TYPE IN MOTION / 字体实验
+        - generic [ref=e196]: +
+        - generic [ref=e197]: PLAY WITH WORDS
+      - generic [ref=e198]:
+        - heading "Make some waves." [level=2] [ref=e199]:
+          - generic [ref=e200]: Make
+          - generic [ref=e201]: some
+          - emphasis [ref=e202]:
+            - generic [ref=e203]: waves.
+        - paragraph [ref=e204]: 让文字动起来。输入你的灵感，看它自由起伏。
+      - img "彩色波浪字体：VIBE MAKING" [ref=e205]:
+        - generic [ref=e206]:
+          - generic [ref=e207]:
+            - generic [ref=e208]: V
+            - generic [ref=e209]: I
+            - generic [ref=e210]: B
+            - generic [ref=e211]: E
+            - generic [ref=e213]: M
+            - generic [ref=e214]: A
+            - generic [ref=e215]: K
+            - generic [ref=e216]: I
+            - generic [ref=e217]: "N"
+            - generic [ref=e218]: G
+          - generic [ref=e219]:
+            - generic [ref=e220]: V
+            - generic [ref=e221]: I
+            - generic [ref=e222]: B
+            - generic [ref=e223]: E
+            - generic [ref=e225]: M
+            - generic [ref=e226]: A
+            - generic [ref=e227]: K
+            - generic [ref=e228]: I
+            - generic [ref=e229]: "N"
+            - generic [ref=e230]: G
+          - generic [ref=e231]:
+            - generic [ref=e232]: V
+            - generic [ref=e233]: I
+            - generic [ref=e234]: B
+            - generic [ref=e235]: E
+            - generic [ref=e237]: M
+            - generic [ref=e238]: A
+            - generic [ref=e239]: K
+            - generic [ref=e240]: I
+            - generic [ref=e241]: "N"
+            - generic [ref=e242]: G
+          - generic [ref=e243]:
+            - generic [ref=e244]: V
+            - generic [ref=e245]: I
+            - generic [ref=e246]: B
+            - generic [ref=e247]: E
+            - generic [ref=e249]: M
+            - generic [ref=e250]: A
+            - generic [ref=e251]: K
+            - generic [ref=e252]: I
+            - generic [ref=e253]: "N"
+            - generic [ref=e254]: G
+          - generic [ref=e255]:
+            - generic [ref=e256]: V
+            - generic [ref=e257]: I
+            - generic [ref=e258]: B
+            - generic [ref=e259]: E
+            - generic [ref=e261]: M
+            - generic [ref=e262]: A
+            - generic [ref=e263]: K
+            - generic [ref=e264]: I
+            - generic [ref=e265]: "N"
+            - generic [ref=e266]: G
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - generic [ref=e269]: 你的文字
+          - textbox "你的文字" [ref=e270]:
+            - /placeholder: VIBE MAKING
+            - text: VIBE MAKING
+        - generic [ref=e271]:
+          - generic [ref=e272]: 速度
+          - slider "速度" [ref=e273]: "1"
+          - status [ref=e274]: 1.00×
+        - button "暂停" [ref=e275] [cursor=pointer]
+        - button "重置" [ref=e279] [cursor=pointer]
+      - paragraph [ref=e283]:
+        - text: TYPE EXPERIMENT / 01
+        - link "Inspired by Wave Type ↗" [ref=e284] [cursor=pointer]:
+          - /url: https://brik.space/toolviewer?slug=remix-of-label-block-type-mshpil8d
+    - generic [ref=e285]:
+      - generic [ref=e286]:
+        - generic [ref=e287]: (03) — PRACTICE / 设计实践
+        - generic [ref=e288]: +
+        - generic [ref=e289]: THINK → MAKE
+      - generic [ref=e290]:
+        - heading "Think. Plan.Do. Repeat." [level=2] [ref=e291]:
+          - generic [ref=e292]: Think.
+          - generic [ref=e293]: Plan.
+          - generic [ref=e294]:
+            - generic [ref=e295]: Do.
+            - generic [ref=e296]: Repeat.
+        - paragraph [ref=e297]: 让设计既有表达，也有方法。在不同业务与媒介之间，持续探索。
+      - generic [ref=e298]:
+        - article [ref=e299]:
+          - generic [ref=e300]: "01"
+          - heading "品牌与 IP" [level=3] [ref=e301]
+          - paragraph [ref=e302]: 从品牌定位、视觉规范到角色与应用，建立一致且可延展的表达。
+        - article [ref=e303]:
+          - generic [ref=e304]: "02"
+          - heading "营销与体验" [level=3] [ref=e305]
+          - paragraph [ref=e306]: 结合业务目标与用户情绪，把概念落到 H5、活动和线上线下触点。
+        - article [ref=e307]:
+          - generic [ref=e308]: "03"
+          - heading "AI 与创意工具" [level=3] [ref=e309]
+          - paragraph [ref=e310]: 探索定制模型、工作流与创作平台，让设计经验成为可复用的工具。
+        - article [ref=e311]:
+          - generic [ref=e312]: "04"
+          - heading "团队与设计系统" [level=3] [ref=e313]
+          - paragraph [ref=e314]: 梳理需求、规划资源、沉淀组件，帮助团队持续交付。
+    - generic [ref=e315]:
+      - generic [ref=e316]:
+        - generic [ref=e317]: (04) — ABOUT / 关于我
+        - generic [ref=e318]: +
+        - generic [ref=e319]: HELLO, I'M ZZ
+      - generic [ref=e320]:
+        - generic [ref=e321]:
+          - paragraph [ref=e322]: ZZ / VISUAL DESIGNER
+          - heading "保持好奇，让想法发生。" [level=2] [ref=e323]:
+            - generic [ref=e324]: 保持好奇，
+            - generic [ref=e325]: 让想法发生。
+          - paragraph [ref=e326]: 用视觉建立品牌，用体验连接用户。将插画、字体、三维与动效融入产品，也用 AI 与代码探索设计的新可能。
+          - link "zzhen0325@gmail.com" [ref=e327] [cursor=pointer]:
+            - /url: mailto:zzhen0325@gmail.com
+        - img "张振作品集封面：Think、Plan、Do、Review、Repeat 五个彩色路牌" [ref=e332]
+      - generic [ref=e333]:
+        - paragraph [ref=e334]: EXPERIENCE / 项目与经历
+        - article [ref=e335]:
+          - heading "Lemon8" [level=3] [ref=e336]
+          - generic [ref=e337]:
+            - heading "海外活动视觉 / AIGC 工具与流程" [level=4] [ref=e338]
+            - paragraph [ref=e339]: US、JP、SEA 活动视觉，以及 AI Workshop、LoRA 和团队创作平台实践。
+        - article [ref=e340]:
+          - heading "网易云音乐" [level=3] [ref=e341]
+          - generic [ref=e342]:
+            - heading "品牌 / 营销 / 团队建设" [level=4] [ref=e343]
+            - paragraph [ref=e344]: 社交直播业务线视觉设计，涵盖妙时、伴岛、心遇等产品及团队资源规划。
+        - article [ref=e345]:
+          - heading "马蜂窝" [level=3] [ref=e346]
+          - generic [ref=e347]:
+            - heading "用户增长 / 成长体系" [level=4] [ref=e348]
+            - paragraph [ref=e349]: 参与旅行地图、成就勋章、足迹与打卡地图等项目。
+        - article [ref=e350]:
+          - heading "字节跳动" [level=3] [ref=e351]
+          - generic [ref=e352]:
+            - heading "今日头条 UED" [level=4] [ref=e353]
+            - paragraph [ref=e354]: 参与今日头条、西瓜视频日常运营及品牌活动设计。
+    - generic [ref=e355]:
+      - paragraph [ref=e356]: HAVE SOMETHING IN MIND? / 一起创造点什么
+      - link "Let's make it happen." [ref=e357] [cursor=pointer]:
+        - /url: mailto:zzhen0325@gmail.com
+        - text: Let's makeit happen.
+      - generic [ref=e361]:
+        - link "zzhen0325@gmail.com" [ref=e362] [cursor=pointer]:
+          - /url: mailto:zzhen0325@gmail.com
+        - generic [ref=e363]:
+          - link "作品" [ref=e364] [cursor=pointer]:
+            - /url: /work
+          - link "视觉漫游" [ref=e365] [cursor=pointer]:
+            - /url: /#gallery
+          - link "设计实践" [ref=e366] [cursor=pointer]:
+            - /url: /#services
+          - link "关于" [ref=e367] [cursor=pointer]:
+            - /url: /#about
+      - generic [ref=e368]:
+        - generic [ref=e369]: © 2026 ZZ · 张振
+        - generic [ref=e370]: VISUAL DESIGN & CREATIVE TECHNOLOGY
+        - link "回到顶部" [ref=e371] [cursor=pointer]:
+          - /url: "#top"
+  - button "Open Next.js Dev Tools" [ref=e379] [cursor=pointer]
+  - alert [ref=e383]

@@ -3,17 +3,27 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { createLatticeCollage } from "@/lib/lattice-collage";
 import { heroVideoRect } from "@/lib/hero-video-geometry";
-import { collagePanels, createRisographRenderer, risographSettings } from "@/lib/risograph";
+import { collagePanels, createRisographRenderer, risographSettings, type RisographStyle } from "@/lib/risograph";
 
 export function RisographVideo({
   videoRef,
   enabled = risographSettings.enabled,
   secretTriggerRef,
+  style = risographSettings,
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
   enabled?: boolean;
+  style?: RisographStyle;
   secretTriggerRef?: RefObject<HTMLButtonElement | null>;
 }) {
+  const redrawRef = useRef<(() => void) | null>(null);
+  const styleRef = useRef(style);
+  const rendererRef = useRef<ReturnType<typeof createRisographRenderer>>(null);
+  useEffect(() => {
+    styleRef.current = style;
+    rendererRef.current?.setStyle(style);
+    redrawRef.current?.();
+  }, [style]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef<HTMLCanvasElement>(null);
 
@@ -39,14 +49,43 @@ export function RisographVideo({
       labelContext.font = `${labelWidth < 600 ? 7 : 8}px monospace`;
       labelContext.textBaseline = "top";
       const positions = renderer.getWindowPositions();
+      const rotations = renderer.getWindowRotations();
       const secret = secretTriggerRef?.current;
       if (secret) {
         const [cx, cy, w, h] = positions.subarray(12, 16);
         const rect = canvas.getBoundingClientRect();
         const heroRect = canvas.closest("section")!.getBoundingClientRect();
-        Object.assign(secret.style, { left: `${rect.left - heroRect.left + (cx - w / 2) * rect.width}px`, top: `${rect.top - heroRect.top + (1 - cy - h / 2) * rect.height}px`, width: `${w * rect.width}px`, height: `${h * rect.height}px` });
+        Object.assign(secret.style, { left: `${rect.left - heroRect.left + (cx - w / 2) * rect.width}px`, top: `${rect.top - heroRect.top + (1 - cy - h / 2) * rect.height}px`, width: `${w * rect.width}px`, height: `${h * rect.height}px`, transform: `rotate(${rotations[3]}rad)` });
       }
-      collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress);
+      collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress, rotations);
+      const videoBounds = heroVideoRect(labelWidth, labelHeight, video.videoWidth, video.videoHeight, fitProgress);
+      labelContext.save();
+      labelContext.beginPath();
+      labelContext.rect(videoBounds.x, videoBounds.y, videoBounds.w, videoBounds.h);
+      labelContext.clip();
+      labelContext.strokeStyle = "rgba(255,255,255,0.32)";
+      labelContext.lineWidth = 0.75;
+      labelContext.setLineDash([3, 4]);
+      const reach = Math.hypot(labelWidth, labelHeight) * 2;
+      for (let i = 0; i < positions.length / 4; i++) {
+        const [cx, cy, width, height] = positions.subarray(i * 4, i * 4 + 4);
+        if (width * labelWidth < 8 || height * labelHeight < 8) continue;
+        labelContext.save();
+        labelContext.translate(cx * labelWidth, (1 - cy) * labelHeight);
+        labelContext.rotate(rotations[i]);
+        labelContext.beginPath();
+        for (const side of [-1, 1]) {
+          const x = side * width * labelWidth / 2;
+          const y = side * height * labelHeight / 2;
+          labelContext.moveTo(x, -reach);
+          labelContext.lineTo(x, reach);
+          labelContext.moveTo(-reach, y);
+          labelContext.lineTo(reach, y);
+        }
+        labelContext.stroke();
+        labelContext.restore();
+      }
+      labelContext.restore();
       const caption = (text: string, x: number, y: number, right = false) => {
         const width = labelContext.measureText(text).width;
         const left = right ? x - width : x;
@@ -61,6 +100,10 @@ export function RisographVideo({
         // Convert bottom-origin shader coordinates to top-origin display coordinates.
         const left = cx - width / 2;
         const top = 1 - cy - height / 2;
+        labelContext.save();
+        labelContext.translate(cx * labelWidth, (1 - cy) * labelHeight);
+        labelContext.rotate(rotations[i]);
+        labelContext.translate(-cx * labelWidth, -(1 - cy) * labelHeight);
         caption(labelWidth < 600 ? `S0${i + 1}` : collagePanels[i].label,
           left * labelWidth, top * labelHeight - 14);
         [[left, top], [left + width, top], [left + width, top + height], [left, top + height]].forEach(([x, y], corner) => {
@@ -84,9 +127,26 @@ export function RisographVideo({
           const labelY = corner < 2 ? py + 5 : py - lines.length * 11 - 2;
           lines.forEach((line, row) => caption(line, px + (right ? -5 : 5), labelY + row * 11, right));
         });
+        labelContext.restore();
       }
     };
     let renderer = createRisographRenderer(canvas);
+    rendererRef.current = renderer;
+    renderer?.setStyle(styleRef.current);
+    const section = canvas.closest("section");
+    let panelsAnnounced = false;
+    const announcePanels = () => {
+      if (panelsAnnounced) return;
+      panelsAnnounced = true;
+      if (section) section.dataset.panelsReady = "true";
+      section?.dispatchEvent(new Event("hero-panels-ready"));
+    };
+    const beginEntrance = () => {
+      renderer?.beginEntrance();
+      if (!renderer) announcePanels();
+    };
+    section?.addEventListener("hero-film-revealed", beginEntrance);
+    if (section?.dataset.filmRevealed === "true") beginEntrance();
     let pending = 0;
     let frameCallback = 0;
     let visible = true;
@@ -117,11 +177,13 @@ export function RisographVideo({
           canvas.style.opacity = "1";
           drawLabels();
           labels.style.opacity = "1";
+          if (renderer.isEntranceComplete()) announcePanels();
         }
       } catch {
         hide();
       }
     };
+    redrawRef.current = () => draw();
     const schedule = () => {
       if (!pending && active()) pending = requestAnimationFrame(() => {
         pending = 0;
@@ -144,8 +206,13 @@ export function RisographVideo({
       if (!positions || !renderer?.canDrag()) return -1;
       const [x, y] = point(event);
       for (let i = positions.length / 4 - 1; i >= 0; i--) {
-        if (Math.abs(x - positions[i * 4]) <= positions[i * 4 + 2] / 2 &&
-            Math.abs(y - positions[i * 4 + 1]) <= positions[i * 4 + 3] / 2) return i;
+        const angle = renderer.getWindowRotations()[i];
+        const dx = (x - positions[i * 4]) * canvas.clientWidth;
+        const dy = -(y - positions[i * 4 + 1]) * canvas.clientHeight;
+        const localX = Math.cos(angle) * dx + Math.sin(angle) * dy;
+        const localY = -Math.sin(angle) * dx + Math.cos(angle) * dy;
+        if (Math.abs(localX) <= positions[i * 4 + 2] * canvas.clientWidth / 2 &&
+            Math.abs(localY) <= positions[i * 4 + 3] * canvas.clientHeight / 2) return i;
       }
       return -1;
     };
@@ -239,7 +306,7 @@ export function RisographVideo({
       textureReady = false;
       renderer?.ready.then(() => {
         if (!disposed) { textureReady = true; resume(); }
-      }).catch(hide);
+      }).catch(() => { hide(); announcePanels(); });
     };
     const onMotionChange = () => {
       stop();
@@ -254,11 +321,15 @@ export function RisographVideo({
       // Invalidate old resources while lost; their handles cannot be deleted
       // against the restored context, which would raise INVALID_OPERATION.
       renderer?.dispose();
+      rendererRef.current = null;
       for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
       renderer = null;
     };
     const restored = () => {
       renderer = createRisographRenderer(canvas);
+      rendererRef.current = renderer;
+      renderer?.setStyle(styleRef.current);
+      if (section?.dataset.filmRevealed === "true") beginEntrance();
       awaitTexture();
     };
     const resize = new ResizeObserver(onResize);
@@ -279,6 +350,8 @@ export function RisographVideo({
     awaitTexture();
     return () => {
       disposed = true;
+      redrawRef.current = null;
+      section?.removeEventListener("hero-film-revealed", beginEntrance);
       stop();
       surface?.removeEventListener("pointerdown", onPointerDown);
       surface?.removeEventListener("pointermove", onPointerMove);
@@ -299,6 +372,7 @@ export function RisographVideo({
       document.removeEventListener("visibilitychange", resume);
       reducedMotion.removeEventListener("change", onMotionChange);
       renderer?.dispose();
+      rendererRef.current = null;
       for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
     };
   }, [videoRef, enabled, secretTriggerRef]);
