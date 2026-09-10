@@ -1,5 +1,7 @@
 "use client";
 
+import { getHeroPalette } from "@/lib/hero-palettes";
+
 import { useEffect, useRef, type RefObject } from "react";
 import { createLatticeCollage } from "@/lib/lattice-collage";
 import { heroVideoRect } from "@/lib/hero-video-geometry";
@@ -8,14 +10,22 @@ import { collagePanels, createRisographRenderer, risographSettings, type Risogra
 export function RisographVideo({
   videoRef,
   enabled = risographSettings.enabled,
+  skipEntrance = false,
+  entranceAt,
+  onReady,
   secretTriggerRef,
   style = risographSettings,
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
   enabled?: boolean;
+  skipEntrance?: boolean;
+  entranceAt?: number;
+  onReady?: () => void;
   style?: RisographStyle;
   secretTriggerRef?: RefObject<HTMLButtonElement | null>;
 }) {
+  const onReadyRef = useRef(onReady);
+  useEffect(() => { onReadyRef.current = onReady; }, [onReady]);
   const redrawRef = useRef<(() => void) | null>(null);
   const styleRef = useRef(style);
   const rendererRef = useRef<ReturnType<typeof createRisographRenderer>>(null);
@@ -33,6 +43,9 @@ export function RisographVideo({
     const canvas = canvasRef.current;
     const labels = labelsRef.current;
     if (!video || !canvas || !labels) return;
+    const palette = getHeroPalette();
+    canvas.dataset.palette = palette.id;
+    const panelColors = [palette.main, palette.main, palette.paper, palette.accent, palette.soft, palette.main, palette.accent, palette.soft];
     const labelContext = labels.getContext("2d");
     const collage = labelContext ? createLatticeCollage(labelContext) : null;
     let labelWidth = canvas.clientWidth;
@@ -51,13 +64,12 @@ export function RisographVideo({
       const positions = renderer.getWindowPositions();
       const rotations = renderer.getWindowRotations();
       const secret = secretTriggerRef?.current;
-      if (secret) {
+      if (secret && !canvas.closest("[inert]")) {
         const [cx, cy, w, h] = positions.subarray(12, 16);
         const rect = canvas.getBoundingClientRect();
         const heroRect = canvas.closest("section")!.getBoundingClientRect();
         Object.assign(secret.style, { left: `${rect.left - heroRect.left + (cx - w / 2) * rect.width}px`, top: `${rect.top - heroRect.top + (1 - cy - h / 2) * rect.height}px`, width: `${w * rect.width}px`, height: `${h * rect.height}px`, transform: `rotate(${rotations[3]}rad)` });
       }
-      collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress, rotations);
       const videoBounds = heroVideoRect(labelWidth, labelHeight, video.videoWidth, video.videoHeight, fitProgress);
       labelContext.save();
       labelContext.beginPath();
@@ -94,9 +106,9 @@ export function RisographVideo({
         labelContext.fillStyle = "rgba(255,255,255,0.9)";
         labelContext.fillText(text, left, y);
       };
-      for (let i = 0; i < positions.length / 4; i++) {
+      const drawPanelLabels = (i: number) => {
         const [cx, cy, width, height] = positions.subarray(i * 4, i * 4 + 4);
-        if (width * labelWidth < 8 || height * labelHeight < 8) continue;
+        if (width * labelWidth < 8 || height * labelHeight < 8) return;
         // Convert bottom-origin shader coordinates to top-origin display coordinates.
         const left = cx - width / 2;
         const top = 1 - cy - height / 2;
@@ -110,7 +122,7 @@ export function RisographVideo({
           const px = x * labelWidth;
           const py = y * labelHeight;
           const right = corner === 1 || corner === 2;
-          labelContext.fillStyle = collagePanels[i].color;
+          labelContext.fillStyle = panelColors[i];
           labelContext.fillRect(px - 1.5, py - 1.5, 3, 3);
           if (width * labelWidth < 145 && (corner === 1 || corner === 3)) return;
           const availableWidth = width * labelWidth - 10;
@@ -128,10 +140,12 @@ export function RisographVideo({
           lines.forEach((line, row) => caption(line, px + (right ? -5 : 5), labelY + row * 11, right));
         });
         labelContext.restore();
-      }
+      };
+      collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress, rotations, drawPanelLabels);
     };
     let renderer = createRisographRenderer(canvas);
     rendererRef.current = renderer;
+    if (!renderer) onReadyRef.current?.();
     renderer?.setStyle(styleRef.current);
     const section = canvas.closest("section");
     let panelsAnnounced = false;
@@ -142,11 +156,14 @@ export function RisographVideo({
       section?.dispatchEvent(new Event("hero-panels-ready"));
     };
     const beginEntrance = () => {
-      renderer?.beginEntrance();
+      renderer?.beginEntrance(skipEntrance);
       if (!renderer) announcePanels();
     };
-    section?.addEventListener("hero-film-revealed", beginEntrance);
-    if (section?.dataset.filmRevealed === "true") beginEntrance();
+    if (entranceAt === undefined) {
+      section?.addEventListener("hero-film-revealed", beginEntrance);
+      if (skipEntrance || section?.dataset.filmRevealed === "true") beginEntrance();
+    }
+    let timedEntranceStarted = false;
     let pending = 0;
     let frameCallback = 0;
     let visible = true;
@@ -155,28 +172,36 @@ export function RisographVideo({
     let motionTime = 0;
     let lastDrawTime = 0;
     let textureReady = false;
+    let readyAnnounced = false;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const hasFrameCallback = typeof video.requestVideoFrameCallback === "function";
     const active = () => !disposed && visible && !document.hidden;
     const hide = () => { canvas.style.opacity = "0"; labels.style.opacity = "0"; };
     const draw = (newFrame = false) => {
       if (!active()) return;
+      if (entranceAt !== undefined && !timedEntranceStarted && video.readyState >= 2 &&
+          !video.seeking && video.currentTime >= entranceAt) {
+        timedEntranceStarted = true;
+        beginEntrance();
+      }
       const now = performance.now();
       if (!reducedMotion.matches && lastDrawTime) motionTime += Math.min((now - lastDrawTime) / 1000, 0.1);
       lastDrawTime = now;
       fitProgress = Number(getComputedStyle(canvas.parentElement!).getPropertyValue("--hero-fit-progress")) || 0;
       renderer?.setFitProgress(fitProgress);
+      renderer?.setScrollProgress(Number(getComputedStyle(canvas.parentElement!).getPropertyValue("--hero-scroll-progress")) || 0);
       if (video.videoWidth && video.videoHeight) {
         const rect = heroVideoRect(canvas.clientWidth, canvas.clientHeight, video.videoWidth, video.videoHeight, fitProgress);
         Object.assign(video.style, { position: "absolute", maxWidth: "none", width: `${rect.w}px`, height: `${rect.h}px`, left: `${rect.x}px`, top: `${rect.y}px` });
       }
-      renderer?.setMotionTime(motionTime, reducedMotion.matches);
+      renderer?.setReducedMotion(reducedMotion.matches);
       renderer?.setGrainFrame(Math.floor(motionTime * risographSettings.grainAnimationFps));
       try {
         if (renderer?.draw(video, newFrame)) {
           canvas.style.opacity = "1";
           drawLabels();
           labels.style.opacity = "1";
+          if (!readyAnnounced) { readyAnnounced = true; onReadyRef.current?.(); }
           if (renderer.isEntranceComplete()) announcePanels();
         }
       } catch {
@@ -194,13 +219,13 @@ export function RisographVideo({
     // Listen on the hero because its typography/gradient sit above the canvas.
     const surface = canvas.closest("section");
     const originalCursor = surface?.style.cursor ?? "";
-    let drag: { pointerId: number; offsetX: number; offsetY: number } | null = null;
+    let drag: { pointerId: number } | null = null;
     const point = (event: PointerEvent) => {
       const bounds = canvas.getBoundingClientRect();
       return [(event.clientX - bounds.left) / bounds.width, 1 - (event.clientY - bounds.top) / bounds.height];
     };
     const hit = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse" || canvas.style.opacity !== "1" ||
+      if (canvas.closest("[inert]") || event.pointerType !== "mouse" || canvas.style.opacity !== "1" ||
           (event.target instanceof Element && event.target.closest("a, button, input, textarea, select"))) return -1;
       const positions = renderer?.getWindowPositions();
       if (!positions || !renderer?.canDrag()) return -1;
@@ -221,19 +246,18 @@ export function RisographVideo({
       const index = hit(event);
       if (index < 0) return;
       const [x, y] = point(event);
-      const positions = renderer.getWindowPositions();
-      drag = { pointerId: event.pointerId, offsetX: positions[index * 4] - x, offsetY: positions[index * 4 + 1] - y };
-      renderer.beginDrag(index);
+      drag = { pointerId: event.pointerId };
+      renderer.beginDrag(x, y);
       surface.setPointerCapture(event.pointerId);
       surface.style.cursor = "grabbing";
       event.preventDefault();
     };
     const onPointerMove = (event: PointerEvent) => {
-      if (!surface) return;
+      if (!surface || canvas.closest("[inert]")) return;
       if (!drag) { surface.style.cursor = hit(event) >= 0 ? "grab" : originalCursor; return; }
       if (event.pointerId !== drag.pointerId) return;
       const [x, y] = point(event);
-      renderer?.dragTo(x + drag.offsetX, y + drag.offsetY);
+      renderer?.dragTo(x, y);
       schedule();
       event.preventDefault();
     };
@@ -250,6 +274,25 @@ export function RisographVideo({
       if (event.pointerId === drag?.pointerId) endDrag();
     };
     const onPointerLeave = () => { if (surface && !drag) surface.style.cursor = originalCursor; };
+    const onScroll = () => {
+      if (!active() || surface?.classList.contains("is-playing")) return;
+      endDrag();
+      if (surface) surface.style.cursor = originalCursor;
+      schedule();
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (!active() || reducedMotion.matches || canvas.closest("[inert]") ||
+          surface?.classList.contains("is-playing") || event.ctrlKey) return;
+      if (event.target instanceof Element && event.target.closest("input, textarea, select, [role=dialog]")) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+      const delta = (Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX) * unit;
+      if (!delta) return;
+      onScroll();
+      schedule();
+    };
+    // Scrolling samples the same seekable choreography as the hero image.
+    surface?.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     surface?.addEventListener("pointerdown", onPointerDown);
     surface?.addEventListener("pointermove", onPointerMove);
     surface?.addEventListener("pointerup", onPointerEnd);
@@ -306,7 +349,7 @@ export function RisographVideo({
       textureReady = false;
       renderer?.ready.then(() => {
         if (!disposed) { textureReady = true; resume(); }
-      }).catch(() => { hide(); announcePanels(); });
+      }).catch(() => { hide(); announcePanels(); onReadyRef.current?.(); });
     };
     const onMotionChange = () => {
       stop();
@@ -329,7 +372,7 @@ export function RisographVideo({
       renderer = createRisographRenderer(canvas);
       rendererRef.current = renderer;
       renderer?.setStyle(styleRef.current);
-      if (section?.dataset.filmRevealed === "true") beginEntrance();
+      if (timedEntranceStarted || (entranceAt === undefined && (skipEntrance || section?.dataset.filmRevealed === "true"))) beginEntrance();
       awaitTexture();
     };
     const resize = new ResizeObserver(onResize);
@@ -353,6 +396,8 @@ export function RisographVideo({
       redrawRef.current = null;
       section?.removeEventListener("hero-film-revealed", beginEntrance);
       stop();
+      surface?.removeEventListener("wheel", onWheel);
+      window.removeEventListener("scroll", onScroll);
       surface?.removeEventListener("pointerdown", onPointerDown);
       surface?.removeEventListener("pointermove", onPointerMove);
       surface?.removeEventListener("pointerup", onPointerEnd);
@@ -375,7 +420,7 @@ export function RisographVideo({
       rendererRef.current = null;
       for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
     };
-  }, [videoRef, enabled, secretTriggerRef]);
+  }, [videoRef, enabled, secretTriggerRef, skipEntrance, entranceAt]);
 
   if (!enabled) return null;
   return <>

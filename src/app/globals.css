@@ -1376,6 +1376,12 @@ button {
   --line: rgba(244, 242, 237, 0.01);
   --grid-line: rgba(244, 242, 237, 0.1);
 }
+.home-content {
+  position: relative;
+  z-index: 4;
+  display: flow-root;
+  background: #090909;
+}
 .home-hero {
   position: relative;
   width: 100%;
@@ -1423,6 +1429,23 @@ button {
   height: 100%;
   isolation: isolate;
 }
+.hero-film-layer::after,
+.hero-video-frame:has(> img)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 58%) 0%,
+    rgb(0 0 0 / 20%) 18%,
+    transparent 38%,
+    transparent 60%,
+    rgb(0 0 0 / 24%) 82%,
+    rgb(0 0 0 / 65%) 100%
+  );
+}
 .hero-video-frame > video,
 .hero-video-frame > img,
 .hero-video-frame > canvas {
@@ -1433,8 +1456,9 @@ button {
   object-fit: cover;
   object-position: center top;
 }
-.home-hero :is(.hero-title, .hero-services, .hero-profile, .hero-record, .hero-timeline, .hero-grid) {
+.home-hero :is(.hero-title, .hero-services, .hero-profile, .hero-grid, .site-nav) {
   --hero-entry-y: 0px;
+  opacity: var(--hero-scroll-opacity, 1);
   translate: 0 calc(var(--hero-entry-y) + var(--hero-exit-y, 0px));
 }
 .hero-grid {
@@ -1469,28 +1493,12 @@ button {
 }
 .hero-grid i::before { top: 4px; width: 9px; height: 1px; }
 .hero-grid i::after { left: 4px; width: 1px; height: 9px; }
-.hero-timeline {
-  top: 84px;
-  bottom: auto;
-  border: 0;
-  padding: 0;
-  font-size: 10px;
-  color: rgb(244 242 237 / 80%);
-}
-.hero-timeline > span { width: 0; white-space: nowrap; }
-.hero-timeline > span:last-child { direction: rtl; }
-.hero-record {
-  position: absolute;
-  top: 148px;
-  left: var(--page-pad);
-  z-index: 3;
-  font-size: 11px;
-  color: rgb(244 242 237 / 80%);
-  font-variant-numeric: tabular-nums;
+.home-hero .site-nav {
+  border-bottom: 0;
 }
 .hero-services {
   position: absolute;
-  top: 35%;
+  top: 84px;
   left: var(--page-pad);
   z-index: 3;
   display: flex;
@@ -1508,7 +1516,7 @@ button {
 .hero-service-note { margin-top: 18px; max-width: 230px; }
 .hero-profile {
   position: absolute;
-  top: 24%;
+  bottom: 36px;
   right: var(--page-pad);
   z-index: 3;
   display: flex;
@@ -1541,7 +1549,7 @@ button {
   inset: auto 2.5vw 36px;
   z-index: 3;
   margin: 0;
-  font-size: 10vw;
+  font-size: 8vw;
   line-height: 0.78;
   font-weight: 480;
   letter-spacing: -0.045em;
@@ -1599,11 +1607,9 @@ button {
 @media (max-width: 809px) {
   .hero-grid { top: 96px; bottom: 20px; }
   .hero-grid > span:nth-child(2), .hero-grid > span:nth-child(4) { display: none; }
-  .hero-timeline { top: 78px; font-size: 8px; }
-  .hero-record { top: 118px; font-size: 10px; }
   .hero-services { display: none; }
-  .hero-profile { top: auto; bottom: 215px; left: var(--page-pad); width: auto; gap: 18px; }
-  .hero-introduction { width: min(100%, 340px); align-self: center; text-align: center; font-size: 13px; line-height: 1.25; }
+  .hero-profile { bottom: calc(12.8vw + 48px); width: min(235px, calc(100% - 2 * var(--page-pad))); gap: 18px; }
+  .hero-introduction { width: 100%; text-align: right; font-size: 13px; line-height: 1.25; }
   .hero-title { bottom: 24px; font-size: 16.4vw; }
   .home-page .section-label { min-height: 64px; grid-template-columns: 1fr auto; gap: 8px; }
   .home-page .section-label > span:last-child { font-size: 8px; }
@@ -1679,3 +1685,13 @@ button {
 .hero-roll-char { display: inline-block; overflow: hidden; vertical-align: bottom; position: relative; padding-block: 0.15em; margin-block: -0.15em; }
 .hero-roll-outgoing { display: inline-block; }
 .hero-roll-incoming { position: absolute; inset: 0; display: inline-block; padding-block: 0.15em; }
+
+/* The second decoded film fades over the retained first film, never over black. */
+.hero-film-layer { position: absolute; inset: 0; isolation: isolate; }
+.hero-film-layer > canvas { z-index: 2; }
+.hero-film-second { opacity: 0; pointer-events: none; transition: opacity 650ms ease-out; }
+.hero-film-second[data-visible="true"] { opacity: 1; pointer-events: auto; }
+.home-hero.is-playing .hero-film-layer > canvas { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-film-second { transition: none; }
+}

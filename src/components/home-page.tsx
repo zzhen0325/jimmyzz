@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { risographSettings } from "@/lib/risograph";
+import { useEffect, useRef, useState } from "react";
 import { useHomeReveals } from "./home-reveals";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
 import { WaveType } from "./wave-type";
 import { ArrowUpRight } from "lucide-react";
-import { Footer, SectionLabel, Timeline, TopNav } from "./site-chrome";
+import { Footer, SectionLabel, TopNav } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
 import { RisographVideo } from "./risograph-video";
 import { HeroMinesweeper } from "./hero-minesweeper";
@@ -27,13 +28,9 @@ const heroVideoSettings: {
   playbackSpeed: 0.1,
 };
 
-// Release the pinned hero at 90% of the video frames; playback finishes during exit.
+// A single upward sequence: clear the copy, gather the image, reveal the work.
 const heroExitSettings = {
-  releaseProgress: 0.9,
-  aspectRatio: 16 / 9,
-  scale: 0.5,
-  subjectRise: 0.18, // Fraction of the hero height, in addition to page scrolling.
-  scrollDistance: 0.85,
+  takeoverProgress: 1.5,
 };
 
 function EditorCard() {
@@ -59,11 +56,17 @@ function EditorCard() {
 function Hero() {
   const hero = useRef<HTMLElement>(null);
   const secretTrigger = useRef<HTMLButtonElement>(null);
+  const introVideo = useRef<HTMLVideoElement>(null);
+  const [secondReady, setSecondReady] = useState(false);
+  const [handoffComplete, setHandoffComplete] = useState(false);
   const backgroundVideo = useRef<HTMLVideoElement>(null);
   const [secret, setSecret] = useState<{ x: number; y: number } | null>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [filmRevealed, setFilmRevealed] = useState(false);
+  const introCompleteRef = useRef(false);
+  useEffect(() => { introCompleteRef.current = introComplete; }, [introComplete]);
 
   useGSAP(
     () => {
@@ -71,7 +74,7 @@ function Hero() {
       const section = hero.current;
       if (!video || !section || videoFailed) return;
       // Cached media may finish loading before React attaches onLoadedData.
-      if (video.readyState >= 2) gsap.delayedCall(0, () => setVideoReady(true));
+      if (introVideo.current && introVideo.current.readyState >= 2) gsap.delayedCall(0, () => setVideoReady(true));
       const mm = gsap.matchMedia();
       mm.add(
         { ...motionConditions, finePointer: "(hover: hover) and (pointer: fine)" },
@@ -93,7 +96,7 @@ function Hero() {
             pendingSeek = 0;
             // Scrolling can hand off early; the intro never shares its playhead
             // with the scroll-controlled clip.
-            if (!introComplete) {
+            if (!introCompleteRef.current) {
               if (playhead.progress > 0) setIntroComplete(true);
               return;
             }
@@ -137,69 +140,73 @@ function Hero() {
               video.removeEventListener("seeked", scheduleSeek);
             };
           }
-          // power1.in maps scroll progress to video progress as p².
-          // Invert it so release is tied to 90% of frames, not 90% of scroll distance.
-          const releaseScrollDistance = playbackScrollDistance * Math.sqrt(heroExitSettings.releaseProgress);
+          const content = section.parentElement?.querySelector<HTMLElement>(".home-content");
+          const serviceList = section.querySelector<HTMLElement>(".hero-services");
+          const profileCard = section.querySelector<HTMLElement>(".hero-profile");
+          const takeoverStart = playbackScrollDistance * heroExitSettings.takeoverProgress;
+          // The next section enters naturally from the bottom while the hero stays pinned.
+          // One viewport of overlap brings its top to the viewport top at pin release.
+          if (content) gsap.set(content, { marginTop: () => -section.offsetHeight });
           const pin = ScrollTrigger.create({
             id: "hero-video-pin",
             trigger: section,
             start: "top top",
-            end: () => `+=${releaseScrollDistance}`,
+            end: () => `+=${takeoverStart + section.offsetHeight}`,
             pin: true,
             anticipatePin: 1,
-          });
-          const playback = gsap.timeline({
-            defaults: { duration: 1, ease: "power1.in" },
-            scrollTrigger: {
-              id: "hero-video",
-              trigger: section,
-              start: () => pin.start,
-              end: () => pin.start + playbackScrollDistance,
-              scrub: true,
-              invalidateOnRefresh: true,
+            onRefresh: () => {
+              if (content) gsap.set(content, { marginTop: -section.offsetHeight });
             },
           });
-          playback.to(playhead, {
-            progress: 1,
-            onUpdate: scheduleSeek,
-          }, 0);
-          playback.fromTo(".hero-video-frame", { scale: 1 }, {
-            scale: heroExitSettings.scale,
-            transformOrigin: "50% 43%",
-          }, 0);
-          playback.fromTo(".hero-video-frame", {
-            width: "100%", height: "100%", left: 0, top: 0, "--hero-fit-progress": 0,
-          }, {
-            width: () => Math.min(section.clientWidth, section.clientHeight * heroExitSettings.aspectRatio),
-            height: () => Math.min(section.clientWidth / heroExitSettings.aspectRatio, section.clientHeight),
-            left: () => (section.clientWidth - Math.min(section.clientWidth, section.clientHeight * heroExitSettings.aspectRatio)) / 2,
-            top: () => (section.clientHeight - Math.min(section.clientWidth / heroExitSettings.aspectRatio, section.clientHeight)) / 2,
-            "--hero-fit-progress": 1,
-          }, 0);
-          const exit = gsap.timeline({
-            defaults: { duration: 1, ease: "power1.in" },
+          const playback = gsap.timeline({
+            defaults: { duration: 1, ease: "none" },
             scrollTrigger: {
-              id: "hero-exit", trigger: section,
-              start: () => pin.end,
-              end: () => pin.end + section.offsetHeight * heroExitSettings.scrollDistance,
+              id: "hero-video", trigger: section,
+              start: () => pin.start,
+              end: () => pin.end,
               scrub: true, invalidateOnRefresh: true,
             },
           });
-          exit.fromTo(".hero-video-frame", { y: 0 }, {
-            y: () => -section.offsetHeight * heroExitSettings.subjectRise,
+          playback.to(playhead, { progress: 1, onUpdate: scheduleSeek }, 0);
+          playback.fromTo(".hero-video-frame", {
+            y: 0, "--hero-scroll-progress": 0,
+          }, {
+            y: () => -section.offsetHeight * 0.18,
+            "--hero-scroll-progress": 1,
+            ease: "power1.inOut",
           }, 0);
-          // CSS adds entrance and exit offsets without competing transform owners.
-          for (const [selector, rise] of [
-            [".hero-title", 0.08],
-            [".hero-services", 0.04],
-            [".hero-profile", 0.11],
-            [".hero-record, .hero-timeline", 0.06],
-            [".hero-grid", 0.025],
-          ] as const) {
-            exit.fromTo(selector, { "--hero-exit-y": "0px" }, {
-              "--hero-exit-y": () => `${-section.offsetHeight * rise}px`,
+          // Offsets and opacity belong to the scroll layer, independently of text entrance.
+          if (serviceList) playback.fromTo(serviceList, {
+            "--hero-exit-y": "0px", "--hero-scroll-opacity": 1,
+          }, {
+            "--hero-exit-y": () => `${-(serviceList.offsetTop + serviceList.offsetHeight + 24)}px`,
+            "--hero-scroll-opacity": 0, duration: 0.28, ease: "power2.in",
+          }, 0);
+          playback.fromTo(".hero-title", {
+            "--hero-exit-y": "0px", "--hero-scroll-opacity": 1,
+          }, {
+            "--hero-exit-y": () => `${-section.offsetHeight * 0.16}px`,
+            "--hero-scroll-opacity": 0, duration: 0.38, ease: "power1.in",
+          }, 0.06);
+          if (profileCard) {
+            playback.fromTo(profileCard, { "--hero-exit-y": "0px" }, {
+              "--hero-exit-y": () => `${84 - profileCard.offsetTop}px`,
+              duration: 0.5, ease: "power1.inOut",
             }, 0);
+            playback.fromTo(profileCard, { "--hero-scroll-opacity": 1 }, {
+              "--hero-scroll-opacity": 0, duration: 0.22,
+            }, 0.5);
+            playback.to(profileCard, {
+              "--hero-exit-y": () => `${24 - profileCard.offsetTop}px`,
+              duration: 0.22,
+            }, 0.5);
           }
+          playback.fromTo(".site-nav", {
+            "--hero-exit-y": "0px", "--hero-scroll-opacity": 1,
+          }, {
+            "--hero-exit-y": "-72px", "--hero-scroll-opacity": 0,
+            duration: 0.26, ease: "power1.in",
+          }, 0.4);
           const onMetadata = () => {
             ScrollTrigger.refresh();
             scheduleSeek();
@@ -218,7 +225,7 @@ function Hero() {
       );
       return () => mm.revert();
     },
-    { scope: hero, dependencies: [videoFailed, introComplete], revertOnUpdate: true },
+    { scope: hero, dependencies: [videoFailed], revertOnUpdate: true },
   );
   return (
     <section
@@ -227,10 +234,12 @@ function Hero() {
       className={`home-hero${secret ? " is-playing" : ""}`}
     >
       <div className="hero-background" data-ready={videoReady || videoFailed}
+        style={filmRevealed || introComplete ? { maskImage: "none", animation: "none" } : undefined}
         onAnimationEnd={(event) => {
           if (event.animationName !== "hero-film-reveal") return;
           const section = hero.current;
           if (!section) return;
+          setFilmRevealed(true);
           section.dataset.filmRevealed = "true";
           section.dispatchEvent(new Event("hero-film-revealed"));
           if (videoFailed) section.dispatchEvent(new Event("hero-panels-ready"));
@@ -255,34 +264,42 @@ function Hero() {
           />
         ) : (
           <>
-            <video
-              ref={backgroundVideo}
-              className="size-full object-cover"
-              src={introComplete ? "/assets/videos/11.mp4" : "/assets/videos/15.mp4"}
-              poster="/assets/images/bg52.png"
-              preload="auto"
-              muted
-              autoPlay={!introComplete}
-              playsInline
-              disablePictureInPicture
-              aria-hidden="true"
-              onLoadedData={(event) => {
-                setVideoReady(true);
-                if (!introComplete && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                  void event.currentTarget.play().catch(() => setIntroComplete(true));
+            {!handoffComplete && <div className="hero-film-layer absolute inset-0" data-film="intro" inert={introComplete}>
+              <video ref={introVideo} className="size-full object-cover" src="/assets/videos/15.mp4?v=aligned-1"
+                poster="/assets/images/bg52.png" preload="auto" muted autoPlay playsInline
+                disablePictureInPicture aria-hidden="true"
+                onLoadedData={(event) => {
+                  setVideoReady(true);
+                  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                    void event.currentTarget.play().catch(() => setIntroComplete(true));
+                  } else event.currentTarget.pause();
+                }}
+                onEnded={() => setIntroComplete(true)}
+                onError={() => { setVideoReady(true); setIntroComplete(true); }} />
+              <RisographVideo videoRef={introVideo} secretTriggerRef={secretTrigger} entranceAt={5.667} />
+            </div>}
+            <div className="hero-film-layer hero-film-second absolute inset-0" data-film="second"
+              style={{ opacity: introComplete && secondReady ? 1 : 0, transition: "opacity 650ms ease-out", pointerEvents: introComplete ? "auto" : "none" }}
+              data-visible={introComplete && secondReady} inert={!introComplete}
+              onTransitionEnd={(event) => {
+                if (event.target === event.currentTarget && event.propertyName === "opacity" && introComplete && secondReady) {
+                  setHandoffComplete(true);
                 }
-              }}
-              onEnded={() => setIntroComplete(true)}
-              onError={() => introComplete ? setVideoFailed(true) : setIntroComplete(true)}
-            />
-            <RisographVideo videoRef={backgroundVideo} secretTriggerRef={secretTrigger} />
+              }}>
+              <video ref={backgroundVideo} className="size-full object-cover" src="/assets/videos/11.mp4"
+                preload="auto" muted playsInline disablePictureInPicture aria-hidden="true"
+                onLoadedData={() => { if (!risographSettings.enabled) setSecondReady(true); }}
+                onError={() => setVideoFailed(true)} />
+              <RisographVideo videoRef={backgroundVideo} skipEntrance
+                secretTriggerRef={secretTrigger}
+                onReady={() => setSecondReady(true)} />
+            </div>
           </>
         )}
         {secret && <HeroMinesweeper origin={secret} onClose={() => setSecret(null)} />}
         </div>
       </div>
       <div className="hero-scene" inert={!!secret}>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.28),transparent_45%,rgba(0,0,0,.22))] max-[809px]:bg-[linear-gradient(180deg,rgba(0,0,0,.25),transparent_50%,rgba(0,0,0,.34))]" />
       <div className="hero-grid" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((line) => <span key={line}><i /></span>)}
       </div>
@@ -302,14 +319,6 @@ function Hero() {
           Building brands through visuals and connecting people through experiences. Exploring illustration, type, 3D and motion — with AI and code.
         </p>
       </div>
-      <div className="hero-record">
-        <span className="flex items-center gap-[7px]">
-          <i className="size-1.5 rounded-full bg-[#f13d19] shadow-[0_0_8px_#f13d19]" />{" "}
-          REC&nbsp; 00:14:18:09
-        </span>
-
-      </div>
-      <Timeline className="hero-timeline" />
       <h1 className="hero-title tracking-tightest">
         <ScannerType enabled={false}>Jimmy</ScannerType>
       </h1>
@@ -426,12 +435,14 @@ export function HomePage() {
     <main ref={scope} className="home-page">
       <HoverLabel />
       <Hero />
-      <SelectedWork />
-      <CurveGallery />
-      <WaveType />
-      <Capabilities />
-      <About />
-      <Footer />
+      <div className="home-content">
+        <SelectedWork />
+        <CurveGallery />
+        <WaveType />
+        <Capabilities />
+        <About />
+        <Footer />
+      </div>
     </main>
   );
 }

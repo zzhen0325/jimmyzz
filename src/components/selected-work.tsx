@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { projects } from "@/lib/site-data";
-import { SectionLabel } from "./site-chrome";
 
 const selected = ["lemo-ai", "miaoshi-brand", "inner-species", "bandao"].map(
   (slug) => projects.find((project) => project.slug === slug)!,
@@ -12,24 +11,7 @@ const selected = ["lemo-ai", "miaoshi-brand", "inner-species", "bandao"].map(
 
 export function SelectedWork() {
   return (
-    <section id="selected-work" className="portfolio-section selected-work-section">
-      <SectionLabel
-        index="01"
-        title="SELECTED WORK / 精选作品"
-        time={`0${selected.length} SELECTED / ${projects.length} TOTAL`}
-      />
-      <div className="section-heading">
-        <h2>
-          Works
-          <br />
-          <span className="heading-muted">into experiences.</span>
-        </h2>
-        <p>
-          从品牌到体验，从创意到工具。
-          <br />
-          选择一个项目，看看它如何发生。
-        </p>
-      </div>
+    <section id="selected-work" className="portfolio-section selected-work-section" aria-label="精选作品">
       <div className="selected-work-list">
         {selected.map((project, index) => (
           <article className="work-row" key={project.slug}>

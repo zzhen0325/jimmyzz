@@ -262,7 +262,7 @@ export function createLatticeFilters(sctx, deps) {
       sctx.fillStyle = "#040404";
       sctx.fillRect(px, py, pw, ph);
     }
-    sctx.font = cell + 'px ui-monospace, "SF Mono", Menlo, monospace'; // glyph matches the cell: a touch bigger, still fits the dense grid
+    sctx.font = (options.asciiWeight || 400) + " " + cell + 'px ui-monospace, "SF Mono", Menlo, monospace'; // glyph matches the cell: a touch bigger, still fits the dense grid
     sctx.textBaseline = "middle";
     sctx.textAlign = "center";
     for (let r = 0; r < rows; r++) {
@@ -276,7 +276,7 @@ export function createLatticeFilters(sctx, deps) {
         const gx = px + c * cw + cw / 2,
           gy = py + r * chh + chh / 2;
         if (asciiSparseSkip(gx, gy)) continue;
-        sctx.fillStyle = lut[Math.min(31, (lum * 32) | 0)];
+        sctx.fillStyle = options.asciiInk || lut[Math.min(31, (lum * 32) | 0)];
         sctx.fillText(g, gx, gy);
       }
     }

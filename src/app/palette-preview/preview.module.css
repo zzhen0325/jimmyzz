@@ -1,0 +1,14 @@
+.preview { height: 100dvh; display: flex; flex-direction: column; background: #f4f1e9; color: #303b45; padding: 22px 26px 16px; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.header p { font-size: 10px; letter-spacing: .16em; margin: 0 0 4px; }
+.header h1 { font-size: 22px; font-weight: 500; margin: 0; }
+.header a { font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+.options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 18px; }
+.options button { cursor: pointer; text-align: left; padding: 8px; border: 1px solid #d2d0c7; background: transparent; font: inherit; font-size: 12px; }
+.options button[aria-pressed=true] { border-color: #303b45; background: #e5e7df; }
+.options button:focus-visible, .header a:focus-visible { outline: 2px solid #466bc4; outline-offset: 3px; }
+.swatches { display: flex; height: 22px; margin-bottom: 7px; }
+.swatches i { flex: 1; }.swatches i:nth-child(2) { flex: 2; }
+.description { font-size: 12px; margin: 12px 0; }
+.frame { width: 100%; flex: 1; min-height: 200px; border: 1px solid #d2d0c7; background: #303b45; }
+@media (max-width: 650px) { .preview { padding: 14px 12px 10px; } .header h1 { font-size: 18px; } .options { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; } .options button { flex: 0 0 138px; } .description { min-height: 32px; } }

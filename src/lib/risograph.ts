@@ -1,6 +1,9 @@
-import { sampleCollageMotion } from "./collage-motion";
-import { createHeroSubjectTracker } from "./hero-subject-tracker";
+import { getHeroPalette } from "./hero-palettes";
+import { sampleCollageMotion, orbitEntranceDuration, createOrbitMotion } from "./collage-motion";
 import { heroVideoRect } from "./hero-video-geometry";
+
+const panelEntrances = new WeakMap<Element, { start: number | null }>();
+const orbitMotions = new WeakMap<Element, ReturnType<typeof createOrbitMotion>>();
 
 // Reconstructed from the visible Effect.app Risograph + Exposure controls.
 // Grain and ink blending approximate the reference preview.
@@ -17,8 +20,8 @@ export const risographSettings = {
   "grainContrast": 1,
   "grainAnimationFps": 12,
   "grainAnimationStrength": 0.35,
-  "paperTextureStrength": 0.24,
-  "paperCreaseStrength": 0.16,
+  "paperTextureStrength": 0.34,
+  "paperCreaseStrength": 0.24,
   "paperChangeEveryFrames": 8,
   "coolColorRecovery": 0.38,
   "shadowDepth": 0.65,
@@ -77,36 +80,19 @@ export const risographWindowSettings = {
   inks: ["#c05be8", "#2371B2", "#ff754c"],
 } as const;
 
-// Five evenly spaced panels on one upper-left to lower-right diagonal.
-// Coordinates use the shader's bottom-left origin; effects follow this order.
+// Eight landscape 4:3 video windows, evenly spaced around the orbit.
 export const collagePanels = [
-  { label: "S01 / PASTEL", color: "#a6b8ff", bounds: [0.24, 0.80, 0.0775, 0.10] },
-  { label: "S02 / RISO", color: "#f4bcac", bounds: [0.37, 0.65, 0.0775, 0.10] },
-  { label: "S03 / ORIGINAL", color: "#ade4d0", bounds: [0.50, 0.50, 0.0775, 0.10] },
-  { label: "S04 / DUOTONE GRID", color: "#ff8e30", bounds: [0.63, 0.35, 0.0775, 0.10] },
-  { label: "S05 / SOFT PASTEL", color: "#ffd4e8", bounds: [0.76, 0.20, 0.0775, 0.10] },
+  { label: "S01 / PASTEL", color: "#a6b8ff" },
+  { label: "S02 / RISO", color: "#f4bcac" },
+  { label: "S03 / ORIGINAL", color: "#ade4d0" },
+  { label: "S04 / DUOTONE GRID", color: "#ff8e30" },
+  { label: "S05 / SOFT PASTEL", color: "#ffd4e8" },
+  { label: "S06 / HALFTONE", color: "#fff6de" },
+  { label: "S07 / ASCII", color: "#fffbea" },
+  { label: "S08 / ACCENT", color: "#ffbd9e" },
 ] as const;
-// Black workflow cards in the final shot: [centre X, centre Y, width, height]
-// in source-video coordinates, with a top-left origin.
-const workflowCards = [
-  [0.183, 0.492, 0.148, 0.450],
-  [0.341, 0.491, 0.148, 0.455],
-  [0.499, 0.491, 0.149, 0.455],
-  [0.657, 0.491, 0.149, 0.453],
-  [0.815, 0.492, 0.147, 0.449],
-] as const;
-const alignedCardScale = 1.04;
-const panelSizeMultiplier = 1.5;
 const risographWindowCount = collagePanels.length;
-// Opening-frame person and computer, in top-origin source-video coordinates.
-const openingSubjectFrame = { x: 0.423, y: 0.37, width: 0.152, height: 0.18 };
-const panelEntranceStagger = 0.18;
-const panelEntranceTweenDuration = 0.72;
-const panelEntranceDuration = (risographWindowCount - 1) * panelEntranceStagger + panelEntranceTweenDuration;
-const driftHoldDuration = 1;
-// Source-space monitor centre in the opening frame of the current hero clip.
-// Follow its displacement so the authored layout matches the reference at rest.
-const subjectRestPosition = { x: 0.531, y: 0.428 };
+const panelEntranceDuration = orbitEntranceDuration;
 
 const vertexSource = `#version 300 es
 
@@ -244,10 +230,26 @@ void main() {
   float relief = paperRelief(paperPixel);
   float creases = paperCrease(paperPixel, normalize(vec2(1.0, 0.16)), 286.0)
     + paperCrease(paperPixel, normalize(vec2(-0.09, 1.0)), 394.0);
+  vec2 sheetSize = 1.0 / borderPixel;
+  creases += paperCrease(paperPixel, normalize(vec2(1.0, -0.22)), sheetSize.x * 0.68) * 0.75
+    + paperCrease(paperPixel, normalize(vec2(0.12, 1.0)), sheetSize.y * 0.24) * 0.65
+    + paperCrease(paperPixel, normalize(vec2(-0.18, 1.0)), sheetSize.y * 0.78) * 0.8
+    + paperCrease(paperPixel, normalize(vec2(0.72, 0.69)), dot(sheetSize, vec2(0.72, 0.69)) * 0.62) * 0.5;
   float paperMark = relief * paperTexture.x + creases * paperTexture.y;
   // A little exposed paper keeps fibers visible in ink without washing out blacks.
   printColor *= 1.0 + paperMark;
   printColor += paper * max(paperMark, 0.0) * 0.12;
+  // The opaque background canvas owns its shading; preserve the S02 effect window.
+  // Other effect rectangles are composited above this canvas.
+  if (!inWindow) {
+    float y = 1.0 - uv.y;
+    float shade = y < 0.18 ? mix(0.58, 0.20, y / 0.18)
+      : y < 0.38 ? mix(0.20, 0.0, (y - 0.18) / 0.20)
+      : y < 0.60 ? 0.0
+      : y < 0.82 ? mix(0.0, 0.24, (y - 0.60) / 0.22)
+      : mix(0.24, 0.65, (y - 0.82) / 0.18);
+    printColor *= 1.0 - shade;
+  }
   outputColor = vec4(clamp(printColor, 0.0, 1.0), 1.0);
 }`;
 
@@ -315,7 +317,9 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   const uniform = (name: string) => gl.getUniformLocation(program, name);
   let settings: RisographStyle = risographSettings;
-  const windowSettings = risographWindowSettings;
+  const palette = getHeroPalette();
+  const windowSettings = { ...risographWindowSettings, paper: palette.paper,
+    inks: [palette.main, palette.dark, palette.accent] };
   const risoWindow = uniform("risoWindow");
   gl.uniform3fv(uniform("windowPaper"), linearRgb(windowSettings.paper));
   gl.uniform4f(uniform("windowGrain"), windowSettings.grainScale, windowSettings.grainOpacity, windowSettings.grainSoftness, windowSettings.grainContrast);
@@ -323,26 +327,23 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   windowSettings.inks.forEach((ink, index) => gl.uniform3fv(uniform(`windowInk[${index}]`), linearRgb(ink)));
   const borderPixel = uniform("borderPixel");
   const windowPositions = new Float32Array(risographWindowCount * 4);
-  const windowLayout: number[][] = collagePanels.map(panel => [...panel.bounds]);
   const windowRotations = new Float32Array(risographWindowCount);
-  const motionOffsets = windowLayout.map(() => [0, 0]);
-  let rowAlignment = 0;
-  let motionTime = 0;
+  const orbitOwner = canvas.closest("section") ?? canvas;
+  const orbit = orbitMotions.get(orbitOwner) ?? createOrbitMotion();
+  orbitMotions.set(orbitOwner, orbit);
+  const sharedEntrance = panelEntrances.get(orbitOwner) ?? { start: null };
+  panelEntrances.set(orbitOwner, sharedEntrance);
   let fitProgress = 0;
+  let scrollProgress = 0;
   let reducedMotion = false;
-  let entranceStart: number | null = null;
+  let instantEntrance = false;
   let entranceComplete = false;
-  let entranceEnabled = false;
-  const easeOut = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
-  let draggedWindow = -1;
-  const tracker = createHeroSubjectTracker();
-  let subject: { x: number; y: number } | null = null;
-  const follow = { x: 0, y: 0 };
-  let previousMotionTime = 0;
-  let followReady = false;
+  let exiting = false;
   let imageBounds = { left: 0, right: 1, bottom: 0, top: 1 };
-  const projection = { x: 0, y: 0, width: 1, height: 1 };
-  const clampCenter = (value: number, size: number, lo = 0, hi = 1) => Math.max(lo + size / 2 + 0.025, Math.min(hi - size / 2 - 0.025, value));
+  const pointerAngle = (x: number, y: number) => Math.atan2(
+    (y - (imageBounds.bottom + imageBounds.top) / 2) * canvas.height,
+    (x - (imageBounds.left + imageBounds.right) / 2) * canvas.width,
+  );
   gl.uniform1i(uniform("frame"), 0);
   gl.uniform1i(uniform("grainPattern"), 1);
   const grainAnimation = uniform("grainAnimation");
@@ -414,32 +415,31 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
   return {
     ready,
     setStyle,
-    beginEntrance() { entranceEnabled = true; },
+    beginEntrance(instant = false) {
+      instantEntrance = instant;
+      if (!instant) sharedEntrance.start ??= performance.now() / 1000;
+    },
     isEntranceComplete() { return entranceComplete; },
     getWindowPositions() { return windowPositions; },
     getWindowRotations() { return windowRotations; },
-    canDrag() { return entranceComplete && rowAlignment === 0; },
-    beginDrag(index: number) { if (entranceComplete && rowAlignment === 0) draggedWindow = index; },
+    canDrag() { return entranceComplete && !exiting; },
+    beginDrag(x: number, y: number) {
+      if (entranceComplete && !exiting) orbit.begin(pointerAngle(x, y), performance.now() / 1000);
+    },
     dragTo(x: number, y: number) {
-      if (draggedWindow < 0) return;
-      const offset = draggedWindow * 4;
-      windowPositions[offset] = clampCenter(x, windowPositions[offset + 2], imageBounds.left, imageBounds.right);
-      windowPositions[offset + 1] = clampCenter(y, windowPositions[offset + 3], imageBounds.bottom, imageBounds.top);
+      orbit.drag(pointerAngle(x, y), performance.now() / 1000);
     },
-    endDrag() {
-      if (draggedWindow < 0) return;
-      // Rebase the composition at the release point, with no snap back.
-      windowLayout[draggedWindow][0] = (windowPositions[draggedWindow * 4] - projection.x - motionOffsets[draggedWindow][0]) / Math.max(0.001, projection.width);
-      windowLayout[draggedWindow][1] = (windowPositions[draggedWindow * 4 + 1] - projection.y - motionOffsets[draggedWindow][1]) / Math.max(0.001, projection.height);
-      draggedWindow = -1;
-    },
+    endDrag() { orbit.end(performance.now() / 1000); },
+    accelerateOrbit(pixels: number) { if (!reducedMotion) orbit.impulse(pixels); },
+
     setGrainFrame(frame: number) {
       if (disposed || gl.isContextLost()) return;
       gl.uniform2f(grainAnimation, frame % 16, settings.grainAnimationStrength);
       gl.uniform1f(paperFrame, Math.floor(frame / settings.paperChangeEveryFrames) % 256);
     },
-    setMotionTime(time: number, reduced = false) { motionTime = time; reducedMotion = reduced; },
+    setReducedMotion(reduced: boolean) { reducedMotion = reduced; },
     setFitProgress(progress: number) { fitProgress = progress; },
+    setScrollProgress(progress: number) { scrollProgress = progress; },
     resize() { sizeDirty = true; },
     draw(video: HTMLVideoElement, forceUpload = false) {
       if (disposed || !grainReady || gl.isContextLost() || video.readyState < 2 || !video.videoWidth) return false;
@@ -464,122 +464,46 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
         gl.uniform2f(sourceSize, video.videoWidth, video.videoHeight);
         // RGBA follows the browser's native video upload path; only upload new frames.
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-        if (lastSource !== video.currentSrc) { subject = null; followReady = false; }
-        // Detect only when a new decoded video frame is uploaded, not on grain ticks.
-        subject = tracker.sample(video) ?? subject;
         lastTime = video.currentTime;
         lastSource = video.currentSrc;
       }
       const videoRect = heroVideoRect(canvas.width, canvas.height, video.videoWidth, video.videoHeight, fitProgress);
       gl.uniform4f(videoRectUniform, videoRect.x / canvas.width,
         1 - (videoRect.y + videoRect.h) / canvas.height, videoRect.w / canvas.width, videoRect.h / canvas.height);
-      if (subject) {
-        const cover = videoRect.scale;
-        const targetX = (subject.x - subjectRestPosition.x) * video.videoWidth * cover / canvas.width;
-        const targetY = (subjectRestPosition.y - subject.y) * video.videoHeight * cover / canvas.height;
-        const dt = Math.max(0, Math.min(motionTime - previousMotionTime, 0.1));
-        const blend = followReady ? 1 - Math.exp(-dt / 0.24) : 1;
-        follow.x += (targetX - follow.x) * blend;
-        follow.y += (targetY - follow.y) * blend;
-        followReady = true;
-      }
-      previousMotionTime = motionTime;
-      if (entranceEnabled) entranceStart ??= motionTime;
-      // The film reveal explicitly releases the panel sequence.
-      const entranceTime = reducedMotion ? 10 : entranceStart === null ? -10 : motionTime - entranceStart;
+      // A shared start lets the stagger finish across the overlapping video layers.
+      const entranceTime = reducedMotion ? panelEntranceDuration : sharedEntrance.start !== null
+        ? performance.now() / 1000 - sharedEntrance.start
+        : instantEntrance ? panelEntranceDuration : -1;
       entranceComplete = entranceTime >= panelEntranceDuration;
-      const driftTime = Math.max(0, entranceTime - panelEntranceDuration - driftHoldDuration);
-      const driftBlend = reducedMotion ? 0 : easeOut(driftTime / 0.8);
-      // Counter the parent's scale only for panel dimensions. At video scale 0.5,
-      // panels retain 0.65 of their initial size: 30% larger than the old minimum.
-      const videoScale = Math.max(0.01, canvas.getBoundingClientRect().width / Math.max(1, canvas.clientWidth));
-      const panelScale = Math.max(0.65, Math.min(1, 0.3 + 0.7 * videoScale));
-      const sizeCompensation = panelScale / videoScale;
-      const section = canvas.closest('section');
-      const widthCompensation = (section?.clientWidth || canvas.clientWidth) / Math.max(1, canvas.clientWidth);
-      const heightCompensation = (section?.clientHeight || canvas.clientHeight) / Math.max(1, canvas.clientHeight);
       imageBounds = {
         left: Math.max(0, videoRect.x / canvas.width),
         right: Math.min(1, (videoRect.x + videoRect.w) / canvas.width),
         bottom: Math.max(0, 1 - (videoRect.y + videoRect.h) / canvas.height),
         top: Math.min(1, 1 - videoRect.y / canvas.height),
       };
-      const settle = 1 - fitProgress;
-      projection.width = imageBounds.right - imageBounds.left;
-      projection.height = imageBounds.top - imageBounds.bottom;
-      const imageWidth = projection.width;
-      const imageHeight = projection.height;
-      // A square is measured in rendered pixels, not equal normalized UV dimensions.
-      const panelSizes = windowLayout.map(([, , w, h], index) => {
-        if (index === 2) return [
-          videoRect.w * openingSubjectFrame.width / canvas.width,
-          videoRect.h * openingSubjectFrame.height / canvas.height,
-        ];
-        const side = Math.min(w * widthCompensation * canvas.width, h * heightCompensation * canvas.height) * sizeCompensation * panelSizeMultiplier;
-        return [side / canvas.width, side / canvas.height];
-      });
-      const maxPanelWidth = Math.max(...panelSizes.map(([w]) => w));
-      const maxPanelHeight = Math.max(...panelSizes.map(([, h]) => h));
-      const spanX = Math.max(...windowLayout.map(([x]) => x)) - Math.min(...windowLayout.map(([x]) => x));
-      const spanY = Math.max(...windowLayout.map(([, y]) => y)) - Math.min(...windowLayout.map(([, y]) => y));
-      // On a narrow viewport, tighten the diagonal's spacing without shrinking its panels.
-      const spreadFit = Math.max(0, Math.min(1,
-        (imageWidth - 0.05 - maxPanelWidth) / Math.max(0.001, spanX * imageWidth),
-        (imageHeight - 0.05 - maxPanelHeight) / Math.max(0.001, spanY * imageHeight)));
-      projection.width *= spreadFit;
-      projection.height *= spreadFit;
-      // Bound the whole diagonal using its compensated sizes, not each panel separately.
-      const minX = Math.min(...windowLayout.map(([x], i) => x * projection.width - panelSizes[i][0] / 2));
-      const maxX = Math.max(...windowLayout.map(([x], i) => x * projection.width + panelSizes[i][0] / 2));
-      const minY = Math.min(...windowLayout.map(([, y], i) => y * projection.height - panelSizes[i][1] / 2));
-      const maxY = Math.max(...windowLayout.map(([, y], i) => y * projection.height + panelSizes[i][1] / 2));
-      const offsetX = follow.x * settle * driftBlend;
-      const offsetY = follow.y * settle * driftBlend;
-      const subjectFrameX = (videoRect.x + (openingSubjectFrame.x + openingSubjectFrame.width / 2) * videoRect.w) / canvas.width;
-      const subjectFrameY = 1 - (videoRect.y + (openingSubjectFrame.y + openingSubjectFrame.height / 2) * videoRect.h) / canvas.height;
-      projection.x = imageBounds.left + Math.max(0.025 - minX, Math.min(imageWidth - 0.025 - maxX, subjectFrameX - imageBounds.left - windowLayout[2][0] * projection.width + offsetX));
-      projection.y = imageBounds.bottom + Math.max(0.025 - minY, Math.min(imageHeight - 0.025 - maxY, subjectFrameY - imageBounds.bottom - windowLayout[2][1] * projection.height + offsetY));
-      // The five workflow cards finish appearing around 9 seconds in 11.mp4.
-      // Use the shared scroll playhead so seeking and reversing remain continuous.
-      const playheadTime = fitProgress * Math.max(0, video.duration - 1 / 24);
-      const alignmentProgress = Math.max(0, Math.min(1, (playheadTime - 7.5) / 1.5));
-      rowAlignment = alignmentProgress * alignmentProgress * (3 - 2 * alignmentProgress);
-      if (rowAlignment > 0) draggedWindow = -1;
-      windowLayout.forEach(([x, y], index) => {
-        // The authored diagonal is ordered from upper left to lower right.
-        const delay = index * panelEntranceStagger;
-        const reveal = easeOut((entranceTime - delay) / panelEntranceTweenDuration);
-        const entranceLift = imageHeight * 0.075 * (1 - reveal);
-        const [cardX, cardY, cardWidth, cardHeight] = workflowCards[index];
-        const alignedWidth = videoRect.w * cardWidth * alignedCardScale / canvas.width;
-        const alignedHeight = videoRect.h * cardHeight * alignedCardScale / canvas.height;
-        const [shiftX, shiftY, scaleX, scaleY] = sampleCollageMotion(reducedMotion ? 0 : driftTime, index);
-        const w = (panelSizes[index][0] * scaleX * (1 - rowAlignment) + alignedWidth * rowAlignment) * reveal;
-        const h = (panelSizes[index][1] * scaleY * (1 - rowAlignment) + alignedHeight * rowAlignment) * reveal;
-        let targetX = projection.x + x * projection.width;
-        let targetY = projection.y + y * projection.height;
-        // Keep frames upright; only the authored composition owns idle geometry.
-        // Use the fitted image so the same choreography works after hero scaling.
+      // Work in physical canvas pixels so the ring stays circular at every aspect ratio.
+      const shortSide = Math.min((imageBounds.right - imageBounds.left) * canvas.width,
+        (imageBounds.top - imageBounds.bottom) * canvas.height);
+      const radius = shortSide * 0.35;
+      const side = shortSide * 0.3;
+      const centerX = (imageBounds.left + imageBounds.right) / 2;
+      const centerY = (imageBounds.bottom + imageBounds.top) / 2;
+      // Both video layers use the same clock phase, keeping the orbit steady through their crossfade.
+      const orbitPhase = orbit.advance(performance.now() / 1000, reducedMotion);
+      const orbitTime = orbitPhase * 24 / (Math.PI * 2);
+      canvas.dataset.orbitPhase = String(orbitPhase);
+      exiting = scrollProgress > 0.08;
+      collagePanels.forEach((_, index) => {
+        // Staggered contraction follows scroll position, so stopping never respawns panels.
+        const exit = Math.max(0, Math.min(1, (scrollProgress - 0.08 - index * 0.035) / 0.32));
+        const remaining = 1 - exit * exit * (3 - 2 * exit);
+        const pose = sampleCollageMotion(entranceTime, index, orbitTime);
+        const w = side / canvas.width * pose.scale * remaining;
+        const h = side * 3 / 4 / canvas.height * pose.scale * remaining;
+        const targetX = centerX + pose.x * radius * (0.35 + 0.65 * remaining) / canvas.width;
+        const targetY = centerY + pose.y * radius * (0.35 + 0.65 * remaining) / canvas.height;
         windowRotations[index] = 0;
-        targetX = clampCenter(targetX + shiftX * projection.width, w, imageBounds.left, imageBounds.right);
-        targetY = clampCenter(targetY + shiftY * projection.height, h, imageBounds.bottom, imageBounds.top);
-        const alignedX = (videoRect.x + cardX * videoRect.w) / canvas.width;
-        const alignedY = 1 - (videoRect.y + cardY * videoRect.h) / canvas.height;
-        targetX += (alignedX - targetX) * rowAlignment;
-        targetY += (alignedY - targetY) * rowAlignment;
-        motionOffsets[index][0] = targetX - (projection.x + x * projection.width);
-        motionOffsets[index][1] = targetY - (projection.y + y * projection.height);
-        if (index === draggedWindow) {
-          windowPositions[index * 4 + 2] = w;
-          windowPositions[index * 4 + 3] = h;
-          return;
-        }
-        windowPositions.set([
-          targetX,
-          // Shader Y points upward: start below the destination and rise into it.
-          targetY - entranceLift,
-          w, h,
-        ], index * 4);
+        windowPositions.set([targetX, targetY, w, h], index * 4);
       });
       // S02 shares the background's video texture and UV mapping.
       gl.uniform4fv(risoWindow, windowPositions.subarray(4, 8));

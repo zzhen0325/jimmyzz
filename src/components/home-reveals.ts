@@ -16,7 +16,7 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       const mobile = conditions?.mobile;
       const hero = scope.current.querySelector<HTMLElement>(".home-hero");
       const textTargets = Array.from(scope.current.querySelectorAll<HTMLElement>(
-        ".home-hero .desktop-nav a, .hero-services > *, .hero-editor-card b, .hero-editor-card small, .hero-introduction, .hero-record > span, .hero-timeline > span, .hero-title",
+        ".home-hero .desktop-nav a, .hero-services > *, .hero-editor-card b, .hero-editor-card small, .hero-introduction, .hero-title",
       ));
       const chrome = scope.current.querySelectorAll(".home-hero .site-wordmark, .home-hero .mobile-menu-toggle, .hero-grid, .hero-editor-card > span:first-child, .hero-editor-card > svg");
       gsap.set([...textTargets, ...chrome], { autoAlpha: 0 });
@@ -64,16 +64,9 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
         if (hero) hero.dataset.textReady = "true";
         entrance.play(0);
       };
-      // Wait for actual panel completion and font metrics rather than unrelated page-load timers.
-      const onPanelsReady = () => { void document.fonts.ready.then(startText); };
-      const onFilmReady = () => {
-        if (!hero?.querySelector('[data-effect="risograph"]')) onPanelsReady();
-      };
-      hero?.addEventListener("hero-panels-ready", onPanelsReady);
-      hero?.addEventListener("hero-film-revealed", onFilmReady);
-      if (hero?.dataset.panelsReady === "true") onPanelsReady();
-      // Keep navigation available even if a video, font, or GPU resource never resolves.
-      const fallback = gsap.delayedCall(8, startText);
+      // Typography starts as soon as its font metrics are ready, independently of the film and panels.
+      void document.fonts.ready.then(startText);
+      const fallback = gsap.delayedCall(1.5, startText);
 
       // A shared trigger establishes reading order without moving sticky anchors.
       const reveal = (trigger: Element, entries: [string, number, number][], start = "top 88%") => {
@@ -143,8 +136,6 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       return () => {
         cancelled = true;
         fallback.kill();
-        hero?.removeEventListener("hero-panels-ready", onPanelsReady);
-        hero?.removeEventListener("hero-film-revealed", onFilmReady);
         splits.forEach((split) => split.revert());
         if (hero) delete hero.dataset.textReady;
       };

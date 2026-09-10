@@ -1,5 +1,6 @@
 import { createLatticeFilters } from '@/vendor/lattice/filters.js';
 import { heroVideoRect } from './hero-video-geometry';
+import { getHeroPalette, paletteGrade, paletteRgb } from './hero-palettes';
 
 // Adapter for effect/vendor/lattice's actual Canvas2D filters. Keep their
 // palettes, sampling, bloom branches and contour annotations intact.
@@ -33,20 +34,14 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
     echoSlot: () => ({ cv: source }),
     time: () => time,
   });
-  const gridPlate = { f: [46, 140, 222], k: [242, 182, 221] };
-  const softPastelGrade = {
-    stops: [
-      [0, [92, 76, 156]],
-      [0.35, [176, 155, 232]],
-      [0.65, [246, 187, 217]],
-      [0.85, [255, 225, 225]],
-      [1, [255, 250, 232]],
-    ] as [number, number[]][],
-    w0: [194, 175, 255],
-    w1: [255, 221, 201],
-  };
+  const palette = getHeroPalette();
+  const dotInk = Array.from({ length: 32 }, () => palette.main);
+  const gridPlate = { f: paletteRgb(palette.main), k: paletteRgb(palette.accent) };
+  const mainGrade = paletteGrade(palette, 'main');
+  const softPastelGrade = paletteGrade(palette, 'soft');
+  const accentGrade = paletteGrade(palette, 'accent');
   return {
-    draw(video: HTMLVideoElement, positions: Float32Array, width: number, height: number, seconds: number, fitProgress = 0, rotations = new Float32Array(positions.length / 4)) {
+    draw(video: HTMLVideoElement, positions: Float32Array, width: number, height: number, seconds: number, fitProgress = 0, rotations = new Float32Array(positions.length / 4), drawPanelLabels?: (index: number) => void) {
       time = seconds * 1000;
       const boxes = Array.from({ length: positions.length / 4 }, (_, i) => {
         const [cx, cy, w, h] = positions.subarray(i * 4, i * 4 + 4);
@@ -75,7 +70,7 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
         context.rect(box.x, box.y, box.w, box.h);
         context.clip();
         if (i === 0) {
-          filters.drawEchoGrade(0, box.x, box.y, box.w, box.h, filters.GRADES[0], 0.5);
+          filters.drawEchoGrade(0, box.x, box.y, box.w, box.h, mainGrade, 0.5);
         } else if (i === 1) {
           // S02's original Riso treatment is rendered in the WebGL layer below.
           context.clearRect(box.x, box.y, box.w, box.h);
@@ -85,6 +80,33 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
           filters.configure({ bloomFocus: 2, bloomRadius: 6 });
           filters.drawEchoGrade(0, box.x, box.y, box.w, box.h, softPastelGrade, 0.5);
           filters.configure({ bloomFocus: 2, bloomRadius: 6 });
+        } else if (i === 5) {
+          // High-key paper keeps the original circular halftone legible over dark footage.
+          context.fillStyle = palette.paper;
+          context.fillRect(box.x, box.y, box.w, box.h);
+          const cell = box.w < 100 ? 6 : 8;
+          const cols = Math.max(1, Math.round(box.w / cell));
+          const rows = Math.max(1, Math.round(box.h / cell));
+          const data = sampleGrid(0, source.width, source.height, cols, rows);
+          // Dark source tones print larger ink dots, highlights retain bright paper.
+          for (let pixel = 0; pixel < data.length; pixel += 4) {
+            data[pixel] = 255 - data[pixel];
+            data[pixel + 1] = 255 - data[pixel + 1];
+            data[pixel + 2] = 255 - data[pixel + 2];
+          }
+          filters.configure({ floor: 0.05, exponent: 1.4, contrast: 1.1 });
+          filters.stampIsectMarks(box.x, box.y, cols, rows, box.w / cols, box.h / rows, data, dotInk);
+          filters.configure();
+        } else if (i === 6) {
+          // Draw glyphs only: the video stays visible between the letters.
+          filters.configure({ overlay: true, cell: box.w < 100 ? 10 : 12,
+            asciiInk: palette.accent, asciiWeight: 700, contrast: 1.15, stretch: 0.8 });
+          filters.runFilter('ascii', gridPlate, box.x, box.y, box.w, box.h,
+            0, source.width, source.height);
+          filters.configure();
+        } else if (i >= 7) {
+          filters.drawEchoGrade(0, box.x, box.y, box.w, box.h,
+            accentGrade, 0.5);
         } else {
           // Apply the two-colour plate at a slower sampling cadence.
           filters.configure({ annotations: false, stretch: 1 });
@@ -101,6 +123,8 @@ export function createLatticeCollage(context: CanvasRenderingContext2D) {
         context.lineWidth = 1.75;
         context.strokeRect(box.x, box.y, box.w, box.h);
         context.restore();
+        // Labels belong to this panel and are covered by later panels in the same pass.
+        drawPanelLabels?.(i);
       });
     },
   };

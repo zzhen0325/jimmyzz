@@ -1,23 +1,100 @@
-// Authored poses in fitted-image space: offset X/Y, width/height multiplier.
-// Pose zero preserves the entrance composition. Each panel moves once per beat.
-const poses = [
-  [[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]],
-  [[0.04, -0.15, 0.85, 1.5], [0.03, 0.12, 1.45, 0.8], [0, 0, 1.1, 1.1], [0.10, 0.14, 0.85, 1.3], [-0.06, 0.04, 1.3, 0.85]],
-  [[0.10, -0.02, 1.5, 0.8], [-0.09, -0.20, 0.9, 1.35], [0.02, 0.03, 0.9, 1.25], [0.05, 0.30, 1.15, 1.05], [-0.02, 0.06, 0.8, 1.4]],
-  [[-0.02, -0.10, 1.1, 1.25], [0.15, 0.14, 0.85, 0.9], [-0.02, -0.02, 1.15, 0.9], [-0.10, -0.08, 1.4, 0.85], [0.01, 0.18, 1.05, 1.2]],
-] as const;
+export const orbitPanelCount = 8;
+export const orbitEntranceStagger = 0.085;
+export const orbitEntranceDuration = (orbitPanelCount - 1) * orbitEntranceStagger + 0.82;
+const turn = Math.PI * 2;
+const easeOut = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
 
-export const collageMotionCycle = 16;
-const beat = collageMotionCycle / poses.length;
-const delays = [0.08, 0.32, 0, 0.22, 0.45];
+/** Shared across video layers; interrupted reveals hide from their current size. */
+export function createPanelScrollVisibility() {
+  let lastScroll = -Infinity;
+  let hideStart = 0;
+  let from = Array<number>(orbitPanelCount).fill(1);
+  const sample = (now: number, panel: number) => {
+    if (lastScroll === -Infinity) return 1;
+    if (now - lastScroll <= 0.18) {
+      return from[panel] * (1 - easeOut((now - hideStart) / 0.12));
+    }
+    return easeOut((now - lastScroll - 0.18 - panel * 0.085) / 0.26);
+  };
+  return {
+    sample,
+    pulse(now: number) {
+      if (now - lastScroll > 0.18) {
+        from = from.map((_, panel) => sample(now, panel));
+        hideStart = now;
+      }
+      lastScroll = now;
+    },
+    isSettled(now: number) {
+      return now - lastScroll >= 0.18 + (orbitPanelCount - 1) * 0.085 + 0.26;
+    },
+  };
+}
 
-export function sampleCollageMotion(seconds: number, panel: number) {
-  const time = Math.max(0, seconds) % collageMotionCycle;
-  const stage = Math.floor(time / beat);
-  const from = poses[stage][panel];
-  const to = poses[(stage + 1) % poses.length][panel];
-  // Hold for 1.5 seconds, then ease into the next composition with stagger.
-  const progress = Math.max(0, Math.min(1, (time % beat - 1.5 - delays[panel]) / 1.65));
-  const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
-  return from.map((value, i) => value + (to[i] - value) * eased);
+/** Unit-circle positions in bottom-origin coordinates; cards stay upright. */
+export function sampleCollageMotion(entranceTime: number, panel: number, orbitTime = 0) {
+  const local = entranceTime - panel * orbitEntranceStagger;
+  // A short scale-up at the centre leads the outward glide by 100ms.
+  const scale = easeOut(local / 0.24);
+  const radius = easeOut((local - 0.1) / 0.72);
+  const angle = Math.PI / 2 + panel * turn / orbitPanelCount + orbitTime * turn / 24;
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, scale };
+}
+
+export const orbitExitStart = 6.8;
+export const orbitExitStagger = 0.2;
+export const orbitExitDuration = 0.85;
+
+/** Seekable exit: scrolling back restores exactly the same radius and scale. */
+export function sampleOrbitExit(videoTime: number, panel: number) {
+  const progress = Math.max(0, Math.min(1,
+    (videoTime - orbitExitStart - panel * orbitExitStagger) / orbitExitDuration));
+  return 1 - progress ** 3;
+}
+
+/** Shared by the two video layers so a crossfade preserves drag momentum. */
+export function createOrbitMotion() {
+  const cruisingSpeed = turn / 24;
+  let phase = 0;
+  let velocity = cruisingSpeed;
+  let lastTime: number | null = null;
+  let pointerAngle: number | null = null;
+  let pointerTime = 0;
+  return {
+    advance(now: number, reduced: boolean) {
+      const dt = lastTime === null ? 0 : Math.min(0.1, Math.max(0, now - lastTime));
+      lastTime = now;
+      if (reduced) { velocity = 0; return phase; }
+      if (pointerAngle === null) {
+        const decay = Math.exp(-dt / 1.1);
+        phase += cruisingSpeed * dt + (velocity - cruisingSpeed) * 1.1 * (1 - decay);
+        velocity = cruisingSpeed + (velocity - cruisingSpeed) * decay;
+      }
+      return phase;
+    },
+    impulse(pixels: number) {
+      if (pointerAngle !== null) return;
+      velocity = Math.max(-7, Math.min(7, velocity + Math.max(-200, Math.min(200, pixels)) * 0.008));
+    },
+    begin(angle: number, now: number) {
+      pointerAngle = angle;
+      pointerTime = now;
+      velocity = 0;
+    },
+    drag(angle: number, now: number) {
+      if (pointerAngle === null) return;
+      const delta = Math.atan2(Math.sin(angle - pointerAngle), Math.cos(angle - pointerAngle));
+      const dt = Math.max(1 / 120, now - pointerTime);
+      phase += delta * 1.35;
+      velocity = Math.max(-7, Math.min(7, delta * 1.35 / dt));
+      pointerAngle = angle;
+      pointerTime = now;
+    },
+    end(now: number) {
+      if (pointerAngle === null) return;
+      // Holding still before release should not fling with an old movement sample.
+      velocity *= Math.exp(-Math.max(0, now - pointerTime - 0.08) / 0.12);
+      pointerAngle = null;
+    },
+  };
 }
