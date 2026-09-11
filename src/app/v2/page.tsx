@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { ChromeHome } from "@/components/chrome-home";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Chrome / Vol. 02" };
-export default function Page() { return <ChromeHome />; }
+export default function Page() {
+  permanentRedirect("/");
+}

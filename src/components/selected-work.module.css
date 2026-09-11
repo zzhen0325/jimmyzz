@@ -1,0 +1,40 @@
+.slider { position: relative; isolation: isolate; height: max(620px, calc(100svh - 88px)); overflow: hidden; background: #0a0a0a; color: #fff; touch-action: pan-x; overflow-anchor: none; outline: none; scroll-margin-top: 88px; }
+.defs { position: absolute; width: 0; height: 0; pointer-events: none; }
+.slide { position: absolute; inset: 0; visibility: hidden; overflow: hidden; background: #0a0a0a; }
+.slide[data-active="true"] { visibility: visible; }
+.image { position: absolute; inset: -8%; will-change: transform; }
+.image img { object-fit: cover; object-position: center; }
+.shade { position: absolute; inset: 0; background: linear-gradient(180deg, #0008, #0005 45%, #000b); pointer-events: none; }
+.title { position: absolute; inset: 0 9%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 60px; text-align: center; }
+.kind { font-size: 10px; letter-spacing: .22em; margin-bottom: 24px; }
+.title h2 { max-width: 1050px; margin: 0; font-size: clamp(44px, 7.6vw, 128px); font-weight: 550; line-height: 1.12; letter-spacing: -.055em; text-wrap: balance; }
+.letterMask { display: inline-block; overflow: hidden; vertical-align: bottom; padding: .08em 0; margin: -.08em 0; }
+.letterMask > span { display: inline-block; will-change: transform; }
+.topline { position: absolute; z-index: 3; top: 30px; left: var(--page-pad); right: var(--page-pad); display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: .09em; }
+.topline a, .bottomline a { display: inline-flex; gap: 12px; align-items: center; }
+.details { position: absolute; left: var(--page-pad); right: var(--page-pad); bottom: 122px; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.details p { max-width: 390px; font-size: 13px; line-height: 1.8; margin: 0 0 16px; }
+.details span { font-size: 9px; letter-spacing: .06em; color: #ddd; }
+.projectLink { display: inline-flex; flex-shrink: 0; align-items: center; gap: 28px; padding: 14px 0; border-bottom: 1px solid #ffffff80; font-size: 14px; }
+.controls { position: absolute; z-index: 4; right: var(--page-pad); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.controls button { width: 36px; height: 36px; display: grid; place-items: center; background: #0004; color: white; border: 1px solid #ffffff50; border-radius: 50%; transition: background .2s; }
+.controls button:hover:not(:disabled) { background: #fff; color: #111; }
+.controls button:disabled { opacity: .3; cursor: default; }
+.counter { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 10px; font-variant-numeric: tabular-nums; }
+.counter i { width: 1px; height: 24px; background: #ffffff70; }
+.bottomline { position: absolute; z-index: 3; bottom: 32px; left: var(--page-pad); right: var(--page-pad); display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .09em; }
+.slider a:focus-visible, .slider button:focus-visible { outline: 2px solid white; outline-offset: 6px; }
+@media (max-width: 700px) {
+  .slider { height: max(590px, calc(100svh - 88px)); }
+  .topline { top: 22px; font-size: 8px; letter-spacing: .02em; }
+  .title { inset-inline: 24px; padding-bottom: 116px; }
+  .title h2 { font-size: clamp(40px, 11vw, 72px); }
+  .kind { font-size: 9px; margin-bottom: 18px; }
+  .controls { top: auto; bottom: 196px; right: 20px; transform: none; flex-direction: row; gap: 12px; }
+  .counter { flex-direction: row; gap: 7px; }.counter i { width: 16px; height: 1px; }
+  .controls button { width: 30px; height: 30px; }
+  .details { bottom: 114px; gap: 15px; }.details p { font-size: 11px; margin-bottom: 10px; max-width: 250px; }.details span { font-size: 8px; }
+  .projectLink { font-size: 11px; gap: 8px; padding: 10px 0; }
+  .bottomline { bottom: 80px; font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .image, .letterMask > span { will-change: auto; } }
