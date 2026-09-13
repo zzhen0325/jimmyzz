@@ -39,8 +39,8 @@ export function HoverLabel() {
         active?.removeAttribute("data-hover-label-active");
         active = surface;
         surface.setAttribute("data-hover-label-active", "");
-        element.textContent = surface.dataset.hoverLabel ?? "";
       }
+      element.textContent = surface.dataset.hoverLabel ?? "";
       if (!visible) {
         x = targetX;
         y = targetY;

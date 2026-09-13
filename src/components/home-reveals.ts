@@ -30,7 +30,7 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       };
 
       const headings = scope.current.querySelectorAll(
-        ".section-heading h2, .about-layout h2, #wave-type h2",
+        ".section-heading h2, .about-layout h2",
       );
       headings.forEach((heading) => {
         SplitText.create(heading, {

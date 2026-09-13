@@ -1,6 +1,6 @@
 .page { background: #070707; color: #f1f1ef; }
 .hero { height: 100svh; min-height: 540px; position: relative; }
-.stage { position: sticky; top: 0; height: 100svh; min-height: 540px; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at 50% 47%, #1b1b1c 0%, #0a0a0b 44%, #050505 80%); }
+.stage { position: sticky; top: 0; height: 100svh; min-height: 540px; overflow: hidden; isolation: isolate; background: #050505; }
 .fallback { position: absolute; left: 50%; top: 43%; transform: translate(-50%,-50%); font-size: clamp(140px,28vw,440px); font-weight: 900; letter-spacing: -.11em; font-style: italic; color: #959595; background: linear-gradient(160deg,#fafafa 10%,#333 27%,#ddd 38%,#575757 51%,#fff 57%,#999 66%,#202020 72%,#eee 89%); background-clip: text; -webkit-text-fill-color: transparent; }
 .stage:has(canvas[data-ready="true"]) .fallback { visibility: hidden; }
 .header { position: absolute; z-index: 3; top: 0; left: 0; width: 100%; display: flex; align-items: flex-start; justify-content: space-between; padding: 30px 34px; }
@@ -72,3 +72,10 @@
   .stage { height: max(100svh, 480px); }
   .center { top: auto; bottom: 20px; }
 }
+
+/* Keep the cursor sticker out of the portal’s empty-screen beat. */
+:global(.home-page:has(canvas[data-vortex-phase]) .hover-label) { visibility: hidden; }
+
+/* Decorative layout boxes must not shield the moving canvas underneath. */
+.header, .center, :global(.hero-profile) { pointer-events: none; }
+.header a, .dock, :global(.hero-profile a) { pointer-events: auto; }

@@ -132,6 +132,11 @@ export function Footer({
           回到顶部 <ArrowUp size={14} />
         </a>
       </div>
+      {variant === "home" && <p className="text-xs text-white/50">
+        Black Hole by <a href="https://sketchfab.com/3d-models/black-hole-e410da98b1e5445eae2acafaaa53587d" target="_blank" rel="noreferrer">NestaEric</a>
+        {" · "}<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>
+        {" · Adapted for web"}
+      </p>}
     </footer>
   );
 }

@@ -5,7 +5,6 @@ import { useRef } from "react";
 import { useHomeReveals } from "./home-reveals";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
-import { WaveType } from "./wave-type";
 import { ArrowUpRight } from "lucide-react";
 import { Footer, SectionLabel } from "./site-chrome";
 import { profile, services } from "@/lib/site-data";
@@ -118,7 +117,6 @@ export function HomePage() {
       <div className="home-content">
         <SelectedWork />
         <CurveGallery />
-        <WaveType />
         <Capabilities />
         <About />
         <Footer />

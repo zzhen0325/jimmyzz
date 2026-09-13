@@ -1,0 +1,7 @@
+.overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #070707; opacity: 1; transition: opacity 240ms ease; overscroll-behavior: none; touch-action: none; }
+.overlay[data-leaving="true"] { opacity: 0; pointer-events: none; }
+.viewport { width: 160px; height: 160px; overflow: hidden; }
+.sequence { --frame: 0; display: flex; width: 100%; height: 100%; transform: translateX(calc(var(--frame) * -100%)); }
+.sequence img { display: block; flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+@media (max-width: 700px) { .viewport { width: 128px; height: 128px; } }
+@media (prefers-reduced-motion: reduce) { .overlay { transition: none; } }

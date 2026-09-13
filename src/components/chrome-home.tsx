@@ -2,15 +2,18 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, X } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { profile } from "@/lib/site-data";
 import styles from "./chrome-home.module.css";
+import { HomeLoader } from "./home-loader";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
   const hero = useRef<HTMLElement>(null);
+  const [loading, setLoading] = useState(true);
+  const finishLoading = useCallback(() => setLoading(false), []);
   const workProgress = useRef(0);
   const transition = useRef<gsap.core.Timeline | null>(null);
   const [view, setView] = useState<"intro" | "transition" | "work">("intro");
@@ -71,26 +74,27 @@ export function ChromeHero() {
 
   return (
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
-      <div className={styles.stage}>
+      {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
+      <div className={styles.stage} inert={loading}>
         <div className={styles.fallback} aria-hidden="true">ZZ</div>
         <ChromeScene workProgress={workProgress} interactive={view === "intro"} />
         <header className={styles.header}>
-          <Link href="/" aria-label="ZZ 首页" className={styles.wordmark}>Jimmy ZZ<span>®</span></Link>
-          <span className={styles.headerNote}>INDEPENDENT DESIGNER<br />& CREATIVE ENGINEER</span>
-          <a href={`mailto:${profile.email}`} className={styles.contact}>LET’S TALK <ArrowUpRight size={12} /></a>
+          <Link href="/" aria-label="ZZ 首页" data-vortex-element className={styles.wordmark}>Jimmy ZZ<span>®</span></Link>
+          {/* <span className={styles.headerNote}>INDEPENDENT DESIGNER<br />& CREATIVE ENGINEER</span> */}
+          <a href={`mailto:${profile.email}`} data-vortex-element className={styles.contact}>LET’S TALK <ArrowUpRight size={12} /></a>
         </header>
         <button className={styles.homeLogo} onClick={showIntro} aria-label="返回首页" tabIndex={view === "work" ? 0 : -1} />
         <div className={styles.center}>
           <h1 className={styles.srOnly}>Jimmy ZZ — Visual design & creative technology</h1>
-          <div className={styles.dock}>
+          <div data-vortex-element className={styles.dock}>
             <button onClick={showWork} disabled={view === "transition"} aria-controls="selected-work">Work <ArrowUpRight size={14} /></button>
             <span className={styles.dockMark} aria-hidden="true">✳</span>
             <button ref={menuButton} onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="chrome-menu">{menu ? "Close" : "Menu"}<span aria-hidden="true">{menu ? "−" : "+"}</span></button>
           </div>
-          <p id="chrome-interaction-hint">Drag to orbit. Click to scatter.</p>
+        
         </div>
         <div className="hero-profile" inert={view !== "intro"}>
-          <a href="#about" className="hero-editor-card">
+          <a href="#about" data-vortex-element className="hero-editor-card">
             <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-sm bg-[#f2f2f2] text-lg font-semibold text-[#172010]" />
             <span className="flex-1">
               <b className="block text-xs">Hey, I&apos;m ZZ</b>
@@ -98,11 +102,11 @@ export function ChromeHero() {
             </span>
             <ArrowUpRight size={16} />
           </a>
-          <p className="hero-introduction">
+          <p data-vortex-element className="hero-introduction">
             Building brands through visuals and connecting people through experiences. Exploring illustration, type, 3D and motion — with AI and code.
           </p>
         </div>
-        {menu && <nav className={styles.menu} id="chrome-menu" aria-label="主导航">
+        {menu && <nav data-vortex-element className={styles.menu} id="chrome-menu" aria-label="主导航">
           <div className={styles.menuTop}><span>LET’S LOOK AROUND.</span><button ref={closeButton} onClick={() => { setMenu(false); menuButton.current?.focus(); }} aria-label="关闭菜单"><X size={22} /></button></div>
           <button onClick={showWork} disabled={view === "transition"}>Selected work<ArrowUpRight /></button>
           <Link onClick={() => setMenu(false)} href="/#gallery">Playground<ArrowUpRight /></Link>

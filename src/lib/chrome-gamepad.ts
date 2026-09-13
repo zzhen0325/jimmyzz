@@ -26,7 +26,7 @@ export function createChromeGamepad() {
     context.fillStyle = color; context.font = "italic 700 64px Arial";
     context.textAlign = "center"; context.textBaseline = "middle"; context.fillText(text, 128, 68);
     const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false }));
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ ...config.labels.material, map: texture }));
     mesh.position.set(x, y, z); controller.add(mesh);
   };
 
