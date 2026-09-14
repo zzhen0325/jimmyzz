@@ -42,7 +42,7 @@ export const home3DConfig = {
     ],
     material: { roughness: .38, metalness: 0, envMapIntensity: .75, clearcoat: .32, clearcoatRoughness: .28 },
   },
-  // Blender 模型：两个情绪角色、蓝色 ZZ 与笑脸键帽；可分别调整尺寸和材质。
+  // Blender 模型：情绪角色、蓝色 ZZ、笑脸键帽与大力士；可分别调整尺寸和材质。
   characters: {
     items: [
       {
@@ -70,6 +70,14 @@ export const home3DConfig = {
         materials: {
           "Keycap ivory polymer": { color: "#77FF6D", metalness: 0, roughness: .43, clearcoat: .24, clearcoatRoughness: .3, envMapIntensity: .7 },
           "Keycap charcoal smile": { color: "#121619", metalness: 0, roughness: .58, clearcoat: .06, clearcoatRoughness: .35, envMapIntensity: .65 },
+        },
+      },
+      {
+        file: "08_strongman", size: 1.6, axisScale: [1, 1, 1],
+        materials: {
+          "Strongman butter yellow": { color: "#FFE477", metalness: 0, roughness: .48, clearcoat: .04, clearcoatRoughness: .4, envMapIntensity: .75 },
+          "Strongman charcoal vest": { color: "#40333D", metalness: 0, roughness: .64, clearcoat: .02, envMapIntensity: .65 },
+          "Strongman surface ink": { color: "#141411", metalness: 0, roughness: .6, clearcoat: 0, envMapIntensity: .6 },
         },
       },
     ] satisfies FloatingModelConfig[],
