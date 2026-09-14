@@ -1080,6 +1080,7 @@ button {
   will-change: transform;
 }
 .hover-label[data-visible="true"] { opacity: 1; }
+.hover-label-character { display: inline-block; }
 @media (hover: hover) and (pointer: fine) {
   [data-hover-label-active], [data-hover-label-active] * { cursor: none !important; }
 }
@@ -1694,4 +1695,65 @@ button {
 .home-hero.is-playing .hero-film-layer > canvas { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .hero-film-second { transition: none; }
+}
+
+/* Apfel Grotezk by Luigi Gorlero / Collletttivo (SIL OFL 1.1). */
+@font-face {
+  font-family: "Apfel Grotezk";
+  src: url("/assets/fonts/apfel-grotezk-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+.home-page {
+  font-family: "Apfel Grotezk", var(--font-bdo), "PingFang SC", sans-serif;
+}
+.profile-introduction {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  margin: 0 var(--page-pad);
+  padding: clamp(36px, 4vw, 64px) 0 clamp(80px, 10vw, 160px);
+  border-top: 1px solid rgb(244 242 237 / 28%);
+  scroll-margin-top: 112px;
+}
+.profile-identity h2,
+.profile-statement > p {
+  font-size: clamp(30px, 3.15vw, 58px);
+  font-weight: 400;
+  line-height: 1.07;
+  letter-spacing: -.045em;
+}
+.profile-identity > p {
+  margin-top: 24px;
+  font-size: 17px;
+  line-height: 1.35;
+  color: #a4a39e;
+}
+.profile-identity > a,
+.profile-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 36px;
+  padding-bottom: 5px;
+  font-size: 16px;
+  border-bottom: 1px solid rgb(244 242 237 / 28%);
+  transition: border-color 180ms;
+}
+.profile-introduction a:hover { border-color: currentColor; }
+.profile-introduction a:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
+.profile-statement { max-width: 850px; min-width: 0; }
+.profile-statement > p + p { margin-top: 1.05em; color: #a4a39e; }
+.profile-word { display: inline-block; white-space: nowrap; font-kerning: none; }
+@media (max-width: 809px) {
+  .profile-introduction { grid-template-columns: 1fr; gap: 44px; padding: 32px 0 72px; }
+  .profile-identity h2 { font-size: 30px; }
+  .profile-identity > p { margin-top: 14px; font-size: 15px; }
+  .profile-identity > a { margin-top: 20px; }
+  .profile-statement > p { font-size: clamp(29px, 6.7vw, 48px); }
+  .profile-email { font-size: 15px; margin-top: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-introduction a { transition: none; }
 }

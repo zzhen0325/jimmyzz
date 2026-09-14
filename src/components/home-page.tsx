@@ -11,6 +11,20 @@ import { profile, services } from "@/lib/site-data";
 import { HoverLabel } from "./hover-label";
 import { ChromeHero } from "./chrome-home";
 
+function Introduction() {
+  return (
+    <section id="introduction" tabIndex={-1} className="profile-introduction" aria-labelledby="introduction-title">
+      <div className="profile-identity">
+        <h2 id="introduction-title" data-profile-reveal>Hey, I&apos;m ZZ</h2>
+        <p>Visual Designer &amp;<br />Creative Engineer</p>
+      </div>
+      <div className="profile-statement">
+        <p data-profile-reveal>Building brands through visuals and connecting people through experiences.</p>
+      </div>
+    </section>
+  );
+}
+
 function Capabilities() {
   return (
     <section id="services" className="portfolio-section">
@@ -115,6 +129,7 @@ export function HomePage() {
       <HoverLabel />
       <ChromeHero />
       <div className="home-content">
+        <Introduction />
         <SelectedWork />
         <CurveGallery />
         <Capabilities />

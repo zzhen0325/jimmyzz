@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 
-/** One closed shell: inset domed face, rounded rim, side wall and back. */
+/** One closed shell: two inset domed faces joined by a rounded rim and side wall. */
 export function createLogoTriangle(vertices: number[][]) {
   const points = vertices.map(([x, y]) => new THREE.Vector2((x - 30) * .05, (y - 15) * .05));
   if (new THREE.Vector2().subVectors(points[1], points[0]).cross(new THREE.Vector2().subVectors(points[2], points[0])) < 0) {
@@ -21,10 +21,11 @@ export function createLogoTriangle(vertices: number[][]) {
   const triangle = (a: number[], b: number[], c: number[]) => positions.push(...a, ...b, ...c);
   const faceVertex = (u: number, v: number, front: boolean) => {
     const w = 1 - u - v;
+    const dome = .11 * Math.pow(Math.max(0, 27 * u * v * w), .65);
     return [facePoints[0].x * w + facePoints[1].x * u + facePoints[2].x * v,
       facePoints[0].y * w + facePoints[1].y * u + facePoints[2].y * v,
-      // Preserve the original broad, inflated face; only the rim construction changes.
-      front ? .09 + .11 * Math.pow(Math.max(0, 27 * u * v * w), .65) : -.075];
+      // Both faces bulge outward equally, meeting their existing rim at the edges.
+      front ? .09 + dome : -.075 - dome];
   };
   for (const front of [true, false]) {
     const emit = (a: number[], b: number[], c: number[]) => front ? triangle(a, b, c) : triangle(a, c, b);

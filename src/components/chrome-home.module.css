@@ -79,3 +79,15 @@
 /* Decorative layout boxes must not shield the moving canvas underneath. */
 .header, .center, :global(.hero-profile) { pointer-events: none; }
 .header a, .dock, :global(.hero-profile a) { pointer-events: auto; }
+
+.scrollDown { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 0; border: 1px solid #ffffff38; border-radius: 50%; background: #151515d9; color: #ededed; cursor: pointer; pointer-events: auto; backdrop-filter: blur(18px); transition: background 180ms; }
+.scrollDown:hover { background: #ffffff25; }
+.scrollDown:disabled { cursor: default; }
+.hero[data-view="work"] .center { display: none; }
+
+/* Keep document geometry stable while the scene follows the scroll into its header. */
+.hero, .hero[data-view="transition"], .hero[data-view="work"] { height: max(100svh, 540px); position: sticky; top: calc(88px - max(100svh, 540px)); }
+.stage { transform: translateY(var(--hero-scroll, 0px)); }
+@media (max-width: 700px) {
+  .hero, .hero[data-view="transition"], .hero[data-view="work"] { height: max(100svh, 480px); top: calc(88px - max(100svh, 480px)); }
+}

@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import images from "@/lib/curve-gallery-assets.json";
 import { projects } from "@/lib/site-data";
-import { SectionLabel } from "./site-chrome";
 import Image from "next/image";
 import "./ribbon-gallery.css";
 
@@ -35,17 +34,17 @@ export function CurveGallery() {
         const w = root.clientWidth;
         const h = root.clientHeight;
         const size = w <= 809 ? Math.min(w * .62, 260) : Math.min(w * .24, 330);
-        const anchor = w * .38;
+        const anchor = w * .5;
         cards.forEach((card, i) => {
           const d = i - playhead.value;
-          const focus = Math.exp(-Math.pow(d / 2.15, 2));
+          const focus = Math.exp(-Math.pow(d / 1.6, 2));
           // Integrating the magnification spreads cards around the playhead,
           // while the far-away images collapse into a continuous film strip.
           const spread = Math.tanh(d * .48) * size * 1.5;
           const x = anchor + d * Math.max(24, w * .029) + spread;
-          const y = h * .51 + Math.sin(i * 2.4 + .5) * h * .29 * focus;
+          const y = h * .5 + Math.sin(i * 2.4 + .5) * h * .18 * focus;
           const scale = .13 + .87 * focus;
-          const height = size * Math.max(.55, Math.min(1.05, images[i].height / images[i].width));
+          const height = size;
           card.style.width = `${size}px`;
           card.style.height = `${height}px`;
           card.style.transform = `translate3d(${x - size / 2}px, ${y - height / 2}px, 0) scale(${scale})`;
@@ -75,7 +74,7 @@ export function CurveGallery() {
       let startScroll = 0;
       let dragged = false;
       const down = (event: PointerEvent) => {
-        if ((event.target as HTMLElement).closest(".ribbon-footer, .ribbon-top")) return;
+        if ((event.target as HTMLElement).closest(".ribbon-footer")) return;
         startX = event.clientX; startY = event.clientY; startScroll = window.scrollY; dragged = false;
       };
       const move = (event: PointerEvent) => {
@@ -105,15 +104,13 @@ export function CurveGallery() {
   }, { scope: section });
 
   return (
-    <section id="gallery" ref={section} className="ribbon-section">
-      <SectionLabel index="02" title="VISUAL PLAYGROUND / 视觉漫游" time={`${images.length} IMAGES / IN MOTION`} />
+    <section id="gallery" ref={section} className="ribbon-section" aria-label="视觉漫游">
       <div ref={stage} className="ribbon-stage" aria-label="滚动画廊">
-        <div className="ribbon-top"><span>A COLLECTION OF LITTLE THINGS</span><p>Scroll to explore <span>滚动探索 · 左右拖动</span></p><a href="#services">继续浏览 ↘</a></div>
         <div className="ribbon-guides" aria-hidden="true" />
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
           {images.map((item, i) => (
-            <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label="view"
+            <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
               <span className="motion-image"><Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 330px" draggable={false} /></span>
             </Link>

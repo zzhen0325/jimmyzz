@@ -71,16 +71,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const spinAxis = new THREE.Vector3(0, 1, 0);
   const spin = new THREE.Quaternion();
   let contacts = 0;
-  let bursts = 0;
+  const bursts = 0;
   let activePointer: number | null = null;
+  let pointerStartX = 0;
   let pointerStartY = 0;
-  let lastWheelTime = -Infinity;
+  let pointerYaw = 0;
   let snapshotTime = 0;
   const pointer = new THREE.Vector2();
   const force = new CANNON.Vec3();
   const point = new CANNON.Vec3();
-  const impulse = new CANNON.Vec3();
-  const center = new CANNON.Vec3();
   const collisions = new Set<string>();
 
   const chrome = new THREE.MeshPhysicalMaterial(config.logo.material);
@@ -193,11 +192,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // teleporting individual bodies into arrangement slots or leaving bodies outside walls.
     if(ready)reset();
   };
-  const release=()=>{
-    if(!ready||paused||reduced||easterEgg.active||workProgress()>0)return;
-    for(const {body} of items){impulse.set((2*Math.random()-1)*15,(2*Math.random()-1)*15,(2*Math.random()-1)*15);body.wakeUp();body.applyLocalImpulse(impulse,center);}
-    bursts++;canvas.dataset.bursts=String(bursts);canvas.dataset.phase='release';
-  };
   const updatePointer=(event:PointerEvent)=>{const r=host.getBoundingClientRect();pointer.set((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));};
   const vortexBounds = () => {
     if (!vortexAnimation || !ready || workProgress() > 0) return null;
@@ -263,32 +257,23 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       startVortex(); return;
     }
     if (reduced) return;
-    activePointer=event.pointerId;pointerStartY=event.clientY;canvas.setPointerCapture(event.pointerId);canvas.dataset.phase='hold';
+    activePointer=event.pointerId;pointerStartX=event.clientX;pointerStartY=event.clientY;
   };
   const pointerMove=(event:PointerEvent)=>{
     updatePointer(event);
     if (!easterEgg.active) {
       const overVortex = ready && workProgress() === 0 && hitVortex();
-      canvas.style.cursor = overVortex ? 'pointer' : 'grab';
-      canvas.dataset.hoverLabel = overVortex ? 'click to enter' : 'scroll';
+      canvas.style.cursor = 'pointer';
+      canvas.dataset.hoverLabel = overVortex ? 'click to enter' : 'click to spin';
       if (overVortex) lastVortexHover = { x: event.clientX, y: event.clientY, time: performance.now() };
     }
-    if(activePointer===event.pointerId){const divisor=event.pointerType==='touch'?10:1000;power=THREE.MathUtils.clamp((event.clientY-pointerStartY)/divisor,-.3,.3);}
   };
   const pointerUp=(event:PointerEvent)=>{
-    if(activePointer!==event.pointerId)return;activePointer=null;if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);release();
+    if(activePointer!==event.pointerId)return;activePointer=null;
+    if(Math.hypot(event.clientX-pointerStartX,event.clientY-pointerStartY)<8 && workProgress()===0 && !paused && !easterEgg.active){power=Math.min(power+.28,.5);canvas.dataset.phase='spin';}
   };
   const pointerCancel=()=>{activePointer=null;};
-  const wheel=(event:WheelEvent)=>{
-    if(reduced||event.ctrlKey||workProgress()>=1)return;
-    event.preventDefault();event.stopPropagation();if(paused||easterEgg.active)return;
-    const now=performance.now();if(now-lastWheelTime<30)return;lastWheelTime=now;
-    const units=event.deltaMode===1?40:event.deltaMode===2?height:1;
-    const dominant=Math.abs(event.deltaY)>=Math.abs(event.deltaX)?event.deltaY:event.deltaX*.75;
-    const next=-dominant*units/800;
-    power=next<=0?Math.max(Math.min(next,power),-.5):Math.min(Math.max(next,power),.5);
-  };
-  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(event.code==='Space'||event.code==='Enter'){event.preventDefault();release();}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
+  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
   const preference=()=>{reduced=media.matches;activePointer=null;if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
   const restored=()=>{contextLost=false;reflectionDirty=true;};
@@ -296,7 +281,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);
   canvas.addEventListener('lostpointercapture',pointerCancel);canvas.addEventListener('keydown',key);
-  host.addEventListener('wheel',wheel,{passive:false});media.addEventListener('change',preference);
+  media.addEventListener('change',preference);
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
   const cameraFrame=()=>{
     // Same orbit as source, shifted by PI to show the supplied plaques' front faces.
@@ -315,7 +300,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     force.set(.02*Math.sin(elapsed/10),0,.02*Math.cos(elapsed/10));point.set(Math.cos(elapsed/15+50),Math.sin(elapsed/10+100),Math.cos(elapsed/20+150));
     for(const {body} of items){
       body.applyLocalForce(force,point);
-      if(activePointer!==null){impulse.set(pointer.x*frameRatio,Math.cos(camera.rotation.x)*pointer.y*frameRatio,Math.sin(camera.rotation.x)*pointer.y*frameRatio);body.wakeUp();body.applyImpulse(impulse,center);}
 
     }
     world.step(1/60,delta,1);
@@ -331,7 +315,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // Acceleration belongs to the shared timeline; local phases only remap its progress.
     const travel = THREE.MathUtils.clamp((p - .2) / .8, 0, 1);
     const turn = reduced ? 0 : THREE.MathUtils.clamp((p - .08) / .82, 0, 1) * Math.PI * 2;
-    logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn));
+    pointerYaw = THREE.MathUtils.lerp(pointerYaw, reduced ? 0 : pointer.x * .45, .08);
+    logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn + pointerYaw * (1 - p)));
+    canvas.dataset.pointerYaw = String(pointerYaw);
     logo.position.set(0, (height / 2 - 44) / camera.zoom * travel, 0).applyQuaternion(camera.quaternion);
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale, 72 / (3.1 * camera.zoom), travel));
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
@@ -480,7 +466,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       options.vortexTarget?.removeEventListener('pointerdown', vortexActivate);
       options.vortexTarget?.removeEventListener('click', vortexActivate);
       if (options.vortexTarget) options.vortexTarget.style.display = 'none';observer.disconnect();visibility.disconnect();
-      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);host.removeEventListener('wheel',wheel);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
+      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;
     },
   };

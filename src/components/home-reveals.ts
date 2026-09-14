@@ -2,9 +2,10 @@
 
 import type { RefObject } from "react";
 import { SplitText } from "gsap/SplitText";
+import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 
-gsap.registerPlugin(SplitText);
+gsap.registerPlugin(SplitText, ScrambleTextPlugin);
 
 /** Animate content inside stable layout anchors; canvases own their motion. */
 export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
@@ -14,6 +15,36 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       if (conditions?.reduced || !scope.current) return;
 
       const mobile = conditions?.mobile;
+      scope.current.querySelectorAll<HTMLElement>("[data-profile-reveal]").forEach((text) => {
+        SplitText.create(text, {
+          type: "words", tag: "span", aria: "auto", autoSplit: true,
+          wordsClass: "profile-word",
+          onSplit: (split) => {
+            const timeline = gsap.timeline({
+              scrollTrigger: {
+                trigger: text,
+                start: "clamp(top bottom)",
+                end: "clamp(bottom top)",
+                toggleActions: "restart reset restart reset",
+              },
+            });
+            split.words.forEach((word, index) => {
+              const original = word.textContent ?? "";
+              // Reserve the final word width so scrambling never shifts the layout.
+              timeline.set(word, { width: word.getBoundingClientRect().width }, 0);
+              timeline.fromTo(word, { opacity: 0 }, {
+                opacity: 1, duration: 0.16,
+              }, index * 0.028);
+              timeline.to(word, {
+                duration: 0.75,
+                scrambleText: { text: original, chars: original, revealDelay: 0.12, speed: 0.35 },
+              }, index * 0.028);
+            });
+            timeline.set(split.words, { clearProps: "width,opacity" });
+            return timeline;
+          },
+        });
+      });
       // A shared trigger establishes reading order without moving sticky anchors.
       const reveal = (trigger: Element, entries: [string, number, number][], start = "top 88%") => {
         const timeline = gsap.timeline({

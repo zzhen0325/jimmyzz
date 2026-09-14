@@ -104,16 +104,17 @@ export const home3DConfig = {
   },
   // 金属外观也受环境与灯光影响。
   lighting: {
-    exposure: 1, environment: "/assets/environments/twomuch-studio.jpg", environmentIntensity: .78,
-    reflectionBackgroundIntensity: .72,
-    ambient: { color: "#eef1f7", intensity: .04 },
-    directional: { color: "#ffffff", intensity: .06 },
-    // 缩小发光面积收紧高光，并提高单位面积亮度以维持总体照度。
+    // 压低全向补光，让主光决定明暗；保留少量环境光读取背光面的颜色。
+    exposure: .95, environment: "/assets/environments/twomuch-studio.jpg", environmentIntensity: .28,
+    reflectionBackgroundIntensity: .35,
+    ambient: { color: "#eef1f7", intensity: .015 },
+    directional: { color: "#ffffff", intensity: .02 },
+    // 左上主光与右侧补光拉开光比，收紧高光以突出曲面起伏。
     studio: [
-      { color: "#fff5e9", intensity: 14, width: 3, height: 2.5, position: [-3.5, 4.5, 5] },
-      { color: "#e8efff", intensity: 3.5, width: 2.2, height: 3.5, position: [4, .5, 3] },
+      { color: "#fff5e9", intensity: 24, width: 3, height: 2.5, position: [-4.5, 5, 4] },
+      { color: "#e8efff", intensity: 1.4, width: 2.2, height: 3.5, position: [4, .5, 3] },
       // 侧后方窄条轮廓光，靠近物件以增强边缘高光。
-      { color: "#ffffff", intensity: 18, width: 1.2, height: 3.5, position: [3, 2, -2.5] },
+      { color: "#ffffff", intensity: 20, width: 1.2, height: 3.5, position: [3, 2, -2.5] },
     ],
   },
 };

@@ -19,7 +19,14 @@ export function HoverLabel() {
     let x = 0, y = 0, targetX = 0, targetY = 0;
     let angle = 0, angularVelocity = 0;
 
+    let characterAnimations: Animation[] = [];
+    const clearCharacters = () => {
+      characterAnimations.forEach((animation) => animation.cancel());
+      characterAnimations = [];
+    };
+
     const hide = () => {
+      clearCharacters();
       visible = false;
       active?.removeAttribute("data-hover-label-active");
       active = null;
@@ -39,8 +46,27 @@ export function HoverLabel() {
         active?.removeAttribute("data-hover-label-active");
         active = surface;
         surface.setAttribute("data-hover-label-active", "");
+        clearCharacters();
+        const characters = Array.from(surface.dataset.hoverLabel ?? "");
+        element.replaceChildren(...characters.map((character, index) => {
+          const span = document.createElement("span");
+          span.textContent = character === " " ? "\u00a0" : character;
+          span.className = "hover-label-character";
+          if (!reducedMotion.matches) {
+            const direction = index % 2 === 0 ? 1 : -1;
+            characterAnimations.push(span.animate([
+              { opacity: 0, transform: `translate(${direction * (8 + index % 3 * 4)}px, ${direction * 16}px) rotate(${direction * 24}deg)` },
+              { opacity: 1, transform: "translate(0, 0) rotate(0deg)" },
+            ], {
+              duration: 360,
+              delay: (index * 7 % characters.length) * Math.min(22, 120 / Math.max(1, characters.length - 1)),
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              fill: "backwards",
+            }));
+          }
+          return span;
+        }));
       }
-      element.textContent = surface.dataset.hoverLabel ?? "";
       if (!visible) {
         x = targetX;
         y = targetY;
