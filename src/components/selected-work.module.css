@@ -1,12 +1,12 @@
 .section {
   position: relative;
-  padding: 0 var(--page-pad) clamp(60px, 8vw, 128px);
+  padding: 0 var(--page-pad) var(--section-space, 96px);
   color: #f4f2ed;
   background: #090909;
   scroll-margin-top: 0;
   outline: none;
 }
-.grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(40px, 5vw, 80px) clamp(16px, 2vw, 32px); }
+.grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--grid-row-gap, 64px) var(--grid-gap, 24px); }
 .project { min-width: 0; }
 .project:nth-child(1) { grid-column: 3; }
 .project:nth-child(2) { grid-column: 4; }
@@ -26,11 +26,11 @@
 .projectLink:hover .image img { filter: brightness(1.1); }
 .section a:focus-visible { outline: 2px solid #f4f2ed; outline-offset: 7px; }
 @media (max-width: 809px) {
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 20px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-row-gap, 40px) var(--grid-gap, 20px); }
   .project:nth-child(n) { grid-column: auto; }
 }
 @media (max-width: 599px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 18px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-row-gap, 36px) var(--grid-gap, 16px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .image img { transition: none; }

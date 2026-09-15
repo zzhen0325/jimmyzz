@@ -16,7 +16,7 @@ export function TopNav({ english = false }: { english?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   return (
-    <header className="site-nav border-b border-white/20">
+    <header className="site-nav border-b border-[var(--line)]">
       <Link href="/" className="site-wordmark" aria-label="ZZ 张振 首页">
         <Image src="/assets/images/logo.svg" alt="ZZ" width={60} height={30} priority />
       </Link>
@@ -72,7 +72,7 @@ export function Timeline({
   return (
     <div
       aria-hidden
-      className={`absolute right-[var(--page-pad)] left-[var(--page-pad)] z-4 flex justify-between border-t border-white/20 pt-2 text-[10px] text-white/60 ${className}`}
+      className={`absolute right-[var(--page-pad)] left-[var(--page-pad)] z-4 flex justify-between border-t border-[var(--line)] pt-2 text-[10px] text-white/60 ${className}`}
     >
       <span>THINK</span>
       <span>PLAN</span>

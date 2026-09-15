@@ -1,0 +1,99 @@
+/* Homepage grid: 12 columns, collapsing to 6 / 4 at the existing breakpoints.
+   Six-column project grids use every second line of this same grid. */
+.home-page {
+  --grid-gap: clamp(16px, 2vw, 32px);
+  --grid-columns: 12;
+  --grid-template: repeat(var(--grid-columns), minmax(0, 1fr));
+  --grid-row-gap: clamp(40px, 5vw, 80px);
+  --section-space: clamp(64px, 8vw, 128px);
+  --row-space: clamp(28px, 3vw, 48px);
+  --preview-left: calc((100% + var(--grid-gap)) / 12);
+}
+.home-page :is(.profile-introduction, .capability-list article, .about-layout,
+  .experience-list article, .footer-details, .footer-bottom, .section-label) {
+  display: grid;
+  grid-template-columns: var(--grid-template);
+  column-gap: var(--grid-gap);
+}
+.home-page :is(.profile-introduction, .capability-list article, .about-layout,
+  .experience-list article, .footer-details, .footer-bottom) > * { min-width: 0; }
+.home-page .portfolio-section { padding-bottom: var(--section-space); }
+.home-page .profile-introduction { padding-block: var(--row-space) var(--section-space); }
+.home-page .profile-identity { grid-column: 1 / 5; }
+.home-page .profile-statement { grid-column: 5 / -1; max-width: none; }
+.home-page .capability-list article { padding-block: var(--row-space); }
+.home-page .capability-number { grid-column: 1 / 5; }
+.home-page .capability-list h3 { grid-column: 5 / 9; }
+.home-page .capability-list p { grid-column: 9 / -1; max-width: none; }
+.home-page .intro-image-strip { gap: var(--grid-gap); margin-bottom: var(--grid-row-gap); }
+.home-page .section-label {
+  margin-inline: var(--page-pad);
+  padding-inline: 0;
+}
+.home-page .section-label > span:first-child { grid-column: 1 / 5; }
+.home-page .section-label > span:nth-child(2) { grid-column: 5 / 9; justify-self: start; }
+.home-page .section-label > span:last-child { grid-column: 9 / -1; justify-self: end; }
+.home-page .section-label::before { left: 0; }
+.home-page .section-label::after { right: 0; }
+.home-page .about-layout { padding-block: var(--section-space); align-items: start; }
+.home-page .about-layout > div:first-child { grid-column: 1 / 5; }
+.home-page .about-art { grid-column: 5 / -1; margin: 0; transform: none; }
+.home-page .about-art img { display: block; width: 100%; height: auto; }
+.home-page .experience-list article { padding-block: var(--row-space); }
+.home-page .experience-list h3 { grid-column: 1 / 5; }
+.home-page .experience-list article > div { grid-column: 5 / -1; }
+.home-page .portfolio-footer { padding-top: var(--section-space); border-top: 0; }
+.home-page .portfolio-footer::before { content: ""; display: block; border-top: 1px solid var(--line); margin-top: calc(-1 * var(--section-space)); margin-bottom: var(--section-space); }
+.home-page .footer-title { margin-block: var(--row-space) var(--section-space); }
+.home-page .footer-details { margin-bottom: var(--grid-row-gap); }
+.home-page .footer-details > a { grid-column: 1 / 5; overflow-wrap: anywhere; }
+.home-page .footer-details > div { grid-column: 5 / -1; gap: var(--grid-gap); flex-wrap: wrap; }
+.home-page .footer-bottom > span:first-child { grid-column: 1 / 5; }
+.home-page .footer-bottom > span:nth-child(2) { grid-column: 5 / 11; }
+.home-page .footer-bottom > a { grid-column: 11 / -1; justify-self: end; }
+.home-page .ribbon-guides { inset-inline: var(--page-pad); }
+.home-page .ribbon-footer { left: var(--page-pad); right: var(--page-pad); grid-template-columns: var(--grid-template); gap: var(--grid-gap); }
+.home-page .ribbon-count { grid-column: 1 / 5; }
+.home-page .ribbon-title { grid-column: 5 / 9; }
+.home-page .ribbon-actions { grid-column: 9 / -1; }
+.home-page .ribbon-stage:not(.is-animated) .ribbon-images {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--grid-gap);
+  padding: var(--section-space) var(--page-pad);
+}
+@media (max-width: 809px) {
+  .home-page { --grid-columns: 6; --grid-gap: 20px; --grid-row-gap: 40px; --section-space: 64px; --row-space: 28px; }
+  .home-page .profile-introduction { row-gap: var(--row-space); }
+  .home-page :is(.profile-identity, .profile-statement) { grid-column: 1 / -1; }
+  .home-page .capability-number { grid-column: 1; }
+  .home-page .capability-list h3 { grid-column: 2 / -1; }
+  .home-page .capability-list p { grid-column: 2 / -1; }
+  .home-page .capability-list article { row-gap: 16px; min-height: 154px; }
+  .home-page .capability-preview { left: 0; right: auto; top: 72px; width: calc((100% - 5 * var(--grid-gap)) / 6); max-width: 88px; }
+  .home-page .capability-row[data-active="true"] .capability-preview { transform: none; }
+  .home-page .section-label > span:first-child { grid-column: 1 / 4; }
+  .home-page .section-label > span:last-child { grid-column: 4 / -1; }
+  .home-page .about-layout { row-gap: var(--grid-row-gap); }
+  .home-page .about-layout > div:first-child, .home-page .about-art { grid-column: 1 / -1; }
+  .home-page .experience-list h3 { grid-column: 1 / 3; }
+  .home-page .experience-list article > div { grid-column: 3 / -1; }
+  .home-page .footer-details > a { grid-column: 1 / -1; }
+  .home-page .footer-details > div { grid-column: 1 / -1; }
+  .home-page .footer-bottom > span:first-child { grid-column: 1 / 4; }
+  .home-page .footer-bottom > a { grid-column: 4 / -1; }
+  .home-page .ribbon-count { grid-column: 1 / 3; }
+  .home-page .ribbon-title { grid-column: 3 / -1; text-align: right; }
+  .home-page .ribbon-actions { grid-column: 1 / -1; }
+  .home-page .ribbon-stage:not(.is-animated) .ribbon-images { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 599px) {
+  .home-page { --grid-columns: 4; --grid-gap: 16px; --grid-row-gap: 32px; }
+  .home-page .capability-preview { width: calc((100% - 3 * var(--grid-gap)) / 4); }
+  .home-page .section-label > span:first-child { grid-column: 1 / 3; }
+  .home-page .section-label > span:last-child { grid-column: 3 / -1; }
+  .home-page .experience-list h3, .home-page .experience-list article > div { grid-column: 1 / -1; }
+  .home-page .experience-list article { row-gap: 16px; }
+  .home-page .footer-bottom > span:first-child { grid-column: 1 / 3; }
+  .home-page .footer-bottom > a { grid-column: 3 / -1; }
+  .home-page .ribbon-stage:not(.is-animated) .ribbon-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -1,7 +1,7 @@
 .ribbon-section { background: #090909; color: #f4f2ed; }
 .ribbon-stage { position: relative; min-height: 650px; height: 100svh; overflow: hidden; isolation: isolate; }
-.ribbon-guides { position: absolute; inset: 12% 28px; pointer-events: none; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), #f4f2ed14 calc(16.666% - 1px), #f4f2ed14 16.666%); }
-.ribbon-playhead { display: none; position: absolute; left: 50%; inset-block: 95px; width: 1px; background: #f4f2ed30; pointer-events: none; z-index: 105; }
+.ribbon-guides { position: absolute; inset: 12% 28px; pointer-events: none; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), var(--line) calc(16.666% - 1px), var(--line) 16.666%); }
+.ribbon-playhead { display: none; position: absolute; left: 50%; inset-block: 95px; width: 1px; background: var(--line); pointer-events: none; z-index: 105; }
 .ribbon-playhead i { position: absolute; left: -4px; top: 0; border: 4px solid transparent; border-top-color: #f4f2ed; }
 .ribbon-playhead i:last-child { top: auto; bottom: 0; transform: rotate(180deg); }
 .ribbon-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 120px 32px; }

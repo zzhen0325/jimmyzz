@@ -2,7 +2,11 @@ import * as THREE from "three";
 
 const clamp = (n: number) => THREE.MathUtils.clamp(n, 0, 1);
 const smooth = (n: number) => { const p = clamp(n); return p * p * (3 - 2 * p); };
-const duration = 6.2;
+const launchDuration = 1.1;
+const stagger = .11;
+const absorbDuration = .72;
+const emitDuration = 1.2;
+const exitCloseDuration = .22;
 type FlightObject = { object: THREE.Object3D; billboard?: boolean };
 
 /** Temporarily take over visuals; leave physics and DOM layout intact. */
@@ -13,9 +17,24 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     const rect = canvas.getBoundingClientRect();
     return new THREE.Vector2(rect.left + (p.x + 1) * rect.width / 2, rect.top + (1 - p.y) * rect.height / 2);
   };
-  function capture(vortex: THREE.Object3D, objects: FlightObject[], reduced: boolean, onComplete: (position: THREE.Vector3) => void) {
-    const origin = vortex.position.clone();
-    const projected = origin.clone().project(camera);
+  function capture(vortex: THREE.Object3D, gun: THREE.Object3D, objects: FlightObject[], reduced: boolean, onComplete: (position: THREE.Vector3) => void) {
+    camera.updateMatrixWorld(true);
+    const gunLocal = gun.position.clone().applyQuaternion(camera.quaternion.clone().invert());
+    const projected = gun.position.clone().project(camera);
+    const rect = canvas.getBoundingClientRect();
+    // Choose a distant point in screen pixels, with room for the expanded portal.
+    const marginX = Math.min(.42, 1.5 * camera.zoom / (camera.right - camera.left));
+    const marginY = Math.min(.42, 1.5 * camera.zoom / (camera.top - camera.bottom));
+    let target = new THREE.Vector3();
+    let farthest = -1;
+    for (let i = 0; i < 24; i++) {
+      const candidate = new THREE.Vector3((Math.random() * 2 - 1) * (1 - marginX), (Math.random() * 2 - 1) * (1 - marginY), projected.z);
+      const distance = Math.hypot((candidate.x - projected.x) * rect.width, (candidate.y - projected.y) * rect.height);
+      if (distance > farthest) { target = candidate; farthest = distance; }
+      if (distance > Math.max(rect.width, rect.height) * 1.05) { target = candidate; break; }
+    }
+    const origin = target.unproject(camera);
+    projected.copy(origin).project(camera);
     // Place the exit on the opposite side, safely inside both desktop and mobile views.
     const destination = new THREE.Vector3(projected.x > 0 ? -.48 : .48, projected.y > 0 ? -.3 : .3, projected.z).unproject(camera);
     const from = screen(origin), to = screen(destination);
@@ -26,8 +45,22 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     });
     const meshes = objects.map(({ object, billboard }) => ({ object, billboard, position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone(), visible: object.visible }));
     dom.forEach(({ node }) => { node.inert = true; node.style.willChange = "translate, rotate, scale, opacity"; });
+    // One queue for both scene objects and page elements, nearest to the mouth first.
+    const queue = [
+      ...meshes.map(mesh => ({ item: mesh, distance: screen(mesh.position).distanceTo(from) })),
+      ...dom.map(item => ({ item, distance: item.center.distanceTo(from) })),
+    ].sort((a, b) => a.distance - b.distance);
+    const order = new Map(queue.map(({ item }, index) => [item, index]));
+    const absorbEnd = .55 + Math.max(0, queue.length - 1) * stagger + absorbDuration;
+    const disappearEnd = absorbEnd + .35;
+    const appearStart = disappearEnd + .25;
+    const emitStart = appearStart + .45;
+    const emitEnd = emitStart + Math.max(0, queue.length - 1) * stagger + emitDuration;
+    // Close once the last object has cleared the mouth; its settling flight continues.
+    const exitCloseStart = emitEnd - emitDuration + .3;
+    const duration = emitEnd + .35;
     const inverseCamera = camera.quaternion.clone().invert();
-    return { vortex, origin, destination, originLocal: origin.clone().applyQuaternion(inverseCamera), destinationLocal: destination.clone().applyQuaternion(inverseCamera), returnPosition: origin.clone(), from, to, dom, meshes, reduced, onComplete, time: 0, scale: vortex.scale.clone(), quaternion: vortex.quaternion.clone() };
+    return { gun, gunLocal, gunQuaternion: gun.quaternion.clone(), aimedQuaternion: gun.quaternion.clone(), muzzle: new THREE.Vector3(), order, absorbEnd, disappearEnd, appearStart, emitStart, emitEnd, exitCloseStart, duration, vortex, origin, destination, originLocal: origin.clone().applyQuaternion(inverseCamera), destinationLocal: destination.clone().applyQuaternion(inverseCamera), returnPosition: origin.clone(), from, to, dom, meshes, reduced, onComplete, time: 0, scale: vortex.scale.clone(), quaternion: vortex.quaternion.clone() };
   }
   function restore(completed: boolean) {
     if (!running) return;
@@ -40,7 +73,7 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       if (style === null) node.removeAttribute("style"); else node.setAttribute("style", style);
       node.inert = inert;
     }
-    state.vortex.visible = true;
+    state.vortex.visible = false;
     state.vortex.position.copy(completed ? state.destination : state.returnPosition);
     state.vortex.scale.copy(state.scale);
     state.vortex.quaternion.copy(camera.quaternion);
@@ -48,55 +81,96 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     canvas.style.cursor = "grab";
     if (completed) state.onComplete(state.destination);
   }
-  // Local flight curves complement the shared slow–fast–slow choreography clock.
-  function flight(t: number, index: number, count: number) {
-    const delay = index / Math.max(1, count - 1) * .4;
-    const incoming = t < 3;
-    const p = incoming ? clamp((t - .55 - delay) / 1.55) : clamp((t - 3.65 - delay) / 2.15);
-    const travel = incoming ? p * p * p : 1 - Math.pow(1 - p, 3);
-    return { incoming, travel, scale: incoming ? 1 - Math.pow(p, 2) : 1 - Math.pow(1 - p, 2), angle: (incoming ? travel : 1 - travel) * Math.PI * 1.35, visible: incoming ? p < 1 : p > 0 };
+  // Short overlapping flights: objects shrink only as they reach the mouth,
+  // and grow as they leave it, rather than scaling the whole scene together.
+  function flight(t: number, index: number, emitStart: number) {
+    const delay = index * stagger;
+    const incoming = t < emitStart;
+    const p = incoming ? clamp((t - .55 - delay) / absorbDuration) : clamp((t - emitStart - delay) / emitDuration);
+    const travel = incoming ? p * p : 1 - Math.pow(1 - p, 3);
+    const scale = incoming ? 1 - smooth((travel - .55) / .45) : smooth(travel / .45);
+    return { incoming, travel, scale, angle: (incoming ? travel : 1 - travel) * Math.PI * 1.35, visible: incoming ? p < 1 : p > 0 };
   }
   return {
     get active() { return !!running; },
-    start(vortex: THREE.Object3D, objects: FlightObject[], reduced: boolean, onComplete: (position: THREE.Vector3) => void) {
+    start(vortex: THREE.Object3D, gun: THREE.Object3D, objects: FlightObject[], reduced: boolean, onComplete: (position: THREE.Vector3) => void) {
       if (running) return;
-      running = capture(vortex, objects, reduced, onComplete);
+      running = capture(vortex, gun, objects, reduced, onComplete);
       canvas.style.cursor = "wait";
-      canvas.dataset.vortexPhase = "charge";
+      canvas.dataset.vortexPhase = "aim";
     },
     cancel: () => restore(false),
     update(delta: number) {
       if (!running) return;
       const s = running;
       // Physics supplies fresh poses every frame, including while objects are
-      // hidden. Flights return to these moving targets, never frozen snapshots.
+      // hidden. The world composes its normal animation first, so position,
+      // orientation and size all converge to the exact next-frame baseline.
       if (!s.reduced) {
         s.returnPosition.copy(s.vortex.position);
         s.origin.copy(s.originLocal).applyQuaternion(camera.quaternion);
         s.destination.copy(s.destinationLocal).applyQuaternion(camera.quaternion);
         for (const mesh of s.meshes) {
           mesh.position.copy(mesh.object.position);
-          mesh.quaternion.copy(mesh.billboard ? camera.quaternion : mesh.object.quaternion);
+          mesh.quaternion.copy(mesh.object.quaternion);
+          mesh.scale.copy(mesh.object.scale);
+          // Visibility belongs to the captured baseline: the previous flight
+          // may have hidden this object while it was inside the portal.
         }
       }
       s.time += delta;
       const seconds = s.time;
-      if (seconds >= (s.reduced ? .3 : duration)) { restore(true); return; }
+      if (seconds >= (s.reduced ? .3 : s.duration + launchDuration)) { restore(true); return; }
       if (s.reduced) {
         s.vortex.visible = seconds < .1 || seconds > .2;
         if (seconds > .15) s.vortex.position.copy(s.destination);
         return;
       }
-      // One master ease keeps the whole journey slow at its ends and fastest
-      // around the handoff, instead of pausing between two independent flights.
-      const t = smooth(seconds / duration) * duration;
-      canvas.dataset.vortexPhase = t < .55 ? "charge" : t < 2.75 ? "absorb" : t < 3.15 ? "hidden" : t < 3.65 ? "appear" : "emit";
-      const exit = t >= 3.15;
-      let size = t < .55 ? 1 + smooth(t / .55) * 1.5 : t < 2.35 ? 2.5 : t < 2.75 ? 2.5 * (1 - smooth((t - 2.35) / .4)) : t < 3.15 ? 0 : t < 3.65 ? 2.5 * smooth((t - 3.15) / .5) : 2.5 - 1.5 * smooth((t - 5.2) / 1);
+      const t = seconds - launchDuration;
+      if (t < 0) {
+        canvas.dataset.vortexPhase = seconds < .42 ? "aim" : "shoot";
+        const gunPosition = s.gunLocal.clone().applyQuaternion(camera.quaternion);
+        const direction = s.origin.clone().sub(gunPosition).applyQuaternion(camera.quaternion.clone().invert());
+        // The toy barrel points along local +X, with a built-in .08 rad tilt.
+        const aim = camera.quaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.atan2(direction.y, direction.x) - .08));
+        s.gun.position.copy(gunPosition);
+        s.gun.quaternion.copy(s.gunQuaternion).slerp(aim, smooth(seconds / .42));
+        s.aimedQuaternion.copy(aim);
+        if (seconds >= .42) {
+          const muzzle = s.gun.getObjectByName("portal-muzzle");
+          s.gun.updateWorldMatrix(true, true);
+          if (muzzle) muzzle.getWorldPosition(s.muzzle); else s.muzzle.copy(gunPosition);
+          const progress = clamp((seconds - .42) / (launchDuration - .42));
+          const recoil = Math.sin(clamp((seconds - .42) / .3) * Math.PI) * .12;
+          s.gun.position.addScaledVector(s.origin.clone().sub(s.muzzle).normalize(), -recoil);
+          s.vortex.visible = true;
+          s.vortex.position.lerpVectors(s.muzzle, s.origin, progress);
+          s.vortex.quaternion.copy(camera.quaternion);
+          s.vortex.scale.copy(s.scale).multiplyScalar(.16 + .035 * Math.sin(progress * Math.PI));
+        } else s.vortex.visible = false;
+        return;
+      }
+      s.from.copy(screen(s.origin)); s.to.copy(screen(s.destination));
+      // Ease the gun back into its live drift after firing, before it is absorbed.
+      if (t < .45) {
+        const gunMesh = s.meshes.find(mesh => mesh.object === s.gun);
+        if (gunMesh) {
+          gunMesh.position.lerpVectors(s.gunLocal.clone().applyQuaternion(camera.quaternion), gunMesh.position.clone(), smooth(t / .45));
+          gunMesh.quaternion.copy(s.aimedQuaternion.clone().slerp(gunMesh.quaternion, smooth(t / .45)));
+        }
+      }
+      canvas.dataset.vortexPhase = t < .55 ? "impact" : t < s.absorbEnd ? "absorb" : t < s.appearStart ? "hidden" : t < s.emitStart ? "appear" : "emit";
+      const exit = t >= s.appearStart;
+      let size = t < .55 ? .16 + (1 - Math.pow(1 - clamp(t / .55), 3)) * 2.34
+        : t < s.absorbEnd ? 2.5
+        : t < s.disappearEnd ? 2.5 * (1 - smooth((t - s.absorbEnd) / .35))
+        : t < s.appearStart ? 0
+        : t < s.emitStart ? 2.5 * smooth((t - s.appearStart) / .45)
+        : 2.5 * (1 - smooth((t - s.exitCloseStart) / exitCloseDuration));
       size = Math.max(0, size);
       s.vortex.visible = size > .001;
-      const inhale = smooth(t / .55) * (1 - smooth((t - 2.35) / .4));
-      const exhale = smooth((t - 3.15) / .35) * (1 - smooth((t - 4.7) / 1.5));
+      const inhale = smooth(t / .55) * (1 - smooth((t - s.absorbEnd) / .35));
+      const exhale = smooth((t - s.appearStart) / .35) * (1 - smooth((t - s.exitCloseStart) / exitCloseDuration));
       const pulse = .72 + .28 * Math.pow(Math.sin(seconds * 14), 2);
       const shake = (.035 * inhale + .05 * exhale) * pulse;
       s.vortex.scale.copy(s.scale).multiplyScalar(size * (1 + Math.sin(seconds * 28) * .025 * exhale));
@@ -107,8 +181,9 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       s.vortex.rotateZ(Math.sin(seconds * 61) * shake * 1.4);
       const screenShake = screen(s.vortex.position).sub(exit ? s.to : s.from);
       const inverseCamera = camera.quaternion.clone().invert();
-      s.meshes.forEach(({ object, position, quaternion, scale, visible }, index) => {
-        const f = flight(t, index, s.meshes.length);
+      s.meshes.forEach(mesh => {
+        const { object, position, quaternion, scale, visible } = mesh;
+        const f = flight(t, s.order.get(mesh)!, s.emitStart);
         const mouth = f.incoming ? s.origin : s.destination;
         const relative = position.clone().sub(mouth).applyQuaternion(inverseCamera);
         const radial = f.incoming ? 1 - f.travel : f.travel;
@@ -121,19 +196,16 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
         object.quaternion.copy(quaternion); object.rotateZ(f.angle); object.rotateY(f.angle * .6);
         object.visible = visible && f.visible;
       });
-      s.dom.forEach(({ node, center }, index) => {
-        const f = flight(t, index, s.dom.length);
+      s.dom.forEach(item => {
+        const { node, center } = item;
+        const f = flight(t, s.order.get(item)!, s.emitStart);
         const mouth = f.incoming ? s.from : s.to;
         const radial = f.incoming ? 1 - f.travel : f.travel;
         const x = center.x - mouth.x, y = center.y - mouth.y;
         const px = mouth.x + (x * Math.cos(-f.angle) - y * Math.sin(-f.angle)) * radial;
         const py = mouth.y + (x * Math.sin(-f.angle) + y * Math.cos(-f.angle)) * radial;
-        // Text and controls also respond gently while waiting for their turn.
-        const drift = smooth(seconds / .35) * (1 - smooth((t - 5.1) / 1.1)) * radial;
-        const driftX = Math.sin(seconds * 2.8 + index) * 5 * drift;
-        const driftY = Math.sin(seconds * 2.2 + index * 1.7) * 4 * drift;
-        node.style.translate = `${px - center.x + screenShake.x * (1 - radial) + driftX}px ${py - center.y + screenShake.y * (1 - radial) + driftY}px`;
-        node.style.rotate = `${-f.angle + Math.sin(seconds * 2.4 + index) * .025 * drift}rad`;
+        node.style.translate = `${px - center.x + screenShake.x * (1 - radial)}px ${py - center.y + screenShake.y * (1 - radial)}px`;
+        node.style.rotate = `${-f.angle}rad`;
         node.style.scale = String(Math.max(.001, f.scale));
         node.style.opacity = f.visible ? String(clamp(f.scale * 4)) : "0";
       });

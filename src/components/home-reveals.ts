@@ -15,6 +15,41 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       if (conditions?.reduced || !scope.current) return;
 
       const mobile = conditions?.mobile;
+      const imageStrip = scope.current.querySelector(".intro-image-strip");
+      const imageCards = scope.current.querySelectorAll(".intro-image-card");
+      if (imageStrip && imageCards.length) {
+        const proxy = { skew: 0 };
+        const clamp = gsap.utils.clamp(mobile ? -6 : -12, mobile ? 6 : 12);
+        gsap.set(imageCards, { skewY: 0, transformOrigin: "right center", force3D: true });
+        const setSkew = gsap.quickSetter(imageCards, "skewY", "deg");
+        const settle = gsap.to(proxy, {
+          skew: 0, duration: 0.8, ease: "power3.out", paused: true,
+          onUpdate: () => setSkew(proxy.skew),
+        });
+        ScrollTrigger.create({
+          trigger: imageStrip, start: "top bottom", end: "bottom top",
+          onUpdate: (self) => {
+            if (!self.isActive) return;
+            const skew = clamp(self.getVelocity() / -300);
+            if (Math.abs(skew) > Math.abs(proxy.skew) || skew * proxy.skew < 0) {
+              proxy.skew = skew;
+              setSkew(skew);
+              settle.invalidate().restart();
+            }
+          },
+        });
+      }
+      scope.current.querySelectorAll<HTMLElement>(".intro-image-slot").forEach((slot) => {
+        gsap.fromTo(slot.querySelector(".intro-image-card"), {
+          x: () => window.innerWidth,
+        }, {
+          x: 0, ease: "none",
+          scrollTrigger: {
+            trigger: slot, start: "clamp(top 95%)", end: "clamp(top 45%)",
+            scrub: 0.45, invalidateOnRefresh: true,
+          },
+        });
+      });
       scope.current.querySelectorAll<HTMLElement>("[data-profile-reveal]").forEach((text) => {
         SplitText.create(text, {
           type: "words", tag: "span", aria: "auto", autoSplit: true,
@@ -30,17 +65,23 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
             });
             split.words.forEach((word, index) => {
               const original = word.textContent ?? "";
-              // Reserve the final word width so scrambling never shifts the layout.
-              timeline.set(word, { width: word.getBoundingClientRect().width }, 0);
-              timeline.fromTo(word, { opacity: 0 }, {
+              // Keep natural font-responsive spacing across refreshes and replays.
+              // Scrambled glyphs stay inside their word instead of overlapping neighbors.
+              const measure = document.createElement("span");
+              measure.className = "profile-word-measure";
+              measure.textContent = original;
+              const animated = document.createElement("span");
+              animated.className = "profile-word-animation";
+              animated.textContent = original;
+              word.replaceChildren(measure, animated);
+              timeline.fromTo(animated, { opacity: 0 }, {
                 opacity: 1, duration: 0.16,
               }, index * 0.028);
-              timeline.to(word, {
+              timeline.to(animated, {
                 duration: 0.75,
                 scrambleText: { text: original, chars: original, revealDelay: 0.12, speed: 0.35 },
               }, index * 0.028);
             });
-            timeline.set(split.words, { clearProps: "width,opacity" });
             return timeline;
           },
         });
@@ -83,8 +124,13 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       scope.current.querySelectorAll(".section-heading").forEach((heading) => {
         reveal(heading, [[":scope > p", 0.2, 28]], "top 74%");
       });
-      scope.current.querySelectorAll(".capability-list article").forEach((row) => {
-        reveal(row, [["span", 0, 10], ["h3", 0.1, 22], ["p", 0.25, 30]]);
+      scope.current.querySelectorAll<HTMLElement>("[data-capability-reveal]").forEach((text) => {
+        const original = text.textContent ?? "";
+        gsap.fromTo(text, { opacity: 0 }, {
+          opacity: 1, duration: 0.9,
+          scrambleText: { text: original, chars: "品牌创意设计体验工具系统01/+#", revealDelay: 0.1, speed: 0.4 },
+          scrollTrigger: { trigger: text.closest("article"), start: "clamp(top 90%)", once: true },
+        });
       });
       scope.current.querySelectorAll(".about-layout").forEach((about) => {
         reveal(about, [[".eyebrow", 0, 12], [".about-art", 0.16, 44],

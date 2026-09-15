@@ -14,7 +14,7 @@ export type FloatingModelConfig = {
 // axisScale：[宽、高、厚] 相对模型倍率；size 最后统一控制最长边。
 // normalStrength：已有法线纹理的颗粒强度，0 为平滑，1 为当前烘焙强度。
 const silver: MeshPhysicalMaterialParameters = {
-  color: "#f4f5f7", metalness: 1, roughness: .24, envMapIntensity: .82,
+  color: "#FFFFFF", metalness: 1, roughness: .16, envMapIntensity: 0.6,
 };
 
 export const home3DConfig = {
@@ -40,18 +40,12 @@ export const home3DConfig = {
       { file: "04_review", size: 0.6, color: "#FFE343", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
       { file: "05_repeat", size: 0.8, color: "#B672FF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
     ],
-    material: { roughness: .38, metalness: 0, envMapIntensity: .75, clearcoat: .32, clearcoatRoughness: .28 },
+    material: { roughness: .38, metalness: 0, envMapIntensity: .95, clearcoat: .32, clearcoatRoughness: .28 },
   },
-  // Blender 模型：情绪角色、蓝色 ZZ、笑脸键帽与大力士；可分别调整尺寸和材质。
+  // Blender 模型：灰色情绪角色、蓝色 ZZ 与笑脸键帽。
   characters: {
     items: [
-      {
-        file: "01_joy", size: 1.2, axisScale: [1, 1, 1],
-        materials: {
-          "Lemon silicone": { color: "#FFE637", metalness: 0, roughness: .62, clearcoat: .08, clearcoatRoughness: .48, envMapIntensity: .75 },
-          "Raised charcoal expressions": { color: "#101311", metalness: 0, roughness: .48, clearcoat: .08, clearcoatRoughness: .3, envMapIntensity: .65 },
-        },
-      },
+
       {
         file: "02_meh", size: 1.0, axisScale: [1, 1, 1],
         materials: {
@@ -72,15 +66,12 @@ export const home3DConfig = {
           "Keycap charcoal smile": { color: "#121619", metalness: 0, roughness: .58, clearcoat: .06, clearcoatRoughness: .35, envMapIntensity: .65 },
         },
       },
-      {
-        file: "08_strongman", size: 1.6, axisScale: [1, 1, 1],
-        materials: {
-          "Strongman butter yellow": { color: "#FFE477", metalness: 0, roughness: .48, clearcoat: .04, clearcoatRoughness: .4, envMapIntensity: .75 },
-          "Strongman charcoal vest": { color: "#40333D", metalness: 0, roughness: .64, clearcoat: .02, envMapIntensity: .65 },
-          "Strongman surface ink": { color: "#141411", metalness: 0, roughness: .6, clearcoat: 0, envMapIntensity: .6 },
-        },
-      },
+
     ] satisfies FloatingModelConfig[],
+  },
+  celestial: {
+    planet: { size: 1.45, material: { color: "#ded9ce", metalness: 1, roughness: .2, envMapIntensity: 1.15 }, ringMaterial: { color: "#a6d3d5", metalness: .95, roughness: .23, envMapIntensity: 1.1 } },
+    cloud: { size: 1.4, material: { color: "#e2e9f0", metalness: 1, roughness: .14, envMapIntensity: 1.2, clearcoat: .35, clearcoatRoughness: .12 } },
   },
   skater: {
     image: "/assets/images/skater-cutout.webp", size: 1.45,
@@ -91,10 +82,18 @@ export const home3DConfig = {
   vortex: {
     size: 1, pixels: 80, speed: .65, arms: 5,
   },
+  portalGun: {
+    size: 1.6,
+    materials: {
+      shell: { color: "#64dd85", metalness: .2, roughness: .22, clearcoat: .08, clearcoatRoughness: .5, envMapIntensity: .85, transmission: .82, thickness: .56, ior: 1.46, attenuationColor: "#159b46", attenuationDistance: .8 },
+      trim: { color: "#53ff10", emissive: "#25e800", emissiveIntensity: .4, metalness: .15, roughness: .2 },
+      buttons: { color: "#e5e8eb", metalness: 1, roughness: .22, clearcoat: .35 },
+    },
+  },
   gamepad: {
     size: 1.35,
     materials: {
-      shell: { color: "#FFECC7", metalness: 0, roughness: .4, envMapIntensity: .65, clearcoat: .18, clearcoatRoughness: .32 },
+      shell: { color: "#FFFF85", metalness: 0, roughness: .4, envMapIntensity: .65, clearcoat: .18, clearcoatRoughness: .32 },
       edge: { color: "#44484d", metalness: 0, roughness: .52, envMapIntensity: .55 },
       rubber: { color: "#202428", metalness: 0, roughness: .78, envMapIntensity: .45 },
       buttons: { color: "#ff463a", metalness: 0, roughness: .27, clearcoat: .48, clearcoatRoughness: .18 },
@@ -104,17 +103,18 @@ export const home3DConfig = {
   },
   // 金属外观也受环境与灯光影响。
   lighting: {
-    // 压低全向补光，让主光决定明暗；保留少量环境光读取背光面的颜色。
-    exposure: .95, environment: "/assets/environments/twomuch-studio.jpg", environmentIntensity: .28,
-    reflectionBackgroundIntensity: .35,
-    ambient: { color: "#eef1f7", intensity: .015 },
-    directional: { color: "#ffffff", intensity: .02 },
+    // 参考站原图：https://www.twomuch.studio/glb/bg_medium.jpg
+    exposure: 1, environment: "/assets/environments/twomuch-bg-medium.jpg", environmentIntensity: .9,
+    // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。
+    reflectionBackgroundIntensity: 1.1,
+    ambient: { color: "#FFFFFF", intensity: .08 },
+    directional: { color: "#ffffff", intensity: 0 },
     // 左上主光与右侧补光拉开光比，收紧高光以突出曲面起伏。
     studio: [
-      { color: "#fff5e9", intensity: 24, width: 3, height: 2.5, position: [-4.5, 5, 4] },
-      { color: "#e8efff", intensity: 1.4, width: 2.2, height: 3.5, position: [4, .5, 3] },
+      { color: "#FFFFFF", intensity: 8, width: 3, height: 2.5, position: [-4.5, 5, 4] },
+      { color: "#FFFFFF", intensity: 3, width: 2.2, height: 3.5, position: [4, .5, 3] },
       // 侧后方窄条轮廓光，靠近物件以增强边缘高光。
-      { color: "#ffffff", intensity: 20, width: 1.2, height: 3.5, position: [3, 2, -2.5] },
+      { color: "#ffffff", intensity: 6, width: 1.2, height: 3.5, position: [3, 2, -2.5] },
     ],
   },
 };

@@ -5,16 +5,19 @@ import { home3DConfig as config, type FloatingModelConfig, type ModelMaterialCon
 import * as CANNON from "cannon-es";
 import { createLogoTriangle } from "./chrome-logo-geometry";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
+import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { createJimmyWordmarkGeometry } from "./jimmy-wordmark-geometry";
-import { createChromeGamepad } from "./chrome-gamepad";
+import { createChromePortalGun } from "./chrome-portal-gun";
+import { createChromePlanet, createChromeRainCloud } from "./chrome-celestial";
 
 export type ChromeWorldOptions = { vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; billboard?: boolean };
 
 // SOURCE: twomuch.studio module 3614 / 3645 / 5743, captured 2026-09-11.
 // The scene is zero-gravity inside a 20-plane cylinder. Initial body overlap
-// produces the entrance burst. No attraction, arranged slots, or synthetic orbit paths.
+// contributes to the entrance burst, alongside a radial launch velocity.
 export const referencePhysics = {
   step: 1 / 60, maxSubSteps: 1, iterations: 5, stiffness: 1e6,
   friction: 0, angularDamping: .5, linearDamping: .01,
@@ -66,15 +69,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let viewHeight = 3;
   let assetScale = 1;
   let logoScale = 1;
-  let lastWorkProgress = 0;
+  const logoEntranceDuration = .95;
+  // Independent from physics resets: resizing or returning home must not replay it.
+  let logoEntranceTime = 0;
   const workProgress = () => options.workProgress?.current ?? 0;
   const spinAxis = new THREE.Vector3(0, 1, 0);
   const spin = new THREE.Quaternion();
   let contacts = 0;
   const bursts = 0;
   let activePointer: number | null = null;
-  let pointerStartX = 0;
-  let pointerStartY = 0;
   let pointerYaw = 0;
   let snapshotTime = 0;
   const pointer = new THREE.Vector2();
@@ -172,6 +175,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     items.forEach((item,index)=>{
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
       item.body.quaternion.set(0,0,0,1);item.body.velocity.setZero();item.body.angularVelocity.setZero();item.body.force.setZero();item.body.torque.setZero();item.body.wakeUp();
+      if(!reduced){
+        // Launch in evenly spread screen directions, with a little depth and tumble.
+        const a=2*Math.PI*index/items.length + .35;
+        const speed=2.4 + (index % 3)*.35;
+        item.body.velocity.set(Math.cos(a)*speed,Math.sin(a)*speed,(index % 2 ? 1 : -1)*.45);
+        item.body.angularVelocity.set(Math.sin(a)*2,Math.cos(a)*2,(index % 2 ? 1 : -1)*1.2);
+      }
       if(reduced){const a=2*Math.PI*index/items.length;item.body.position.set(Math.cos(a)*viewWidth*.35,Math.sin(a)*viewHeight*.35,.2);}
       item.object.position.copy(item.body.position);item.object.quaternion.copy(item.body.quaternion);
     });
@@ -194,24 +204,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   };
   const updatePointer=(event:PointerEvent)=>{const r=host.getBoundingClientRect();pointer.set((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));};
   const vortexBounds = () => {
-    if (!vortexAnimation || !ready || workProgress() > 0) return null;
-    const mesh = vortexAnimation.mesh;
-    // Screen-space picking includes the shader's transparent edge and a finger-sized
-    // margin. Raycasting the narrow painted disk made moving tips hard to click.
-    mesh.updateWorldMatrix(true, false); camera.updateMatrixWorld(true);
+    const mesh = items.find(item => item.object.name === "floating-green-portal-gun")?.object;
+    if (!mesh || !ready || workProgress() > 0) return null;
+    mesh.updateWorldMatrix(true, true); camera.updateMatrixWorld(true);
     const rect = canvas.getBoundingClientRect();
-    const project = (x: number, y: number) => {
-      const p = mesh.localToWorld(new THREE.Vector3(x, y, 0)).project(camera);
-      return new THREE.Vector2((p.x + 1) * rect.width / 2, (1 - p.y) * rect.height / 2);
-    };
-    const center = project(0, 0);
-    // Shader disk: 35-degree tilt, 0.38 minor/major ratio, outer radius <= 1.14.
-    const major = project(.819 * 1.14 / 1.866667, .574 * 1.14 / 1.866667).sub(center);
-    const minor = project(-.574 * .38 * 1.14 / 1.866667, .819 * .38 * 1.14 / 1.866667).sub(center);
-    const majorLength = major.length(), minorLength = minor.length();
-    if (majorLength < 1 || minorLength < 1) return null;
-    const padding = matchMedia('(pointer: coarse)').matches ? 24 : 16;
-    return { center, major, minor, majorLength, minorLength, rx: Math.max(22, majorLength + padding), ry: Math.max(22, minorLength + padding), rect };
+    const box = new THREE.Box3().setFromObject(mesh);
+    const min = new THREE.Vector2(Infinity, Infinity), max = new THREE.Vector2(-Infinity, -Infinity);
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+      const p = new THREE.Vector3(x, y, z).project(camera);
+      const pixel = new THREE.Vector2((p.x + 1) * rect.width / 2, (1 - p.y) * rect.height / 2);
+      min.min(pixel); max.max(pixel);
+    }
+    const padding = matchMedia('(pointer: coarse)').matches ? 12 : 6;
+    return { center: min.clone().add(max).multiplyScalar(.5), major: new THREE.Vector2(1, 0), minor: new THREE.Vector2(0, 1), majorLength: 1, minorLength: 1, rx: Math.max(22, (max.x - min.x) / 2 + padding), ry: Math.max(22, (max.y - min.y) / 2 + padding), rect };
   };
   const hitVortex = () => {
     const bounds = vortexBounds();
@@ -222,9 +227,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   };
   const startVortex = () => {
     const vortex = items.find(item => item.object.name === "floating-pixel-vortex");
-    if (!vortex || easterEgg.active || !ready || paused || workProgress() > 0) return;
+    const gun = items.find(item => item.object.name === "floating-green-portal-gun");
+    if (!vortex || !gun || easterEgg.active || !ready || paused || workProgress() > 0) return;
     activePointer = null;
-    easterEgg.start(vortex.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard }) => ({ object, billboard }))], reduced, position => {
+    easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard }) => ({ object, billboard }))], reduced, position => {
       vortex.body.position.set(position.x, position.y, position.z); vortex.body.velocity.setZero(); vortex.body.angularVelocity.setZero();
       vortex.body.aabbNeedsUpdate = true; vortex.body.wakeUp(); reflectionDirty = true;
     });
@@ -250,29 +256,36 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     target.style.transform = `translate(${center.x - rx}px, ${center.y - ry}px) rotate(${Math.atan2(major.y, major.x)}rad)`;
   };
   const pointerDown=(event:PointerEvent)=>{
-    if(event.button!==0||!ready||paused||easterEgg.active||workProgress()>0)return;
+    if(event.button!==0||activePointer!==null||!ready||paused||easterEgg.active||workProgress()>0)return;
     updatePointer(event);
     const recentHover = lastVortexHover && performance.now() - lastVortexHover.time < 250 && Math.hypot(event.clientX - lastVortexHover.x, event.clientY - lastVortexHover.y) < 22;
     if (hitVortex() || recentHover) {
       startVortex(); return;
     }
     if (reduced) return;
-    activePointer=event.pointerId;pointerStartX=event.clientX;pointerStartY=event.clientY;
+    activePointer=event.pointerId;
+    canvas.setPointerCapture(event.pointerId);
+    canvas.dataset.phase='spin';
   };
   const pointerMove=(event:PointerEvent)=>{
     updatePointer(event);
     if (!easterEgg.active) {
       const overVortex = ready && workProgress() === 0 && hitVortex();
       canvas.style.cursor = 'pointer';
-      canvas.dataset.hoverLabel = overVortex ? 'click to enter' : 'click to spin';
+      canvas.dataset.hoverLabel = overVortex ? 'click to shoot' : 'hold to spin';
       if (overVortex) lastVortexHover = { x: event.clientX, y: event.clientY, time: performance.now() };
     }
   };
   const pointerUp=(event:PointerEvent)=>{
-    if(activePointer!==event.pointerId)return;activePointer=null;
-    if(Math.hypot(event.clientX-pointerStartX,event.clientY-pointerStartY)<8 && workProgress()===0 && !paused && !easterEgg.active){power=Math.min(power+.28,.5);canvas.dataset.phase='spin';}
+    if(activePointer!==event.pointerId)return;
+    pointerCancel();
   };
-  const pointerCancel=()=>{activePointer=null;};
+  const pointerCancel=()=>{
+    const pointerId=activePointer;activePointer=null;
+    if(pointerId!==null&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);
+    canvas.dataset.phase=reduced?'static':'orbit';
+  };
+  const pageVisibility=()=>{if(document.hidden)pointerCancel();};
   const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
   const preference=()=>{reduced=media.matches;activePointer=null;if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
@@ -280,6 +293,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);
+  window.addEventListener('blur',pointerCancel);document.addEventListener('visibilitychange',pageVisibility);
   canvas.addEventListener('lostpointercapture',pointerCancel);canvas.addEventListener('keydown',key);
   media.addEventListener('change',preference);
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
@@ -294,8 +308,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const step=(delta:number)=>{
     elapsed+=delta;
     // Reference orbit is per-frame; normalize to 60Hz so high-refresh displays match it.
-    const frameRatio=delta*60;orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : power)*frameRatio;
-    if(Math.abs(power)>.01)power*=Math.pow(.98,frameRatio);
+    const frameRatio=delta*60;
+    if(workProgress()>0&&activePointer!==null)pointerCancel();
+    const holding=activePointer!==null&&!easterEgg.active&&!reduced;
+    if(holding)power=.29;
+    orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : power)*frameRatio;
+    // Retain the held speed on release, then ease back to the idle orbit.
+    if(!holding)power=referencePhysics.idlePower+(power-referencePhysics.idlePower)*Math.pow(referencePhysics.orbitDecay,frameRatio);
     cameraFrame();
     force.set(.02*Math.sin(elapsed/10),0,.02*Math.cos(elapsed/10));point.set(Math.cos(elapsed/15+50),Math.sin(elapsed/10+100),Math.cos(elapsed/20+150));
     for(const {body} of items){
@@ -310,8 +329,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   // keep the logo centered while the surrounding objects accelerate in world space.
   const composeWork = () => {
     const p = workProgress();
-    if (lastWorkProgress > 0 && p === 0) reset();
-    lastWorkProgress = p;
+    logo.visible = true;
+    // Returning to the hero keeps the live physics state instead of replaying the entrance.
     // Acceleration belongs to the shared timeline; local phases only remap its progress.
     const travel = THREE.MathUtils.clamp((p - .2) / .8, 0, 1);
     const turn = reduced ? 0 : THREE.MathUtils.clamp((p - .08) / .82, 0, 1) * Math.PI * 2;
@@ -319,10 +338,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn + pointerYaw * (1 - p)));
     canvas.dataset.pointerYaw = String(pointerYaw);
     logo.position.set(0, (height / 2 - 44) / camera.zoom * travel, 0).applyQuaternion(camera.quaternion);
-    logo.scale.setScalar(THREE.MathUtils.lerp(logoScale, 72 / (3.1 * camera.zoom), travel));
+    const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
+    const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
+    logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
     for (const { object, body, phase, billboard } of items) {
-      object.visible = p < .7;
+      object.visible = p < .7 && object.name !== "floating-pixel-vortex";
       object.scale.setScalar(assetScale * (1 - vanish));
       object.quaternion.copy(billboard ? camera.quaternion : body.quaternion);
       if (p > 0 && !reduced && !billboard) {
@@ -339,21 +360,26 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     frame=requestAnimationFrame(render);
     const delta=Math.min((time-previous)/1000,1/30);previous=time;
     if(disposed||!visible||document.hidden||contextLost)return;
+    // Start when the loading overlay releases the scene, not while assets load.
+    if (ready && !paused) {
+      logoEntranceTime = reduced || workProgress() > 0
+        ? logoEntranceDuration
+        : Math.min(logoEntranceDuration, logoEntranceTime + delta);
+    }
     if (easterEgg.active && workProgress() > 0) easterEgg.cancel();
     if (!easterEgg.active) {
       if(ready&&!paused&&!reduced&&workProgress()<1)step(delta);else cameraFrame();
       composeWork();
     } else if (!paused) {
-      if (!reduced) {
-        step(delta);
-        // The fixed logo follows the camera; floating items keep their live
-        // physics poses before the portal composes its temporary flight paths.
-        logo.position.set(0, 0, 0);
-      }
+      if (!reduced) step(delta); else cameraFrame();
+      // Keep the same live baseline during the effect and after it. In particular,
+      // the logo must retain its pointer yaw instead of snapping back on handoff.
+      composeWork();
       easterEgg.update(delta);
     }
     if (!paused && !reduced) vortexTime += delta * (easterEgg.active ? 2.5 : 1);
-    vortexAnimation?.update(reduced ? 0 : vortexTime);
+    const portalScale = vortexAnimation?.mesh.parent?.parent?.scale.x ?? assetScale;
+    vortexAnimation?.update(reduced ? 0 : vortexTime, easterEgg.active ? THREE.MathUtils.clamp((portalScale / assetScale - .16) / 2.34, 0, 1) : 1);
     // Capture after physics and camera updates. Hide the receiver during capture
     // and keep the panorama behind the real geometry, restoring the black page afterward.
     const reflectionInterval = width < 700 ? 1000 / 12 : 1000 / 20;
@@ -402,13 +428,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     return texture;
   });
   const loaded = Promise.all([skaterTexture, characterModels, Promise.all([
-    new THREE.TextureLoader().loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
+    (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
   ])]).then(([cutout, characters, [environment,...models]])=>{
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
-    // The JPG is display-encoded; decode it before using it as illumination.
-    env.colorSpace=THREE.SRGBColorSpace;
+    // Decode display-encoded images; HDR/EXR loaders already provide linear data.
+    if (/\.(jpe?g|png|webp)$/i.test(config.lighting.environment)) env.colorSpace = THREE.SRGBColorSpace;
     scene.environment=env;
     scene.environmentIntensity=config.lighting.environmentIntensity;
     for(const [index,model] of models.entries()) {
@@ -423,7 +449,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       });
       add(model as THREE.Object3D,config.plaques.items[index].size,index);
     }
-    add(createChromeGamepad(),config.gamepad.size,5);
+    add(createChromePortalGun(),config.portalGun.size,5);
     const wordmark = new THREE.Mesh(createJimmyWordmarkGeometry(), new THREE.MeshPhysicalMaterial(config.wordmark.material));
     wordmark.name = "floating-jimmy-wordmark";
     add(wordmark, config.wordmark.size, 6);
@@ -440,15 +466,22 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       });
       add(model, setting.size, 7 + index);
     });
+    add(createChromePlanet(), config.celestial.planet.size, 7 + characters.length);
+    add(createChromeRainCloud(), config.celestial.cloud.size, 8 + characters.length);
     const image = cutout.image as { width: number; height: number };
     const skater = new THREE.Mesh(
       new THREE.PlaneGeometry(image.width / image.height, 1),
       new THREE.MeshBasicMaterial({ ...config.skater.material, map: cutout }),
     );
     skater.name = "skater-billboard";
-    add(skater, config.skater.size, 7 + characters.length, true);
+    add(skater, config.skater.size, 9 + characters.length, true);
     vortexAnimation = createPixelVortex(config.vortex);
-    add(vortexAnimation.mesh, config.vortex.size, 8 + characters.length, true);
+    add(vortexAnimation.mesh, config.vortex.size, 10 + characters.length, true);
+    vortexAnimation.mesh.parent!.parent!.visible = false;
+    // A hidden effect must not collide with the floating toys.
+    const portalBody = items[items.length - 1].body;
+    portalBody.collisionFilterMask = 0;
+    portalBody.collisionResponse = false;
     canvas.dataset.billboards = "2";
     canvas.dataset.characters = String(characters.length);
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
@@ -462,7 +495,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     setPaused(value:boolean){paused=value;if(value)activePointer=null;},
     replay(){if(ready)reset();},
     dispose(){
-      disposed=true;easterEgg.cancel();cancelAnimationFrame(frame);
+      disposed=true;pointerCancel();easterEgg.cancel();cancelAnimationFrame(frame);
+      window.removeEventListener('blur',pointerCancel);document.removeEventListener('visibilitychange',pageVisibility);
       options.vortexTarget?.removeEventListener('pointerdown', vortexActivate);
       options.vortexTarget?.removeEventListener('click', vortexActivate);
       if (options.vortexTarget) options.vortexTarget.style.display = 'none';observer.disconnect();visibility.disconnect();

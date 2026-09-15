@@ -4,7 +4,7 @@ import * as THREE from "three";
 export function createPixelVortex(settings: { pixels: number; speed: number; arms: number }) {
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      time: { value: 0 }, pixels: { value: settings.pixels },
+      formation: { value: 1 }, time: { value: 0 }, pixels: { value: settings.pixels },
       speed: { value: settings.speed }, arms: { value: settings.arms },
       green: { value: new THREE.Color("#74C93B") },
       lime: { value: new THREE.Color("#B8EE52") },
@@ -14,7 +14,7 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
     fragmentShader: `varying vec2 vUv;
-      uniform float time, pixels, speed, arms;
+      uniform float time, pixels, speed, arms, formation;
       uniform vec3 green, lime, yellow, white;
       const float TAU = 6.2831853;
       float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
@@ -29,7 +29,7 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
         vec2 grid = vec2(pixels, pixels / 1.5);
         vec2 p = ((floor(vUv * grid) + .5) / grid - .5) * vec2(2.8, 1.866667);
         vec2 q = mat2(.819, -.574, .574, .819) * p;
-        q.y /= .38;
+        q.y /= mix(1., .38, formation);
         float r = length(q);
         float a = atan(q.y, q.x);
         float t = time * speed;
@@ -53,7 +53,7 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
           * (.78 + broad * .52);
         vec3 color = green;
         float alpha = 0.;
-        if (r < outer) {
+        if (r < mix(.8, outer, formation)) {
           alpha = 1.;
           float pigment = distanceToArm / max(armWidth, .001)
             + (patches - .5) * .72;
@@ -72,5 +72,5 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
   });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1), material);
   mesh.name = "floating-pixel-vortex";
-  return { mesh, update: (seconds: number) => { material.uniforms.time.value = seconds; } };
+  return { mesh, update: (seconds: number, formation = 1) => { material.uniforms.time.value = seconds; material.uniforms.formation.value = formation; } };
 }

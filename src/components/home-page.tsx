@@ -1,62 +1,48 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef } from "react";
 import { useHomeReveals } from "./home-reveals";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
 import { ArrowUpRight } from "lucide-react";
 import { Footer, SectionLabel } from "./site-chrome";
-import { profile, services } from "@/lib/site-data";
+import { profile, projects, projectCover } from "@/lib/site-data";
 import { HoverLabel } from "./hover-label";
+import { Capabilities } from "./capabilities";
 import { ChromeHero } from "./chrome-home";
+import "./home-grid.css";
 
 function Introduction() {
   return (
     <section id="introduction" tabIndex={-1} className="profile-introduction" aria-labelledby="introduction-title">
       <div className="profile-identity">
         <h2 id="introduction-title" data-profile-reveal>Hey, I&apos;m ZZ</h2>
-        <p>Visual Designer &amp;<br />Creative Engineer</p>
+
       </div>
       <div className="profile-statement">
-        <p data-profile-reveal>Building brands through visuals and connecting people through experiences.</p>
+        <p data-profile-reveal>Creative Designer & Engineer <br /> brands through visuals and connecting people through experiences.</p>
       </div>
     </section>
   );
 }
 
-function Capabilities() {
+function IntroductionImages() {
   return (
-    <section id="services" className="portfolio-section">
-      <SectionLabel
-        index="03"
-        title="PRACTICE / 设计实践"
-        time="THINK → MAKE"
-      />
-      <div className="section-heading">
-        <h2 aria-label="Think. Plan. Do. Repeat.">
-          Think. Plan.
-          <br />
-          <span className="heading-muted">Do. Repeat.</span>
-        </h2>
-        <p>
-          让设计既有表达，也有方法。
-          <br />
-          在不同业务与媒介之间，持续探索。
-        </p>
-      </div>
-      <div className="capability-list">
-        {services.map((s, index) => (
-          <article key={s.title}>
-            <span>0{index + 1}</span>
-            <h3>{s.title}</h3>
-            <p>{s.text}</p>
-          </article>
-        ))}
-      </div>
-    </section>
+      <section className="intro-image-strip" aria-label="项目视觉精选">
+        {["lemo-ai", "miaoshi-brand", "inner-species"].map((slug) => {
+          const project = projects.find((item) => item.slug === slug)!;
+          return <div className="intro-image-slot" key={slug}>
+            <Link className="intro-image-card" href={`/work/${slug}`} aria-label={`查看大图项目：${project.title}`}>
+              <Image src={projectCover(slug)} alt={`${project.title}项目视觉`} fill sizes="(max-width: 599px) 92vw, 32vw" />
+            </Link>
+          </div>;
+        })}
+      </section>
   );
 }
+
 function About() {
   return (
     <section id="about" className="portfolio-section">
@@ -130,9 +116,10 @@ export function HomePage() {
       <ChromeHero />
       <div className="home-content">
         <Introduction />
+        <Capabilities />
+        <IntroductionImages />
         <SelectedWork />
         <CurveGallery />
-        <Capabilities />
         <About />
         <Footer />
       </div>

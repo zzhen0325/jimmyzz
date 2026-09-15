@@ -1,0 +1,48 @@
+/* Practice lives directly beneath the personal introduction. */
+.capabilities-section { scroll-margin-top: 90px; }
+.capability-row { position: relative; isolation: isolate; }
+.capability-text { display: grid; }
+.capability-measure, .capability-animation { grid-area: 1 / 1; }
+.capability-measure { visibility: hidden; }
+.capability-animation { overflow: hidden; }
+.capability-trigger { color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; }
+.capability-trigger::after { content: ""; position: absolute; inset: 0; z-index: 2; }
+.capability-trigger:focus-visible { outline: none; }
+.capability-row:has(:focus-visible) { outline: 1px solid currentColor; outline-offset: 6px; }
+.capability-preview {
+  position: absolute;
+  width: clamp(100px, 11vw, 180px);
+  aspect-ratio: 1;
+  left: var(--preview-left, 7%);
+  top: 50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-45%) rotate(-5deg) scale(.9);
+  transition: opacity 160ms ease-out, transform 280ms cubic-bezier(.22, 1, .36, 1);
+  overflow: hidden;
+  background: #22231f;
+}
+.capability-preview img { object-fit: cover; opacity: 0; transition: opacity 140ms ease-out; }
+.capability-preview img.is-current { opacity: 1; }
+.capability-row[data-active="true"] .capability-preview { opacity: 1; transform: translateY(-50%) rotate(0) scale(1); }
+@media (max-width: 809px) {
+  .capability-preview { width: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .capability-preview, .capability-preview img { transition: none; }
+}
+
+/* Pointer positioning uses transforms without rerendering the row on every move. */
+.capability-row[data-active="true"] { z-index: 3; }
+.home-page .capability-row[data-following="true"] .capability-preview {
+  left: 0;
+  top: 0;
+  right: auto;
+  translate: var(--cursor-x, 0px) var(--cursor-y, 0px);
+  transform: none;
+  transition: opacity 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page .capability-row[data-following="true"] .capability-preview { transition: none; }
+}
