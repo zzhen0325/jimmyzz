@@ -49,7 +49,12 @@ export function SelectedWork() {
   }, { scope: root });
 
   return (
-    <section ref={root} tabIndex={-1} id="selected-work" className={styles.section} aria-label="精选作品">
+    <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
+      <div className={styles.indexHeading}>
+        <h3>WORK INDEX / 项目一览</h3>
+        <p>品牌、活动与持续发生的探索。</p>
+        <Link href="/work">浏览全部 {String(selected.length).padStart(2, "0")} 个项目 ↗</Link>
+      </div>
       <div className={styles.grid}>
         {selected.map((project) => (
           <article key={project.slug} className={styles.project}>
@@ -58,6 +63,7 @@ export function SelectedWork() {
                 <Image src={projectCover(project.slug)} alt={`${project.title}项目视觉`} fill
                   sizes="(max-width: 599px) 44vw, (max-width: 809px) 29vw, 16vw" />
               </div>
+              <div className={styles.caption}><h4>{project.title}</h4><span>{project.kind}</span></div>
             </Link>
           </article>
         ))}

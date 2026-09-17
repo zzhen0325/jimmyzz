@@ -8,6 +8,7 @@ import images from "@/lib/curve-gallery-assets.json";
 import { projects } from "@/lib/site-data";
 import Image from "next/image";
 import "./ribbon-gallery.css";
+import { HomeSectionHeading } from "./home-section-heading";
 
 export function CurveGallery() {
   const section = useRef<HTMLElement>(null);
@@ -105,7 +106,11 @@ export function CurveGallery() {
 
   return (
     <section id="gallery" ref={section} className="ribbon-section" aria-label="视觉漫游">
+      <HomeSectionHeading index="02" label="VISUAL LAB / 视觉漫游" title="A closer look." id="gallery-title">
+        <p>走近作品里的角色、色彩与细节。沿着横向画廊，看看同一个想法的不同切面。</p>
+      </HomeSectionHeading>
       <div ref={stage} className="ribbon-stage" aria-label="滚动画廊">
+        <div className="ribbon-instructions"><p><span className="ribbon-motion-hint">滚动继续 · 左右拖动 · </span>点击图片查看项目</p><a href="#services">继续了解设计实践 <span aria-hidden="true">↘</span></a></div>
         <div className="ribbon-guides" aria-hidden="true" />
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">

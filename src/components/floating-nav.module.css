@@ -1,0 +1,61 @@
+.header {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  top: 20px;
+  left: 50%;
+  width: min(620px, calc(100% - 2 * var(--page-pad)));
+  
+  color: var(--home-foreground, #f1f1ef);
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition: transform 420ms cubic-bezier(.22, 1, .36, 1), opacity 220ms ease;
+}
+.header[data-ready="false"], .header[data-hidden="true"] {
+  transform: translate(-50%, calc(-100% - 24px));
+  opacity: 0;
+  pointer-events: none;
+}
+.bar { display: grid; grid-template-columns: 1fr 1fr 96px 1fr 1fr; column-gap: var(--grid-gap); align-items: center; min-height: 48px; pointer-events: none; }
+.desktop a { display: flex; align-items: center; justify-self: center; min-height: 48px; padding: 0; font-size: 14px; font-weight: 500; letter-spacing: -.04em; pointer-events: auto; }
+.desktop { display: contents; }
+.desktop a { grid-row: 1; }
+.desktop a:nth-child(1) { grid-column: 1; }
+.desktop a:nth-child(2) { grid-column: 2; }
+.desktop a:nth-child(3) { grid-column: 4; }
+.desktop a:nth-child(4) { grid-column: 5; }
+.logo { grid-column: 3; grid-row: 1; justify-self: center; display: flex; align-items: center; width: 72px; height: 48px; pointer-events: auto; }
+.roll { position: relative; display: block; overflow: hidden; line-height: 1.2; }
+.rollLine { display: block; white-space: nowrap; }
+.rollCopy { position: absolute; inset: 0; white-space: nowrap; }
+.rollLine > span, .rollCopy > span { display: inline-block; transition: transform 360ms cubic-bezier(.45, 0, .55, 1); transition-delay: var(--delay); }
+.rollCopy > span { transform: translateY(100%); }
+@media (hover: hover) {
+  .header :is(a, button):hover .rollLine > span { transform: translateY(-100%); }
+  .header :is(a, button):hover .rollCopy > span { transform: translateY(0); }
+}
+.header :is(a, button):focus-visible .rollLine > span { transform: translateY(-100%); }
+.header :is(a, button):focus-visible .rollCopy > span { transform: translateY(0); }
+.header :is(a, button):focus-visible { outline: 2px solid currentColor; outline-offset: -3px; border-radius: 3px; }
+.toggle, .mobile { display: none; }
+@media (max-width: 700px) {
+  .header { top: 20px; width: calc(100% - 2 * var(--page-pad)); }
+  .bar { grid-template-columns: 1fr 72px 1fr; gap: 12px; }
+  .logo { grid-column: 2; grid-row: 1; width: 72px; }
+  .desktop { display: none; }
+  .toggle { justify-self: end; grid-column: 3; grid-row: 1; pointer-events: auto; display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 10px; border: 0; background: none; color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
+  .toggleIcon { display: grid; align-content: center; gap: 5px; width: 16px; height: 20px; }
+  .toggleIcon i { display: block; width: 16px; height: 1px; background: currentColor; transition: transform 240ms ease; }
+  .header[data-open="true"] .toggleIcon i:first-child { transform: translateY(3px) rotate(45deg); }
+  .header[data-open="true"] .toggleIcon i:last-child { transform: translateY(-3px) rotate(-45deg); }
+  .mobile { pointer-events: auto; display: flex; flex-direction: column; position: absolute; top: calc(100% + 6px); left: 0; right: 0; padding: 12px 20px; border-radius: 4px; background: var(--home-background, #171815); visibility: hidden; opacity: 0; transform: translateY(-8px); transition: opacity 200ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1), visibility 300ms; }
+  .mobile a { display: flex; align-items: center; justify-content: space-between; min-height: 58px; font-size: 22px; font-weight: 550; letter-spacing: -.045em; opacity: 0; transform: translateY(8px); transition: transform 320ms ease, opacity 220ms ease; }
+  .mobile a > span:last-child { font-size: 20px; }
+  .header[data-open="true"] .mobile { visibility: visible; opacity: 1; transform: translateY(0); }
+  .header[data-open="true"] .mobile a { opacity: 1; transform: translateY(0); transition-delay: calc(var(--index) * 35ms); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header, .header *, .header *::before { transition: none !important; }
+  .rollCopy { display: none; }
+  .header :is(a, button) .rollLine > span { transform: none !important; }
+}

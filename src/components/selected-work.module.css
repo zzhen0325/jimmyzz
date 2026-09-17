@@ -1,8 +1,8 @@
 .section {
   position: relative;
   padding: 0 var(--page-pad) var(--section-space, 96px);
-  color: #f4f2ed;
-  background: #090909;
+  color: var(--home-foreground, #f4f2ed);
+  background: var(--home-background, #090909);
   scroll-margin-top: 0;
   outline: none;
 }
@@ -34,4 +34,23 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .image img { transition: none; }
+}
+
+.indexHeading { display: grid; grid-template-columns: var(--grid-template); column-gap: var(--grid-gap); row-gap: 16px; align-items: baseline; border-top: 1px solid var(--line); padding-block: 24px 48px; font-size: 11px; line-height: 1.6; }
+.indexHeading h3 { grid-column: 1 / 5; font-size: inherit; font-weight: 400; }
+.indexHeading p { grid-column: 5 / 9; color: var(--muted); }
+.indexHeading > a { grid-column: 9 / -1; justify-self: end; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.caption { margin-top: 12px; line-height: 1.5; }
+.caption h4 { font-size: 13px; font-weight: 400; }
+.caption > span { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+.section a:focus-visible { outline-color: currentColor; }
+.projectLink:hover h4 { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 809px) {
+  .indexHeading h3 { grid-column: 1 / 4; }
+  .indexHeading > a { grid-column: 4 / -1; grid-row: 1; }
+  .indexHeading p { grid-column: 1 / -1; }
+}
+@media (max-width: 599px) {
+  .indexHeading h3 { grid-column: 1 / 3; }
+  .indexHeading > a { grid-column: 3 / -1; }
 }

@@ -1,6 +1,13 @@
 /* Homepage grid: 12 columns, collapsing to 6 / 4 at the existing breakpoints.
    Six-column project grids use every second line of this same grid. */
 .home-page {
+  --home-background: #0B0B0B;
+  --home-foreground:  #F7F7F7;
+  --muted: #666761;
+  --line: rgb(32 33 30 / 18%);
+  --accent: #656d28;
+  background: var(--home-background);
+  color: var(--home-foreground);
   --grid-gap: clamp(16px, 2vw, 32px);
   --grid-columns: 12;
   --grid-template: repeat(var(--grid-columns), minmax(0, 1fr));
@@ -97,3 +104,129 @@
   .home-page .footer-bottom > a { grid-column: 3 / -1; }
   .home-page .ribbon-stage:not(.is-animated) .ribbon-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
+.home-page .home-content, .home-page .ribbon-section { background: var(--home-background); color: var(--home-foreground); }
+.home-page :is(.ribbon-count small, .ribbon-title small, .portfolio-footer > p:last-child) { color: var(--muted); }
+
+/* One editorial grid carries text and images through every chapter. */
+.home-page .home-chapter {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: .035em;
+  color: var(--muted);
+}
+.home-chapter > span { margin-right: 16px; }
+.home-page .home-section-heading {
+  display: grid;
+  grid-template-columns: var(--grid-template);
+  column-gap: var(--grid-gap);
+  row-gap: 24px;
+  align-items: start;
+  margin-inline: var(--page-pad);
+  padding-block: 28px clamp(48px, 5.5vw, 88px);
+  border-top: 1px solid var(--line);
+}
+.home-section-heading > * { min-width: 0; }
+.home-section-heading .home-chapter { grid-column: 1 / 5; padding-top: 9px; }
+.home-page .home-section-heading h2 {
+  grid-column: 5 / 9;
+  font-size: clamp(36px, 3.9vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -.05em;
+  font-weight: 400;
+  text-wrap: balance;
+}
+.home-section-description {
+  grid-column: 9 / -1;
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+  max-width: 32ch;
+}
+.home-page .profile-introduction { padding-block: 48px clamp(96px, 10vw, 160px); }
+.home-page .profile-identity h2 { margin-top: 28px; font-size: clamp(28px, 3.1vw, 48px); }
+.home-page .profile-identity > .home-chapter { margin-top: 0; }
+.home-page .profile-identity .profile-role { margin-top: 24px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.home-page .profile-statement > .profile-lead { font-size: clamp(40px, 5.05vw, 80px); line-height: 1.02; letter-spacing: -.05em; }
+.profile-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); margin-top: 40px; align-items: end; }
+.profile-context > p { font-size: 15px; line-height: 1.9; color: var(--muted); }
+.home-page .home-text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; justify-self: start; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.home-work-section, .home-page #about, .home-page #gallery, .home-page #contact { scroll-margin-top: 100px; outline: none; }
+.home-page .intro-image-strip { margin-bottom: clamp(64px, 7vw, 112px); align-items: start; }
+.home-page .intro-image-slot { aspect-ratio: auto; }
+.home-page .intro-image-card { height: auto; aspect-ratio: 4 / 3; }
+.featured-caption { padding-top: 18px; }
+.featured-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.featured-caption h3 { margin-top: 12px; font-size: clamp(19px, 1.7vw, 28px); font-weight: 400; line-height: 1.3; }
+.featured-caption h3 a { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.featured-caption svg { flex-shrink: 0; }
+.featured-summary { margin-top: 12px; max-width: 35ch; font-size: 13px; line-height: 1.8; color: var(--muted); }
+.home-page .capability-list article { grid-template-columns: var(--grid-template); }
+.home-page .capability-list { padding-top: 0; }
+.home-page .about-layout { column-gap: var(--grid-gap); padding-top: 0; }
+.home-page .about-layout h3 { margin-top: 22px; font-size: clamp(30px, 3.3vw, 52px); font-weight: 400; line-height: 1.3; letter-spacing: -.03em; }
+.home-page .about-intro { font-size: 14px; margin-top: 24px; }
+.home-page .about-art-caption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font-size: 10px; color: var(--muted); line-height: 1.5; }
+.experience-heading { display: grid; grid-template-columns: var(--grid-template); column-gap: var(--grid-gap); padding-bottom: 28px; }
+.experience-heading h3 { grid-column: 1 / 5; }
+.experience-heading > p { grid-column: 5 / -1; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.home-page .experience-list article > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
+.home-page .experience-list article p { margin-top: 0; }
+.home-page .experience-list h3 { font-size: 21px; }
+.home-page .experience-list h4 { line-height: 1.8; }
+.home-page .ribbon-instructions { position: absolute; inset: 112px var(--page-pad) auto; z-index: 110; display: flex; justify-content: space-between; gap: 16px; font-size: 11px; line-height: 1.6; }
+.ribbon-instructions > p { color: var(--muted); }
+.ribbon-instructions > a { border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.home-page .ribbon-playhead i { border-top-color: var(--home-foreground); }
+.home-page .ribbon-card:focus-visible { outline-color: var(--home-foreground); }
+.home-page .ribbon-stage:not(.is-animated) { min-height: 0; }
+.home-page .ribbon-stage:not(.is-animated) .ribbon-footer { position: static; margin: 0 var(--page-pad); padding-bottom: 32px; }
+.home-page .ribbon-section { padding-bottom: var(--section-space); }
+.home-page .footer-title { font-size: clamp(68px, 10vw, 160px); }
+@media (max-width: 1099px) and (min-width: 810px) {
+  .home-section-heading .home-chapter { grid-column: 1 / 4; }
+  .home-page .home-section-heading h2 { grid-column: 5 / -1; }
+  .home-section-description { grid-column: 5 / -1; max-width: 44ch; }
+}
+@media (max-width: 809px) {
+  .home-page .home-section-heading { padding-block: 24px 40px; }
+  .home-section-heading .home-chapter { grid-column: 1 / -1; padding-top: 0; }
+  .home-page .home-section-heading h2 { grid-column: 1 / 4; font-size: clamp(30px, 4.8vw, 42px); }
+  .home-section-description { grid-column: 4 / -1; padding-top: 0; font-size: 13px; }
+  .home-page .profile-introduction { padding-block: 32px 72px; row-gap: 40px; }
+  .home-page .profile-identity h2 { margin-top: 16px; }
+  .home-page .profile-identity .profile-role { margin-top: 16px; }
+  .home-page .profile-statement > .profile-lead { font-size: clamp(36px, 7.2vw, 58px); }
+  .profile-context { margin-top: 28px; }
+  .profile-context > p { font-size: 13px; }
+  .featured-meta { font-size: 9px; }
+  .featured-caption h3 { font-size: 19px; }
+  .featured-summary { font-size: 12px; }
+  .home-page .experience-list article > div { grid-template-columns: 1fr; gap: 8px; }
+  .experience-heading h3 { grid-column: 1 / 3; }
+  .experience-heading > p { grid-column: 3 / -1; }
+  .home-page .about-art { grid-row: 1; }
+}
+@media (max-width: 599px) {
+  .home-page .home-section-heading h2, .home-section-description { grid-column: 1 / -1; }
+  .home-page .home-section-heading h2 { font-size: 38px; }
+  .home-section-description { max-width: 32ch; }
+  .profile-context { grid-template-columns: 1fr; gap: 24px; }
+  .home-page .intro-image-strip { row-gap: 40px; }
+  .featured-summary { max-width: 34ch; font-size: 13px; }
+  .featured-caption h3 { font-size: 23px; }
+  .experience-heading { row-gap: 12px; }
+  .experience-heading h3, .experience-heading > p { grid-column: 1 / -1; }
+  .home-page .ribbon-instructions { font-size: 10px; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ribbon-motion-hint { display: none; }
+}
+/* Clip the entering images without creating a nested scrolling container. */
+.home-page .home-work-section { overflow-x: clip; }
+.home-page .experience-heading h3 { font-size: 11px; }
+
+.home-page .ribbon-stage:not(.is-animated) .ribbon-images { padding-top: 172px; }

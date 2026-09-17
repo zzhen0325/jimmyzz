@@ -118,7 +118,7 @@ export async function createCurveScene(host: HTMLElement, images: GalleryImage[]
     return texture;
   });
   const colors = loaded.map(borderColor);
-  const background = new Color("#090909");
+  const background = new Color("rgb(247, 247, 247)");
   const makeMaterial = (index: number, border: boolean) => {
     const aspect = images[index].width / images[index].height;
     return new ShaderMaterial({

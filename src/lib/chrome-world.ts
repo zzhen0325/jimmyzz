@@ -427,10 +427,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   });
-  const loaded = Promise.all([skaterTexture, characterModels, Promise.all([
+  const cutoutTextures = Promise.all(config.cutouts.map(({ file }) =>
+    new THREE.TextureLoader().loadAsync(`/assets/images/floating/${file}.webp`).then(texture => {
+      resources.add(texture);
+      if (disposed) texture.dispose();
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    })
+  ));
+  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(([cutout, characters, [environment,...models]])=>{
+  ])]).then(([cutout, characters, floatingTextures, [environment,...models]])=>{
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
@@ -475,14 +483,25 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     );
     skater.name = "skater-billboard";
     add(skater, config.skater.size, 9 + characters.length, true);
+    floatingTextures.forEach((texture, index) => {
+      const setting = config.cutouts[index];
+      const image = texture.image as { width: number; height: number };
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(image.width / image.height, 1),
+        new THREE.MeshBasicMaterial({ ...config.skater.material, map: texture }),
+      );
+      mesh.name = `floating-cutout-${setting.file}`;
+      add(mesh, setting.size, 10 + characters.length + index, true);
+    });
     vortexAnimation = createPixelVortex(config.vortex);
-    add(vortexAnimation.mesh, config.vortex.size, 10 + characters.length, true);
+    add(vortexAnimation.mesh, config.vortex.size, 10 + characters.length + floatingTextures.length, true);
     vortexAnimation.mesh.parent!.parent!.visible = false;
     // A hidden effect must not collide with the floating toys.
     const portalBody = items[items.length - 1].body;
     portalBody.collisionFilterMask = 0;
     portalBody.collisionResponse = false;
-    canvas.dataset.billboards = "2";
+    canvas.dataset.billboards = String(2 + floatingTextures.length);
+    canvas.dataset.cutouts = String(floatingTextures.length);
     canvas.dataset.characters = String(characters.length);
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';

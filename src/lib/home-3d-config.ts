@@ -78,6 +78,15 @@ export const home3DConfig = {
     // 已烘焙光影的图片：color 为染色，白色保留原色；opacity 控制透明度。
     material: { color: "#ffffff", opacity: 1, transparent: true, alphaTest: .04, depthWrite: true, side: DoubleSide, toneMapped: false },
   },
+  // 透明抠图始终朝向镜头，与现有物件共享漂浮和碰撞。
+  cutouts: [
+    { file: "barrier", size: 1.35 },
+    { file: "chrome-head", size: 1.05 },
+    { file: "cat-head", size: .95 },
+    { file: "fries", size: .9 },
+    { file: "cash-roll", size: .85 },
+    { file: "trash-bag", size: 1.15 },
+  ],
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
     size: 1, pixels: 80, speed: .65, arms: 5,

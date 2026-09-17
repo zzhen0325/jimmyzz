@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import "./capabilities.css";
+import { HomeSectionHeading } from "./home-section-heading";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { projectAssets, projectCover, services } from "@/lib/site-data";
 
@@ -101,6 +102,9 @@ function CapabilityRow({ index }: { index: number }) {
 export function Capabilities() {
   return (
     <section id="services" className="portfolio-section capabilities-section" aria-label="设计实践">
+      <HomeSectionHeading index="03" label="PRACTICE / 设计实践" title="From vision to making." id="practice-title">
+        <p>根据问题选择表达方式，把视觉、体验与技术连接起来。以下是我持续投入的四个方向。</p>
+      </HomeSectionHeading>
       <div className="capability-list">
         {services.map((service, index) => <CapabilityRow key={service.title} index={index} />)}
       </div>
