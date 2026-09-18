@@ -1,8 +1,8 @@
 /* Homepage grid: 12 columns, collapsing to 6 / 4 at the existing breakpoints.
    Six-column project grids use every second line of this same grid. */
 .home-page {
-  --home-background: #0B0B0B;
-  --home-foreground:  #F7F7F7;
+  --home-background: #F7F7F7;
+  --home-foreground:   #0B0B0B;
   --muted: #666761;
   --line: rgb(32 33 30 / 18%);
   --accent: #656d28;
