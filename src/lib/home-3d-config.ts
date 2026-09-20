@@ -19,9 +19,9 @@ const silver: MeshPhysicalMaterialParameters = {
 
 export const home3DConfig = {
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .7, mobile: .72, mobileBreakpoint: 700 },
+  sizing: { desktop: .9, mobile: .72, mobileBreakpoint: 700 },
   logo: {
-    scale: 0.7, // 正常尺寸上限
+    scale: 1, // 正常尺寸上限
     maxViewportWidth: .68, // 窄屏最大占宽比例
     material: { ...silver },
   },

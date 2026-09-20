@@ -1,0 +1,9 @@
+.root { display: inline; }
+.word { position: relative; display: inline-block; vertical-align: baseline; }
+.copy { display: none; position: absolute; inset: 0; overflow: clip; white-space: nowrap; pointer-events: none; }
+.root[data-running] .original { opacity: 0; }
+.root[data-running] .copy { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  .root[data-running] .original { opacity: 1; }
+  .root[data-running] .copy { display: none; }
+}

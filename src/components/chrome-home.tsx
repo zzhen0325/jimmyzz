@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 import { ScrollTrigger, useGSAP } from "@/lib/gsap";
 import styles from "./chrome-home.module.css";
@@ -41,7 +39,6 @@ export function ChromeHero() {
     <FloatingNav ready={!loading} />
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
       {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
-      <Link href="/" className={styles.heroWordmark} inert={loading} aria-label="Jimmy 首页"><Image src="/assets/images/jimmy-wordmark.svg" alt="Jimmy" width={72} height={36} priority /></Link>
       <div className={styles.stage} inert={loading}>
         <div className={styles.fallback} aria-hidden="true">ZZ</div>
         <ChromeScene workProgress={workProgress} interactive={view === "intro"} paused={loading} />

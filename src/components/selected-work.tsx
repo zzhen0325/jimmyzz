@@ -1,5 +1,7 @@
 "use client";
 
+import { ScrambleText } from "./scramble-text";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
@@ -10,7 +12,7 @@ import styles from "./selected-work.module.css";
 const featuredSlugs = ["lemo-ai", "miaoshi-brand", "inner-species", "bandao"];
 const selected = [
   ...featuredSlugs.map((slug) => projects.find((project) => project.slug === slug)!),
-  ...projects.filter((project) => !featuredSlugs.includes(project.slug)),
+  ...projects.filter((project) => !featuredSlugs.includes(project.slug) && project.slug !== "visual-explorations"),
 ];
 
 export function SelectedWork() {
@@ -50,20 +52,15 @@ export function SelectedWork() {
 
   return (
     <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
-      <div className={styles.indexHeading}>
-        <h3>WORK INDEX / 项目一览</h3>
-        <p>品牌、活动与持续发生的探索。</p>
-        <Link href="/work">浏览全部 {String(selected.length).padStart(2, "0")} 个项目 ↗</Link>
-      </div>
       <div className={styles.grid}>
-        {selected.map((project) => (
-          <article key={project.slug} className={styles.project}>
+        {selected.map((project, index) => (
+          <article key={project.slug} className={styles.project} data-project={project.slug}>
             <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
+              <div className={styles.caption}><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
               <div className={styles.image} data-work-skew>
                 <Image src={projectCover(project.slug)} alt={`${project.title}项目视觉`} fill
                   sizes="(max-width: 599px) 44vw, (max-width: 809px) 29vw, 16vw" />
               </div>
-              <div className={styles.caption}><h4>{project.title}</h4><span>{project.kind}</span></div>
             </Link>
           </article>
         ))}

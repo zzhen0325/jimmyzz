@@ -1,5 +1,7 @@
 "use client";
 
+import { ScrambleText } from "./scramble-text";
+
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
@@ -8,7 +10,6 @@ import images from "@/lib/curve-gallery-assets.json";
 import { projects } from "@/lib/site-data";
 import Image from "next/image";
 import "./ribbon-gallery.css";
-import { HomeSectionHeading } from "./home-section-heading";
 
 export function CurveGallery() {
   const section = useRef<HTMLElement>(null);
@@ -43,23 +44,27 @@ export function CurveGallery() {
           // while the far-away images collapse into a continuous film strip.
           const spread = Math.tanh(d * .48) * size * 1.5;
           const x = anchor + d * Math.max(24, w * .029) + spread;
-          const y = h * .5 + Math.sin(i * 2.4 + .5) * h * .18 * focus;
+          // A shared baseline keeps every scaled image bottom-aligned.
+          const baseline = h - (w <= 809 ? 142 : 110);
           const scale = .13 + .87 * focus;
           const height = size;
           card.style.width = `${size}px`;
           card.style.height = `${height}px`;
-          card.style.transform = `translate3d(${x - size / 2}px, ${y - height / 2}px, 0) scale(${scale})`;
+          card.style.transform = `translate3d(${x - size / 2}px, ${baseline - height}px, 0) scale(${scale})`;
           card.style.zIndex = String(Math.round(focus * 100));
           card.style.visibility = x < -size || x > w + size ? "hidden" : "visible";
         });
         const index = Math.max(0, Math.min(images.length - 1, Math.round(playhead.value)));
         if (index !== current.current) { current.current = index; setActive(index); }
       };
+      // Keep the preceding list in view while the compact gallery scrubs.
+      // Pinning only the bottom-aligned stage leaves an empty upper viewport.
+      const pinRegion = root.closest<HTMLElement>(".home-work-ending") ?? root;
       const animation = gsap.to(playhead, {
         value: images.length - 1, ease: "none", onUpdate: render,
         scrollTrigger: {
-          id: "ribbon-gallery", trigger: root, start: "top top", pin: true,
-          end: () => `+=${Math.max(3200, innerHeight * 5)}`, scrub: .65,
+          id: "ribbon-gallery", trigger: root, start: "bottom bottom", pin: pinRegion,
+          end: () => `+=${Math.max(1200, images.length * 90)}`, scrub: .65,
           anticipatePin: 1, invalidateOnRefresh: true, onRefresh: render,
         },
       });
@@ -106,11 +111,7 @@ export function CurveGallery() {
 
   return (
     <section id="gallery" ref={section} className="ribbon-section" aria-label="视觉漫游">
-      <HomeSectionHeading index="02" label="VISUAL LAB / 视觉漫游" title="A closer look." id="gallery-title">
-        <p>走近作品里的角色、色彩与细节。沿着横向画廊，看看同一个想法的不同切面。</p>
-      </HomeSectionHeading>
       <div ref={stage} className="ribbon-stage" aria-label="滚动画廊">
-        <div className="ribbon-instructions"><p><span className="ribbon-motion-hint">滚动继续 · 左右拖动 · </span>点击图片查看项目</p><a href="#services">继续了解设计实践 <span aria-hidden="true">↘</span></a></div>
         <div className="ribbon-guides" aria-hidden="true" />
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
@@ -122,9 +123,9 @@ export function CurveGallery() {
           ))}
         </div>
         <div className="ribbon-footer">
-          <span className="ribbon-count">{String(active + 1).padStart(2, "0")} <small>/ {images.length}</small></span>
-          <div className="ribbon-title" aria-live="polite"><span>▸ {project.title}</span><small>{images[active].title}</small></div>
-          <div className="ribbon-actions"><button onClick={() => jump.current(active - 1)} disabled={active === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(active + 1)} disabled={active === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button><Link href={`/work/${project.slug}`}>查看项目 <ArrowUpRight size={16} /></Link></div>
+          <span className="ribbon-count"><ScrambleText>{String(active + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>
+          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{project.title}</ScrambleText></span><small><ScrambleText>{images[active].title}</ScrambleText></small></div>
+          <div className="ribbon-actions"><button onClick={() => jump.current(active - 1)} disabled={active === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(active + 1)} disabled={active === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button><Link href={`/work/${project.slug}`}><ScrambleText>查看项目 </ScrambleText><ArrowUpRight size={16} /></Link></div>
         </div>
       </div>
     </section>

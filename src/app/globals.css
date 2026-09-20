@@ -1730,7 +1730,7 @@ button {
 }
 .profile-identity > p {
   margin-top: 24px;
-  font-size: 17px;
+  font-size: clamp(30px, 3.15vw, 58px);
   line-height: 1.35;
   color: #a4a39e;
 }

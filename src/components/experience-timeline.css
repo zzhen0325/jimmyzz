@@ -1,0 +1,69 @@
+.timeline-section {
+  margin: clamp(64px, 8vw, 128px) var(--page-pad) 0;
+  padding-bottom: 32px;
+  scroll-margin-top: 100px;
+}
+.timeline-heading, .timeline-row {
+  display: grid;
+  grid-template-columns: 14% 14.5% minmax(0, 1fr) 10% 16px;
+  column-gap: clamp(16px, 2vw, 32px);
+  align-items: baseline;
+}
+.timeline-heading { padding-bottom: 18px; color: var(--muted); font-size: 11px; }
+.timeline-list { padding: 0; margin: 0; list-style: none; }
+.timeline-row {
+  position: relative;
+  min-height: clamp(48px, 3.05vw, 64px);
+  padding: clamp(13px, .85vw, 18px) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: clamp(16px, 1.1vw, 23px);
+  line-height: 1.35;
+}
+.timeline-row > span { min-width: 0; }
+.timeline-date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.timeline-company { position: relative; }
+.timeline-category { color: var(--muted); font-size: 12px; }
+.timeline-arrow { align-self: center; }
+.timeline-preview {
+  position: absolute;
+  z-index: 10;
+  left: 59%;
+  top: calc(50% + 10px);
+  width: 26%;
+  aspect-ratio: 1.62;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition: opacity .65s ease-in-out, transform .65s ease-in-out, visibility .65s;
+}
+.timeline-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.timeline-row:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+@media (hover: hover) and (min-width: 810px) {
+
+  .timeline-arrow { opacity: 0; transition: opacity .65s ease-in-out; }
+  .timeline-date { color: #999; transition: color .65s ease-in-out; }
+  .timeline-row { transition: border-color .65s ease-in-out; }
+  .timeline-row[data-active="true"], .timeline-row:focus-visible { border-bottom-color: #777; }
+  .timeline-row[data-active="true"] .timeline-date, .timeline-row:focus-visible .timeline-date { color: var(--home-foreground); }
+  .timeline-row[data-active="true"] .timeline-arrow,
+  .timeline-row:focus-visible .timeline-arrow { opacity: 1; transform: translateY(0); }
+  a.timeline-row[data-active="true"] .timeline-preview, a.timeline-row:focus-visible .timeline-preview {
+    opacity: 1; visibility: visible; transform: translateY(calc(-50% - 10px)) scale(1.03);
+  }
+  .timeline-row[data-active="true"], .timeline-row:focus-visible,
+  .timeline-row[data-active="true"] :is(.timeline-project, .timeline-category, .timeline-arrow, .timeline-date, .timeline-preview),
+  .timeline-row:focus-visible :is(.timeline-project, .timeline-category, .timeline-arrow, .timeline-date, .timeline-preview) { transition-duration: .3s; }
+
+}
+@media (max-width: 809px) {
+  .timeline-heading, .timeline-row { grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1.65fr) 14px; gap: 6px 12px; }
+  .timeline-heading > :last-child { display: none; }
+  .timeline-row { padding-block: 20px; min-height: 86px; font-size: 15px; }
+  .timeline-category { grid-column: 3; grid-row: 2; font-size: 10px; }
+  .timeline-arrow { grid-column: 4; grid-row: 1; width: 14px; }
+  .timeline-preview { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-row, .timeline-preview, .timeline-arrow, .timeline-date { transition: none; }
+}

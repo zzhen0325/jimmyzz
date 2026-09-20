@@ -9,10 +9,10 @@ const nav = [
   ["作品", "/work"],
   ["视觉漫游", "/#gallery"],
   ["设计实践", "/#services"],
-  ["关于", "/#about"],
+  ["关于", "/#introduction"],
 ] as const;
 export function TopNav({ english = false }: { english?: boolean }) {
-  const links = english ? [["Work", "/work"], ["Playground", "/#gallery"], ["Services", "/#services"], ["About", "/#about"]] : nav;
+  const links = english ? [["Work", "/work"], ["Playground", "/#gallery"], ["Services", "/#services"], ["About", "/#introduction"]] : nav;
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   return (

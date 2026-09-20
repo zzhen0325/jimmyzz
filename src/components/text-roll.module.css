@@ -1,0 +1,17 @@
+.roll { position: relative; display: block; overflow: hidden; line-height: 1.2; }
+.line { display: block; white-space: nowrap; }
+.copy { position: absolute; inset: 0; white-space: nowrap; }
+.line > span, .copy > span { display: inline-block; transition: transform 360ms cubic-bezier(.45, 0, .55, 1); transition-delay: var(--roll-delay); }
+.copy > span { transform: translateY(100%); }
+:global([data-roll-active="true"]) .line > span { transform: translateY(-100%); }
+:global([data-roll-active="true"]) .copy > span { transform: translateY(0); }
+@media (hover: hover) and (min-width: 810px) {
+  .roll[data-reveal="true"] .line { visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .line > span, .copy > span { transition: none; }
+}
+
+@media (max-width: 809px) {
+  .roll[data-reveal="true"] .line, .roll[data-reveal="true"] .copy { white-space: normal; overflow-wrap: anywhere; }
+}

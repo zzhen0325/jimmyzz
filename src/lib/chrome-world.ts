@@ -116,7 +116,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const logo = new THREE.Group(); logo.name = "fixed-silver-ZZ"; scene.add(logo);
   // User-directed silver adaptation. A real curved surface reflects the panorama;
   // this replaces the old sinusoidal fragment-normal trick and fabricated softboxes.
-  const triangles = [ [[0,30],[30,30],[0,15]], [[30,30],[60,30],[30,15]], [[0,0],[30,0],[30,15]], [[30,0],[60,0],[60,15]] ];
+  // Exact path vertices from public/assets/logo.svg (600 × 200).
+  // Convert SVG's downward Y axis to scene coordinates, keeping the existing
+  // width, center, curved silver surface, and all interaction transforms.
+  const triangles = [
+    [[0, 0], [300, 0], [0, 100]],
+    [[600.001, 200], [299.998, 200], [599.998, 100]],
+    [[300, 0], [600, 0], [300, 100]],
+    [[299.997, 200], [0, 200], [300, 100]],
+  ].map((vertices) => vertices.map(([x, y]) => [Math.min(600, x) / 10, 25 - y / 10]));
   for (const vertices of triangles) {
     const geometry = createLogoTriangle(vertices);
     geometries.add(geometry);
@@ -195,7 +203,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const oldScale=assetScale;assetScale=width<config.sizing.mobileBreakpoint?config.sizing.mobile:config.sizing.desktop;
     logoScale = Math.min(config.logo.scale,viewWidth*config.logo.maxViewportWidth/3.1);
     logo.scale.setScalar(logoScale);
-    shapeBody(logoBody,new THREE.Vector3(3.1*logo.scale.x,1.55*logo.scale.y,.16));
+    shapeBody(logoBody,new THREE.Vector3(3.1*logo.scale.x,1.05*logo.scale.y,.16));
     items.forEach(item=>{shapeBody(item.body,item.originalSize.clone().multiplyScalar(assetScale),item.billboard);item.object.scale.setScalar(assetScale);if(ready&&oldScale!==assetScale)item.body.position.scale(assetScale/oldScale,item.body.position);});
     makeWalls();renderer.setSize(width,height,false);
     // Viewport changes invalidate wall containment; restart the same entrance instead of
