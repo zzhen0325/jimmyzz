@@ -30,6 +30,8 @@ export type Asset = {
 };
 export type Project = {
   slug: string;
+  /** 首页精选作品封面：填写 /assets/... 路径，支持图片或 .mp4 / .webm / .mov 视频。 */
+  selectedWorkCover: string;
   title: string;
   english: string;
   kind: Category;
@@ -45,6 +47,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     slug: "lemo-ai",
+    selectedWorkCover: "/assets/videos/lemo.mov",
     title: "All about AIGC",
     english: "From experiments to tools",
     kind: "AIGC",
@@ -61,6 +64,7 @@ export const projects: Project[] = [
   },
   {
     slug: "lemon8-campaigns",
+    selectedWorkCover: "/assets/portfolio/lemon8-campaigns/thumbnail.webp",
     title: "Lemon8 Campaigns",
     english: "Across cultures, beyond borders",
     kind: "海外活动",
@@ -77,6 +81,7 @@ export const projects: Project[] = [
   },
   {
     slug: "miaoshi-brand",
+    selectedWorkCover: "/assets/portfolio/miaoshi-brand/thumbnail.webp",
     title: "妙时品牌",
     english: "This way to love",
     kind: "品牌与 IP",
@@ -93,6 +98,7 @@ export const projects: Project[] = [
   },
   {
     slug: "inner-species",
+    selectedWorkCover: "/assets/portfolio/inner-species/thumbnail.webp",
     title: "鉴一鉴你的内心物种",
     english: "Meet your inner creature",
     kind: "H5 营销",
@@ -114,6 +120,7 @@ export const projects: Project[] = [
   },
   {
     slug: "bandao",
+    selectedWorkCover: "/assets/portfolio/bandao/thumbnail.webp",
     title: "伴岛",
     english: "A little island, a shared world",
     kind: "品牌与 IP",
@@ -130,6 +137,7 @@ export const projects: Project[] = [
   },
   {
     slug: "meetup-plan",
+    selectedWorkCover: "/assets/portfolio/meetup-plan/thumbnail.webp",
     title: "奇妙接头计划",
     english: "Take the connection outside",
     kind: "品牌与 IP",
@@ -146,6 +154,7 @@ export const projects: Project[] = [
   },
   {
     slug: "winter-gathering",
+    selectedWorkCover: "/assets/portfolio/winter-gathering/thumbnail.webp",
     title: "冬至有酒局",
     english: "A warm encounter on a cold night",
     kind: "H5 营销",
@@ -167,6 +176,7 @@ export const projects: Project[] = [
   },
   {
     slug: "vinyl-anniversary",
+    selectedWorkCover: "/assets/portfolio/vinyl-anniversary/thumbnail.webp",
     title: "黑胶纪念墙",
     english: "Ten years, one shared record",
     kind: "H5 营销",
@@ -189,6 +199,7 @@ export const projects: Project[] = [
   },
   {
     slug: "youth-album",
+    selectedWorkCover: "/assets/portfolio/youth-album/thumbnail.webp",
     title: "青春纪念册",
     english: "The songs we grew up with",
     kind: "H5 营销",
@@ -205,6 +216,7 @@ export const projects: Project[] = [
   },
   {
     slug: "social-live",
+    selectedWorkCover: "/assets/portfolio/social-live/thumbnail.webp",
     title: "社交直播业务群",
     english: "One family, many connections",
     kind: "品牌与 IP",
@@ -221,6 +233,7 @@ export const projects: Project[] = [
   },
   {
     slug: "design-operations",
+    selectedWorkCover: "/assets/portfolio/design-operations/thumbnail.webp",
     title: "设计团队与资源规划",
     english: "Make space for better work",
     kind: "设计管理",
@@ -237,6 +250,7 @@ export const projects: Project[] = [
   },
   {
     slug: "visual-explorations",
+    selectedWorkCover: "/assets/portfolio/visual-explorations/thumbnail.webp",
     title: "视觉探索与更多",
     english: "A collection of possibilities",
     kind: "视觉探索",

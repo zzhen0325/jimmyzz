@@ -2,11 +2,23 @@ import * as THREE from "three";
 
 const clamp = (n: number) => THREE.MathUtils.clamp(n, 0, 1);
 const smooth = (n: number) => { const p = clamp(n); return p * p * (3 - 2 * p); };
-const launchDuration = 1.1;
-const stagger = .11;
-const absorbDuration = .72;
-const emitDuration = 1.2;
-const exitCloseDuration = .22;
+const easeIn = (n: number) => Math.pow(clamp(n), 4);
+const easeOut = (n: number) => 1 - Math.pow(1 - clamp(n), 5);
+const easeInOut = (n: number) => {
+  const p = clamp(n);
+  return p < .5 ? 8 * p ** 4 : 1 - (-2 * p + 2) ** 4 / 2;
+};
+const aimDuration = .3;
+const launchDuration = .72;
+const impactDuration = .36;
+const stagger = .075;
+const absorbDuration = .56;
+const collapseDuration = .24;
+const hiddenDuration = .12;
+const appearDuration = .28;
+const emitDuration = .86;
+const exitCloseDuration = .16;
+const settleDuration = .16;
 type FlightObject = { object: THREE.Object3D; billboard?: boolean };
 
 /** Temporarily take over visuals; leave physics and DOM layout intact. */
@@ -51,14 +63,14 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       ...dom.map(item => ({ item, distance: item.center.distanceTo(from) })),
     ].sort((a, b) => a.distance - b.distance);
     const order = new Map(queue.map(({ item }, index) => [item, index]));
-    const absorbEnd = .55 + Math.max(0, queue.length - 1) * stagger + absorbDuration;
-    const disappearEnd = absorbEnd + .35;
-    const appearStart = disappearEnd + .25;
-    const emitStart = appearStart + .45;
+    const absorbEnd = impactDuration + Math.max(0, queue.length - 1) * stagger + absorbDuration;
+    const disappearEnd = absorbEnd + collapseDuration;
+    const appearStart = disappearEnd + hiddenDuration;
+    const emitStart = appearStart + appearDuration;
     const emitEnd = emitStart + Math.max(0, queue.length - 1) * stagger + emitDuration;
     // Close once the last object has cleared the mouth; its settling flight continues.
-    const exitCloseStart = emitEnd - emitDuration + .3;
-    const duration = emitEnd + .35;
+    const exitCloseStart = emitEnd - emitDuration + .18;
+    const duration = emitEnd + settleDuration;
     const inverseCamera = camera.quaternion.clone().invert();
     return { gun, gunLocal, gunQuaternion: gun.quaternion.clone(), aimedQuaternion: gun.quaternion.clone(), muzzle: new THREE.Vector3(), order, absorbEnd, disappearEnd, appearStart, emitStart, emitEnd, exitCloseStart, duration, vortex, origin, destination, originLocal: origin.clone().applyQuaternion(inverseCamera), destinationLocal: destination.clone().applyQuaternion(inverseCamera), returnPosition: origin.clone(), from, to, dom, meshes, reduced, onComplete, time: 0, scale: vortex.scale.clone(), quaternion: vortex.quaternion.clone() };
   }
@@ -86,8 +98,8 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
   function flight(t: number, index: number, emitStart: number) {
     const delay = index * stagger;
     const incoming = t < emitStart;
-    const p = incoming ? clamp((t - .55 - delay) / absorbDuration) : clamp((t - emitStart - delay) / emitDuration);
-    const travel = incoming ? p * p : 1 - Math.pow(1 - p, 3);
+    const p = incoming ? clamp((t - impactDuration - delay) / absorbDuration) : clamp((t - emitStart - delay) / emitDuration);
+    const travel = incoming ? easeIn(p) : easeOut(p);
     const scale = incoming ? 1 - smooth((travel - .55) / .45) : smooth(travel / .45);
     return { incoming, travel, scale, angle: (incoming ? travel : 1 - travel) * Math.PI * 1.35, visible: incoming ? p < 1 : p > 0 };
   }
@@ -128,23 +140,23 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       }
       const t = seconds - launchDuration;
       if (t < 0) {
-        canvas.dataset.vortexPhase = seconds < .42 ? "aim" : "shoot";
+        canvas.dataset.vortexPhase = seconds < aimDuration ? "aim" : "shoot";
         const gunPosition = s.gunLocal.clone().applyQuaternion(camera.quaternion);
         const direction = s.origin.clone().sub(gunPosition).applyQuaternion(camera.quaternion.clone().invert());
         // The toy barrel points along local +X, with a built-in .08 rad tilt.
         const aim = camera.quaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.atan2(direction.y, direction.x) - .08));
         s.gun.position.copy(gunPosition);
-        s.gun.quaternion.copy(s.gunQuaternion).slerp(aim, smooth(seconds / .42));
+        s.gun.quaternion.copy(s.gunQuaternion).slerp(aim, easeInOut(seconds / aimDuration));
         s.aimedQuaternion.copy(aim);
-        if (seconds >= .42) {
+        if (seconds >= aimDuration) {
           const muzzle = s.gun.getObjectByName("portal-muzzle");
           s.gun.updateWorldMatrix(true, true);
           if (muzzle) muzzle.getWorldPosition(s.muzzle); else s.muzzle.copy(gunPosition);
-          const progress = clamp((seconds - .42) / (launchDuration - .42));
-          const recoil = Math.sin(clamp((seconds - .42) / .3) * Math.PI) * .12;
+          const progress = clamp((seconds - aimDuration) / (launchDuration - aimDuration));
+          const recoil = Math.sin(clamp((seconds - aimDuration) / .22) * Math.PI) * .12;
           s.gun.position.addScaledVector(s.origin.clone().sub(s.muzzle).normalize(), -recoil);
           s.vortex.visible = true;
-          s.vortex.position.lerpVectors(s.muzzle, s.origin, progress);
+          s.vortex.position.lerpVectors(s.muzzle, s.origin, easeIn(progress));
           s.vortex.quaternion.copy(camera.quaternion);
           s.vortex.scale.copy(s.scale).multiplyScalar(.16 + .035 * Math.sin(progress * Math.PI));
         } else s.vortex.visible = false;
@@ -152,25 +164,25 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       }
       s.from.copy(screen(s.origin)); s.to.copy(screen(s.destination));
       // Ease the gun back into its live drift after firing, before it is absorbed.
-      if (t < .45) {
+      if (t < impactDuration) {
         const gunMesh = s.meshes.find(mesh => mesh.object === s.gun);
         if (gunMesh) {
-          gunMesh.position.lerpVectors(s.gunLocal.clone().applyQuaternion(camera.quaternion), gunMesh.position.clone(), smooth(t / .45));
-          gunMesh.quaternion.copy(s.aimedQuaternion.clone().slerp(gunMesh.quaternion, smooth(t / .45)));
+          gunMesh.position.lerpVectors(s.gunLocal.clone().applyQuaternion(camera.quaternion), gunMesh.position.clone(), easeOut(t / impactDuration));
+          gunMesh.quaternion.copy(s.aimedQuaternion.clone().slerp(gunMesh.quaternion, easeOut(t / impactDuration)));
         }
       }
-      canvas.dataset.vortexPhase = t < .55 ? "impact" : t < s.absorbEnd ? "absorb" : t < s.appearStart ? "hidden" : t < s.emitStart ? "appear" : "emit";
+      canvas.dataset.vortexPhase = t < impactDuration ? "impact" : t < s.absorbEnd ? "absorb" : t < s.appearStart ? "hidden" : t < s.emitStart ? "appear" : "emit";
       const exit = t >= s.appearStart;
-      let size = t < .55 ? .16 + (1 - Math.pow(1 - clamp(t / .55), 3)) * 2.34
+      let size = t < impactDuration ? .16 + easeOut(t / impactDuration) * 2.34
         : t < s.absorbEnd ? 2.5
-        : t < s.disappearEnd ? 2.5 * (1 - smooth((t - s.absorbEnd) / .35))
+        : t < s.disappearEnd ? 2.5 * (1 - easeIn((t - s.absorbEnd) / collapseDuration))
         : t < s.appearStart ? 0
-        : t < s.emitStart ? 2.5 * smooth((t - s.appearStart) / .45)
-        : 2.5 * (1 - smooth((t - s.exitCloseStart) / exitCloseDuration));
+        : t < s.emitStart ? 2.5 * easeOut((t - s.appearStart) / appearDuration)
+        : 2.5 * (1 - easeIn((t - s.exitCloseStart) / exitCloseDuration));
       size = Math.max(0, size);
       s.vortex.visible = size > .001;
-      const inhale = smooth(t / .55) * (1 - smooth((t - s.absorbEnd) / .35));
-      const exhale = smooth((t - s.appearStart) / .35) * (1 - smooth((t - s.exitCloseStart) / exitCloseDuration));
+      const inhale = smooth(t / impactDuration) * (1 - easeIn((t - s.absorbEnd) / collapseDuration));
+      const exhale = smooth((t - s.appearStart) / appearDuration) * (1 - easeIn((t - s.exitCloseStart) / exitCloseDuration));
       const pulse = .72 + .28 * Math.pow(Math.sin(seconds * 14), 2);
       const shake = (.035 * inhale + .05 * exhale) * pulse;
       s.vortex.scale.copy(s.scale).multiplyScalar(size * (1 + Math.sin(seconds * 28) * .025 * exhale));

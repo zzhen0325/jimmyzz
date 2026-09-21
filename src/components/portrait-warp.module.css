@@ -23,3 +23,6 @@
 .caption { display: flex; justify-content: center; align-items: center; gap: 16px; font-size: 12px; color: #666761; }
 .caption button { padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 @media (max-width: 759px) { .portrait { grid-column: 2; } }
+
+.dragLabel { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.dragLabel text { fill: #383838; font-family: inherit; font-size: 4.5px; font-weight: 500; letter-spacing: .05px; }

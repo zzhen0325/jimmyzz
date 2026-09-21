@@ -53,17 +53,27 @@ export function SelectedWork() {
   return (
     <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
       <div className={styles.grid}>
-        {selected.map((project, index) => (
-          <article key={project.slug} className={styles.project} data-project={project.slug}>
-            <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
-              <div className={styles.caption}><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
-              <div className={styles.image} data-work-skew>
-                <Image src={projectCover(project.slug)} alt={`${project.title}项目视觉`} fill
-                  sizes="(max-width: 599px) 44vw, (max-width: 809px) 29vw, 16vw" />
-              </div>
-            </Link>
-          </article>
-        ))}
+        {selected.map((project, index) => {
+          const cover = project.selectedWorkCover;
+          const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);
+          return (
+            <article key={project.slug} className={styles.project} data-project={project.slug}>
+              <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
+                <div className={styles.caption}><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
+                <div className={styles.image} data-work-skew>
+                  {isVideo ? (
+                    <video src={cover} poster={projectCover(project.slug)}
+                      autoPlay muted loop playsInline preload="metadata"
+                      aria-label={`${project.title}项目视频`} />
+                  ) : (
+                    <Image src={cover} alt={`${project.title}项目视觉`} fill
+                      sizes="(max-width: 599px) 44vw, (max-width: 809px) 29vw, 16vw" />
+                  )}
+                </div>
+              </Link>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

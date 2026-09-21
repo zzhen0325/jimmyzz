@@ -443,10 +443,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       return texture;
     })
   ));
-  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, Promise.all([
+  const portalGunModel = createChromePortalGun().then(model => {
+    track(model);
+    if (disposed) {
+      geometries.forEach(geometry => geometry.dispose());
+      materials.forEach(material => material.dispose());
+    }
+    return model;
+  });
+  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(([cutout, characters, floatingTextures, [environment,...models]])=>{
+  ])]).then(([cutout, characters, floatingTextures, portalGun, [environment,...models]])=>{
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
@@ -465,7 +473,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       });
       add(model as THREE.Object3D,config.plaques.items[index].size,index);
     }
-    add(createChromePortalGun(),config.portalGun.size,5);
+    add(portalGun,config.portalGun.size,5);
     const wordmark = new THREE.Mesh(createJimmyWordmarkGeometry(), new THREE.MeshPhysicalMaterial(config.wordmark.material));
     wordmark.name = "floating-jimmy-wordmark";
     add(wordmark, config.wordmark.size, 6);

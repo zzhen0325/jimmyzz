@@ -94,8 +94,8 @@ export const home3DConfig = {
   portalGun: {
     size: 1.6,
     materials: {
-      shell: { color: "#64dd85", metalness: .2, roughness: .22, clearcoat: .08, clearcoatRoughness: .5, envMapIntensity: .85, transmission: .82, thickness: .56, ior: 1.46, attenuationColor: "#159b46", attenuationDistance: .8 },
-      trim: { color: "#53ff10", emissive: "#25e800", emissiveIntensity: .4, metalness: .15, roughness: .2 },
+      shell: { color: "#35B221", metalness: .08, roughness: .4, clearcoat: 0.8, clearcoatRoughness: .16, envMapIntensity: 1.1 },
+      trim: { color: "#FAFF66", metalness: .02, roughness: .25, clearcoat: .65 },
       buttons: { color: "#e5e8eb", metalness: 1, roughness: .22, clearcoat: .35 },
     },
   },

@@ -14,8 +14,9 @@
 .project[data-project="design-operations"] { grid-column: 3; grid-row: 3; }
 .projectLink { display: block; }
 .image { position: relative; aspect-ratio: 1; background: #e4e4e4; overflow: hidden; }
-.image img { object-fit: cover; transition: transform 300ms ease; }
-.projectLink:hover .image img { transform: scale(1.035); }
+.image video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.image img, .image video { object-fit: cover; transition: transform 300ms ease; }
+.projectLink:hover .image img, .image video { transform: scale(1.035); }
 .section a:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
 .caption { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; line-height: 1.3; }
 .caption h3 { font-size: clamp(12px, 1.15vw, 20px); font-weight: 500; letter-spacing: -.04em; overflow-wrap: anywhere; }
@@ -31,4 +32,4 @@
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
   .caption { gap: 6px; margin-bottom: 10px; }
 }
-@media (prefers-reduced-motion: reduce) { .image img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .image img, .image video { transition: none; } }
