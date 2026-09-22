@@ -13,7 +13,9 @@ import { createChromePortalGun } from "./chrome-portal-gun";
 import { createChromePlanet, createChromeRainCloud } from "./chrome-celestial";
 import { mergeRigidMeshes } from "./merge-rigid-meshes";
 
-export type ChromeWorldOptions = { vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
+export type FloatingMode = "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
+
+export type ChromeWorldOptions = { floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; billboard?: boolean };
 
 // SOURCE: twomuch.studio module 3614 / 3645 / 5743, captured 2026-09-11.
@@ -64,6 +66,20 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let elapsed = 0;
   let vortexTime = 0;
   let vortexAnimation: ReturnType<typeof createPixelVortex> | undefined;
+  let floatingMode: FloatingMode = options.floatingMode ?? "physics";
+  const usesPhysics = () => floatingMode === "physics" || floatingMode === "physics-wave";
+  let beltAngle = 0;
+  let beltSpeed = .10;
+  const beltKeys = new Set<string>();
+  const beltSeed = (index: number, salt: number) => {
+    const value = Math.sin((index + 1) * 127.1 + salt * 311.7) * 43758.5453;
+    return value - Math.floor(value);
+  };
+  const waveForce = new CANNON.Vec3();
+  const smoothPointer = new THREE.Vector2();
+  const targetPosition = new THREE.Vector3();
+  const targetRotation = new THREE.Quaternion();
+  const targetEuler = new THREE.Euler();
   let orbit = 0;
   let power = referencePhysics.idlePower;
   let angle = 0;
@@ -192,11 +208,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     easterEgg.cancel();
     lastVortexHover = null;
     reflectionDirty=true;
-    orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
+    beltAngle=0;beltSpeed=.10;orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
     items.forEach((item,index)=>{
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
       item.body.quaternion.set(0,0,0,1);item.body.velocity.setZero();item.body.angularVelocity.setZero();item.body.force.setZero();item.body.torque.setZero();item.body.wakeUp();
-      if(!reduced){
+      if(!reduced && usesPhysics()){
         // Launch in evenly spread screen directions, with a little depth and tumble.
         const a=2*Math.PI*index/items.length + .35;
         const speed=2.4 + (index % 3)*.35;
@@ -206,7 +222,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if(reduced){const a=2*Math.PI*index/items.length;item.body.position.set(Math.cos(a)*viewWidth*.35,Math.sin(a)*viewHeight*.35,.2);}
       item.object.position.copy(item.body.position);item.object.quaternion.copy(item.body.quaternion);
     });
-    canvas.dataset.phase=reduced?'static':'entrance';
+    if (!usesPhysics()) arrange(0, true);
+    canvas.dataset.motionMode = floatingMode;
+    canvas.dataset.phase=reduced?'static':floatingMode;
   };
   const resize=()=>{
     renderedWorkProgress = -1;
@@ -289,7 +307,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (hitVortex() || recentHover) {
       startVortex(); return;
     }
-    if (reduced) return;
+    if (reduced || (!usesPhysics() && floatingMode !== 'planet-belt')) return;
     activePointer=event.pointerId;
     canvas.setPointerCapture(event.pointerId);
     canvas.dataset.phase='spin';
@@ -299,7 +317,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (!easterEgg.active) {
       const overVortex = ready && workProgress() === 0 && hitVortex();
       canvas.style.cursor = 'pointer';
-      canvas.dataset.hoverLabel = overVortex ? 'click to shoot' : 'hold to spin';
+      canvas.dataset.hoverLabel = overVortex ? 'click to shoot' : usesPhysics() ? 'hold to spin' : floatingMode === 'planet-belt' ? 'hold to accelerate' : 'move to explore';
       if (overVortex) lastVortexHover = { x: event.clientX, y: event.clientY, time: performance.now() };
     }
   };
@@ -308,13 +326,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     pointerCancel();
   };
   const pointerCancel=()=>{
+    beltKeys.clear();
     const pointerId=activePointer;activePointer=null;
     if(pointerId!==null&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);
-    canvas.dataset.phase=reduced?'static':'orbit';
+    canvas.dataset.phase=reduced?'static':floatingMode;
   };
+  const pointerLeave=()=>{pointer.set(0,0);};
+  canvas.addEventListener("pointerleave",pointerLeave);
   const pageVisibility=()=>{if(document.hidden)pointerCancel();};
-  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
-  const preference=()=>{reduced=media.matches;activePointer=null;if(ready)reset();};
+  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(floatingMode === 'planet-belt' && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
+  const keyUp = (event: KeyboardEvent) => { beltKeys.delete(event.code); };
+  window.addEventListener('keyup', keyUp);
+  const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
   const restored=()=>{contextLost=false;reflectionDirty=true;};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
@@ -326,14 +349,101 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
   const cameraFrame=()=>{
     // Same orbit as source, shifted by PI to show the supplied plaques' front faces.
-    angle=2*Math.PI/10*orbit;
+    angle=usesPhysics() ? 2*Math.PI/10*orbit : 0;
     camera.position.set(0,10*Math.sin(angle),10*Math.cos(angle));camera.rotation.set(-angle,0,0);
     logo.quaternion.copy(camera.quaternion);logoBody.quaternion.set(camera.quaternion.x,camera.quaternion.y,camera.quaternion.z,camera.quaternion.w);logoBody.aabbNeedsUpdate=true;
     lights.rotation.set(0,-angle,-angle);
     studio.quaternion.copy(camera.quaternion);
   };
+  // Shared clock and deterministic slots keep the composition readable. The hidden
+  // portal is excluded from slot counts; it keeps its own effect-controlled position.
+  const arrange = (delta: number, snap = false) => {
+    const count = items.length - 1;
+    const t = reduced ? 0 : elapsed;
+    const blend = snap || reduced ? 1 : 1 - Math.exp(-delta * 5);
+    if (reduced) smoothPointer.set(0, 0); else smoothPointer.lerp(pointer, blend);
+    const compact = width < 700;
+    const columns = compact ? 4 : 5;
+    const rows = Math.ceil(count / columns);
+    items.forEach((item, index) => {
+      if (item.object.name === 'floating-pixel-vortex') return;
+      const layer = index % 3;
+      let x: number, y: number, z: number;
+      if (floatingMode === 'planet-belt') {
+        // Stable per-object seeds make a broad, irregular band without per-frame
+        // randomness or teleporting. Local drift stays bounded around each orbit.
+        const seed = beltSeed(index, 1);
+        const driftPhase = beltSeed(index, 2) * Math.PI * 2;
+        const driftTime = t * (.24 + beltSeed(index, 3) * .18);
+        const theta = (index + (seed - .5) * .65) / count * Math.PI * 2
+          + (reduced ? 0 : beltAngle) + Math.sin(driftTime + driftPhase) * .055;
+        const radius = .77 + beltSeed(index, 4) * .32 + Math.sin(driftTime * .8 + driftPhase) * .055;
+        const along = Math.cos(theta) * radius;
+        const across = Math.sin(theta) * radius;
+        const thickness = (beltSeed(index, 5) - .5) * .07
+          + Math.sin(driftTime * 1.3 + driftPhase) * .018;
+        x = (along * (compact ? .33 : .37) - across * .10 - thickness * .5) * viewWidth;
+        y = (along * .25 + across * .17 + thickness) * viewHeight;
+        // Flip front/back while preserving the reference's screen-space tilt.
+        z = (-across * .38 + Math.cos(driftTime + driftPhase) * .045) * Math.min(viewWidth, viewHeight);
+      } else if (floatingMode === 'orbit') {
+        const ring = index % 2;
+        const ringCount = Math.ceil((count - ring) / 2);
+        const theta = Math.floor(index / 2) / ringCount * Math.PI * 2 + ring * .24 + t * (ring ? .085 : .065);
+        const radius = ring ? .40 : .29;
+        x = Math.cos(theta) * viewWidth * radius;
+        y = Math.sin(theta) * viewHeight * radius;
+        z = -.6 + Math.sin(theta) * .18;
+      } else {
+        const row = Math.floor(index / columns);
+        const col = index % columns;
+        const rowCount = Math.min(columns, count - row * columns);
+        x = (col - (rowCount - 1) / 2) * viewWidth * (compact ? .22 : .18);
+        // An empty central band leaves the ZZ silhouette unobstructed.
+        const side = row < rows / 2 ? 1 : -1;
+        const rank = side === 1 ? row : rows - 1 - row;
+        y = side * viewHeight * (.38 - rank * (compact ? .115 : .17));
+        z = -.5 - layer * .15;
+        if (floatingMode === 'wave') {
+          const wave = t * .72 - x / viewWidth * Math.PI * 2;
+          y += Math.sin(wave) * viewHeight * .025;
+        } else {
+          x += smoothPointer.x * (.025 + layer * .02) * viewWidth;
+          y += smoothPointer.y * (.015 + layer * .012) * viewHeight;
+        }
+      }
+      targetPosition.set(x, y, z);
+      item.object.position.lerp(targetPosition, blend);
+      item.body.position.set(item.object.position.x, item.object.position.y, item.object.position.z);
+      const sway = floatingMode === 'parallax' ? smoothPointer.x * .06 : Math.sin(t * .72 - x) * .06;
+      if (floatingMode === 'planet-belt') {
+        const phase = beltSeed(index, 6) * Math.PI * 2;
+        targetEuler.set(Math.sin(t * .23 + phase) * .25, Math.cos(t * .19 + phase) * .35,
+          (beltSeed(index, 7) - .5) * .65 + Math.sin(t * .28 + phase) * .15);
+      } else targetEuler.set(.06, sway, (index % 3 - 1) * .10 + sway * .5);
+      targetRotation.setFromEuler(targetEuler);
+      item.object.quaternion.slerp(targetRotation, blend);
+      item.body.quaternion.set(item.object.quaternion.x, item.object.quaternion.y, item.object.quaternion.z, item.object.quaternion.w);
+      item.body.velocity.setZero(); item.body.angularVelocity.setZero();
+      item.body.aabbNeedsUpdate = true;
+    });
+    canvas.dataset.phase = reduced ? 'static' : floatingMode;
+    canvas.dataset.motionMode = floatingMode;
+  };
   const step=(delta:number)=>{
     elapsed+=delta;
+    if (!usesPhysics()) {
+      if (floatingMode === 'planet-belt') {
+        const holding = (activePointer !== null || beltKeys.size > 0) && !easterEgg.active && workProgress() === 0;
+        const targetSpeed = holding ? .95 : .10;
+        const response = holding ? 6 : .85;
+        const decay = Math.exp(-delta * response);
+        beltAngle -= targetSpeed * delta + (beltSpeed - targetSpeed) * (1 - decay) / response;
+        beltSpeed = targetSpeed + (beltSpeed - targetSpeed) * decay;
+        canvas.dataset.beltSpeed = beltSpeed.toFixed(3);
+      }
+      cameraFrame(); arrange(delta); return;
+    }
     // Reference orbit is per-frame; normalize to 60Hz so high-refresh displays match it.
     const frameRatio=delta*60;
     if(workProgress()>0&&activePointer!==null)pointerCancel();
@@ -346,7 +456,20 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     force.set(.02*Math.sin(elapsed/10),0,.02*Math.cos(elapsed/10));point.set(Math.cos(elapsed/15+50),Math.sin(elapsed/10+100),Math.cos(elapsed/20+150));
     for(const {body} of items){
       body.applyLocalForce(force,point);
-
+      if (floatingMode === "physics-wave" && body.collisionResponse) {
+        // A shared travelling current acts on the real bodies, so collisions and
+        // portal hit targets stay aligned. Camera-up keeps the wave vertical on screen.
+        const frequency = .8;
+        const phase = elapsed * frequency - body.position.x / viewWidth * Math.PI * 2;
+        const entrance = THREE.MathUtils.smoothstep(elapsed, 1.5, 3.5);
+        const strength = entrance * (1 - workProgress());
+        const desiredVelocity = Math.cos(phase) * viewHeight * .045 * frequency;
+        const upY = Math.cos(angle), upZ = -Math.sin(angle);
+        const verticalVelocity = body.velocity.y * upY + body.velocity.z * upZ;
+        const current = (desiredVelocity - verticalVelocity) * .65 * strength;
+        waveForce.set(0, upY * current, upZ * current);
+        body.applyForce(waveForce);
+      }
     }
     world.step(1/60,delta,1);
     for(const {body,object} of items){object.position.copy(body.position);object.quaternion.copy(body.quaternion);}
@@ -371,7 +494,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
     for (const { object, body, phase, billboard } of items) {
       object.visible = p < .7 && object.name !== "floating-pixel-vortex";
-      object.scale.setScalar(assetScale * (1 - vanish));
+      object.scale.setScalar(assetScale * (usesPhysics() ? 1 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
       object.quaternion.copy(billboard ? camera.quaternion : body.quaternion);
       if (p > 0 && !reduced && !billboard) {
         object.rotateY(p * p * (22 + phase));
@@ -554,15 +677,25 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
-  const debug={snapshot:()=>({ready,paused,reduced,reflectionFrames,elapsed,angle,power,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard})=>({name:object.name,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={snapshot:()=>({ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard})=>({name:object.name,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
     loaded,
+    setFloatingMode(value: FloatingMode) {
+      if (value === floatingMode) return;
+      const wasPhysics = usesPhysics();
+      pointerCancel(); easterEgg.cancel(); floatingMode = value;
+      const keepPhysics = wasPhysics && usesPhysics();
+      if (!keepPhysics) { orbit = 0; elapsed = 0; beltAngle = 0; beltSpeed = .10; }
+      reflectionDirty = true;
+      canvas.dataset.motionMode = value;
+      if (ready && ((!keepPhysics && usesPhysics()) || reduced)) reset();
+    },
     setPaused(value:boolean){paused=value;if(value)activePointer=null;},
     replay(){if(ready)reset();},
     dispose(){
-      disposed=true;pointerCancel();easterEgg.cancel();cancelAnimationFrame(frame);
+      disposed=true;window.removeEventListener('keyup',keyUp);canvas.removeEventListener("pointerleave",pointerLeave);pointerCancel();easterEgg.cancel();cancelAnimationFrame(frame);
       window.removeEventListener('blur',pointerCancel);document.removeEventListener('visibilitychange',pageVisibility);
       options.vortexTarget?.removeEventListener('pointerdown', vortexActivate);
       options.vortexTarget?.removeEventListener('click', vortexActivate);

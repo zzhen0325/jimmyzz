@@ -64,7 +64,7 @@ export const projects: Project[] = [
   },
   {
     slug: "lemon8-campaigns",
-    selectedWorkCover: "/assets/portfolio/lemon8-campaigns/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/lemohuodong.png",
     title: "Lemon8 Campaigns",
     english: "Across cultures, beyond borders",
     kind: "海外活动",
@@ -98,7 +98,7 @@ export const projects: Project[] = [
   },
   {
     slug: "inner-species",
-    selectedWorkCover: "/assets/portfolio/cucumber/cucumber.png",
+    selectedWorkCover: "/assets/portfolio/jian.png",
     title: "鉴一鉴你的内心物种",
     english: "Meet your inner creature",
     kind: "H5 营销",
@@ -120,7 +120,7 @@ export const projects: Project[] = [
   },
   {
     slug: "bandao",
-    selectedWorkCover: "/assets/portfolio/bandao/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/bandao.png",
     title: "伴岛",
     english: "A little island, a shared world",
     kind: "品牌与 IP",
@@ -137,7 +137,7 @@ export const projects: Project[] = [
   },
   {
     slug: "meetup-plan",
-    selectedWorkCover: "/assets/portfolio/meetup-plan/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/miao.png",
     title: "奇妙接头计划",
     english: "Take the connection outside",
     kind: "品牌与 IP",
@@ -154,7 +154,7 @@ export const projects: Project[] = [
   },
   {
     slug: "winter-gathering",
-    selectedWorkCover: "/assets/portfolio/winter-gathering/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/jiu.png",
     title: "冬至有酒局",
     english: "A warm encounter on a cold night",
     kind: "H5 营销",
@@ -176,7 +176,7 @@ export const projects: Project[] = [
   },
   {
     slug: "vinyl-anniversary",
-    selectedWorkCover: "/assets/portfolio/vinyl-anniversary/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/10.png",
     title: "黑胶纪念墙",
     english: "Ten years, one shared record",
     kind: "H5 营销",
@@ -199,7 +199,7 @@ export const projects: Project[] = [
   },
   {
     slug: "youth-album",
-    selectedWorkCover: "/assets/portfolio/youth-album/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/qing.png",
     title: "青春纪念册",
     english: "The songs we grew up with",
     kind: "H5 营销",
@@ -216,7 +216,7 @@ export const projects: Project[] = [
   },
   {
     slug: "social-live",
-    selectedWorkCover: "/assets/portfolio/social-live/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/long.png",
     title: "社交直播业务群",
     english: "One family, many connections",
     kind: "品牌与 IP",

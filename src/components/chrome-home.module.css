@@ -107,3 +107,16 @@
 .heroWordmark { position: absolute; z-index: 6; top: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; height: 48px; color: var(--home-foreground, #f1f1ef); font-size: 16px; font-weight: 750; letter-spacing: -.04em; }
 .heroWordmark[inert] { visibility: hidden; }
 .heroWordmark img { display: block; width: 72px; height: 36px; object-fit: contain; filter: brightness(0); }
+
+/* Quiet preview switch: hover/focus reveals it; touch retains a faint target. */
+.motionControl { position: absolute; z-index: 8; right: 18px; bottom: 20px; }
+.motionTrigger { width: 44px; height: 44px; border: 0; background: transparent; color: #343b42; font-size: 25px; cursor: pointer; opacity: 0; transition: opacity .2s; }
+.motionControl:hover .motionTrigger, .motionControl:focus-within .motionTrigger { opacity: 1; }
+.motionMenu { position: absolute; right: 0; bottom: 52px; width: 186px; padding: 12px; background: #f5f5f0; color: #252a30; border: 1px solid #b9bec0; display: grid; gap: 4px; }
+.motionMenu > span { font-size: 11px; padding: 4px 8px 8px; color: #666c70; }
+.motionMenu button { font: inherit; font-size: 12px; text-align: left; padding: 10px 8px; min-height: 40px; border: 0; background: transparent; cursor: pointer; }
+.motionMenu button:hover { background: #e4e6e3; }
+.motionMenu button[aria-pressed="true"] { background: #252a30; color: #f5f5f0; }
+.page .motionControl button:focus-visible { outline: 2px solid #4779db; outline-offset: 2px; }
+@media (hover: none) { .motionTrigger { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .motionTrigger { transition: none; } }
