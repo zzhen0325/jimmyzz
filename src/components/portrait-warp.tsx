@@ -61,6 +61,8 @@ export function PortraitWarp() {
     let lastDraw = -Infinity;
     let renderedFrame = -2;
     let renderedPoints: Point[] | null = null;
+    let meshPoints: Point[] | null = null;
+    let triangles: (() => void)[] = [];
     let position = 0;
     let direction = 1;
     let state: "smile" | "struggle" | "returning" = "smile";
@@ -70,26 +72,40 @@ export function PortraitWarp() {
     let speed = 1;
     let consumedDeformation = -Infinity;
     const shakeStart = 72, shakeEnd = 84;
+    const syncPlayback = () => {
+      lastDraw = -Infinity;
+      if (visible && !document.hidden) {
+        if (!frame) frame = requestAnimationFrame(draw);
+      } else {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    };
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      lastDraw = -Infinity;
+      syncPlayback();
     });
     observer.observe(output);
+    document.addEventListener("visibilitychange", syncPlayback);
     // Affine texture mapping over a fine mesh deforms the image itself, not just its border.
-    const triangle = (src: Point[], dst: Point[]) => {
+    const prepareTriangle = (src: Point[], dst: Point[]) => {
       const [a,b,c] = src, [d,e,f] = dst;
       const det = (b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y);
       const xx = ((e.x-d.x)*(c.y-a.y)-(f.x-d.x)*(b.y-a.y))/det;
       const xy = ((f.x-d.x)*(b.x-a.x)-(e.x-d.x)*(c.x-a.x))/det;
       const yx = ((e.y-d.y)*(c.y-a.y)-(f.y-d.y)*(b.y-a.y))/det;
       const yy = ((f.y-d.y)*(b.x-a.x)-(e.y-d.y)*(c.x-a.x))/det;
-      ctx.save(); ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(e.x,e.y); ctx.lineTo(f.x,f.y); ctx.closePath(); ctx.clip();
-      ctx.transform(xx,yx,xy,yy,d.x-xx*a.x-xy*a.y,d.y-yx*a.x-yy*a.y);
-      ctx.drawImage(texture,0,0,600,600); ctx.restore();
+      const tx = d.x-xx*a.x-xy*a.y, ty = d.y-yx*a.x-yy*a.y;
+      return () => {
+        ctx.save(); ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(e.x,e.y); ctx.lineTo(f.x,f.y); ctx.closePath(); ctx.clip();
+        ctx.transform(xx,yx,xy,yy,tx,ty);
+        ctx.drawImage(texture,0,0,600,600); ctx.restore();
+      };
     };
     const draw = (now: number) => {
-      frame = requestAnimationFrame(draw);
+      frame = 0;
       if (!visible || document.hidden) return;
+      frame = requestAnimationFrame(draw);
       const dt = Number.isFinite(lastDraw) ? Math.min((now - lastDraw) / 1000, .08) : 0;
       lastDraw = now;
       const active = now - lastDeformation.current < 160;
@@ -135,34 +151,42 @@ export function PortraitWarp() {
         }
         const index = Math.max(0, Math.min(120, Math.round(position)));
         frameIndex = index;
-        const tile = index % 32;
-        source.drawImage(sheets[Math.floor(index / 32)], (tile % 8) * 384, Math.floor(tile / 8) * 384, 384, 384, 0, 0, 600, 600);
-        output.dataset.frame = String(index);
       } else {
         if (!poster.complete || !poster.naturalWidth) return;
-        source.drawImage(poster, 0, 0, 600, 600);
       }
       output.dataset.motion = state;
       // Follow display timing, but remap the mesh only for a new frame or shape.
       // A 24fps timer on a 60Hz display otherwise drops to uneven 20fps steps.
       if (renderedFrame === frameIndex && renderedPoints === geometry.current) return;
+      // The texture changes at video cadence; the mesh only changes on deformation.
+      if (renderedFrame !== frameIndex) {
+        if (frameIndex >= 0) {
+          const tile = frameIndex % 32;
+          source.drawImage(sheets[Math.floor(frameIndex / 32)], (tile % 8) * 384, Math.floor(tile / 8) * 384, 384, 384, 0, 0, 600, 600);
+          output.dataset.frame = String(frameIndex);
+        } else source.drawImage(poster, 0, 0, 600, 600);
+      }
       renderedFrame = frameIndex;
       renderedPoints = geometry.current;
       ctx.clearRect(0, 0, 600, 600);
-      const n = MESH_SEGMENTS;
-      const points = geometry.current;
-      for (let y=0;y<n;y++) for(let x=0;x<n;x++) {
-        const uv = [{x:x/n,y:y/n},{x:(x+1)/n,y:y/n},{x:(x+1)/n,y:(y+1)/n},{x:x/n,y:(y+1)/n}];
-        const dst = uv.map(p=>surface(points,p.x,p.y));
-        const src = uv.map(p=>({x:p.x*600,y:p.y*600}));
-        triangle([src[0],src[1],src[2]],[dst[0],dst[1],dst[2]]);
-        triangle([src[0],src[2],src[3]],[dst[0],dst[2],dst[3]]);
+      if (meshPoints !== geometry.current) {
+        meshPoints = geometry.current;
+        triangles = [];
+        const n = MESH_SEGMENTS;
+        for (let y=0;y<n;y++) for(let x=0;x<n;x++) {
+          const uv = [{x:x/n,y:y/n},{x:(x+1)/n,y:y/n},{x:(x+1)/n,y:(y+1)/n},{x:x/n,y:(y+1)/n}];
+          const dst = uv.map(p=>surface(meshPoints!,p.x,p.y));
+          const src = uv.map(p=>({x:p.x*600,y:p.y*600}));
+          triangles.push(prepareTriangle([src[0],src[1],src[2]],[dst[0],dst[1],dst[2]]));
+          triangles.push(prepareTriangle([src[0],src[2],src[3]],[dst[0],dst[2],dst[3]]));
+        }
       }
+      for (const triangle of triangles) triangle();
     };
-    frame = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      document.removeEventListener("visibilitychange", syncPlayback);
     };
   }, []);
   const deform = (time: number) => {

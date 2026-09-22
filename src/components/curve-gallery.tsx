@@ -32,11 +32,14 @@ export function CurveGallery() {
       }
       root.classList.add("is-animated");
       const playhead = { value: 0 };
+      let previousSize = -1;
       const render = () => {
         const w = root.clientWidth;
         const h = root.clientHeight;
         const size = w <= 809 ? Math.min(w * .62, 260) : Math.min(w * .24, 330);
         const anchor = w * .5;
+        const resized = size !== previousSize;
+        previousSize = size;
         cards.forEach((card, i) => {
           const d = i - playhead.value;
           const focus = Math.exp(-Math.pow(d / 1.6, 2));
@@ -48,8 +51,10 @@ export function CurveGallery() {
           const baseline = h - (w <= 809 ? 142 : 110);
           const scale = .13 + .87 * focus;
           const height = size;
-          card.style.width = `${size}px`;
-          card.style.height = `${height}px`;
+          if (resized) {
+            card.style.width = `${size}px`;
+            card.style.height = `${height}px`;
+          }
           card.style.transform = `translate3d(${x - size / 2}px, ${baseline - height}px, 0) scale(${scale})`;
           card.style.zIndex = String(Math.round(focus * 100));
           card.style.visibility = x < -size || x > w + size ? "hidden" : "visible";

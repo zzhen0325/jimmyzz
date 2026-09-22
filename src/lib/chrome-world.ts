@@ -11,6 +11,7 @@ import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUnifo
 import { createJimmyWordmarkGeometry } from "./jimmy-wordmark-geometry";
 import { createChromePortalGun } from "./chrome-portal-gun";
 import { createChromePlanet, createChromeRainCloud } from "./chrome-celestial";
+import { mergeRigidMeshes } from "./merge-rigid-meshes";
 
 export type ChromeWorldOptions = { vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; billboard?: boolean };
@@ -34,6 +35,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   renderer.toneMappingExposure = config.lighting.exposure;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7));
   const scene = new THREE.Scene();
+  // Physics and the portal effect finish before rendering. All six probe faces
+  // and the main camera can share one world-matrix update for that frame.
+  scene.matrixWorldAutoUpdate = false;
   scene.backgroundIntensity = 1;
   const camera = new THREE.OrthographicCamera(-3, 3, 1.5, -1.5, .1, 1000);
   const easterEgg = createVortexEasterEgg(canvas, camera);
@@ -98,9 +102,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let reflectionTime = -Infinity;
   let reflectionFrames = 0;
   let reflectionDirty = true;
+  let renderedWorkProgress = -1;
   scene.add(new THREE.AmbientLight(config.lighting.ambient.color, config.lighting.ambient.intensity));
   const lights = new THREE.Group();
   for (const position of [[15,-15,6],[-15,15,-6],[15,-6,15],[-15,6,-15]]) {
+    // Zero-intensity lights still add BRDF work to every physical-material pixel.
+    if (config.lighting.directional.intensity === 0) continue;
     const light = new THREE.DirectionalLight(config.lighting.directional.color, config.lighting.directional.intensity);
     light.position.fromArray(position); lights.add(light);
   }
@@ -156,8 +163,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const add=(object:THREE.Object3D,size:number,index:number,billboard=false)=>{
     track(object);
     const bounds=new THREE.Box3().setFromObject(object),dimensions=bounds.getSize(new THREE.Vector3()),mid=bounds.getCenter(new THREE.Vector3());
+    // Measure the original hierarchy first: batching must not change sizing or physics.
+    mergeRigidMeshes(object);
+    track(object);
     const normalization=size/Math.max(dimensions.x,dimensions.y,dimensions.z);
     const normalized=new THREE.Group();normalized.add(object);object.position.sub(mid);normalized.scale.setScalar(normalization);
+    // Only the outer group moves. Reuse every internal local transform in all
+    // six reflection views as well as the main view.
+    normalized.traverse(child => { child.updateMatrix(); child.matrixAutoUpdate = false; });
     const group=new THREE.Group();group.name=object.name||`chrome-${index}`;group.add(normalized);scene.add(group);
     const originalSize=dimensions.multiplyScalar(normalization);
     const body=new CANNON.Body({mass:1,allowSleep:true,angularDamping:.5,linearDamping:.01,collisionFilterGroup:2});
@@ -196,6 +209,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.phase=reduced?'static':'entrance';
   };
   const resize=()=>{
+    renderedWorkProgress = -1;
     easterEgg.cancel();
     const rect=host.getBoundingClientRect();width=rect.width;height=rect.height;
     camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.zoom=(width+height)/9;camera.updateProjectionMatrix();
@@ -211,19 +225,24 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if(ready)reset();
   };
   const updatePointer=(event:PointerEvent)=>{const r=host.getBoundingClientRect();pointer.set((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));};
+  const vortexBox = new THREE.Box3();
+  const vortexMin = new THREE.Vector2(), vortexMax = new THREE.Vector2();
+  const vortexCorner = new THREE.Vector3(), vortexPixel = new THREE.Vector2();
+  const coarsePointer = matchMedia('(pointer: coarse)');
   const vortexBounds = () => {
     const mesh = items.find(item => item.object.name === "floating-green-portal-gun")?.object;
     if (!mesh || !ready || workProgress() > 0) return null;
-    mesh.updateWorldMatrix(true, true); camera.updateMatrixWorld(true);
+    // setFromObject updates descendants itself; only prepare ancestors here.
+    mesh.updateWorldMatrix(true, false); camera.updateMatrixWorld(true);
     const rect = canvas.getBoundingClientRect();
-    const box = new THREE.Box3().setFromObject(mesh);
-    const min = new THREE.Vector2(Infinity, Infinity), max = new THREE.Vector2(-Infinity, -Infinity);
+    const box = vortexBox.setFromObject(mesh);
+    const min = vortexMin.set(Infinity, Infinity), max = vortexMax.set(-Infinity, -Infinity);
     for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
-      const p = new THREE.Vector3(x, y, z).project(camera);
-      const pixel = new THREE.Vector2((p.x + 1) * rect.width / 2, (1 - p.y) * rect.height / 2);
+      const p = vortexCorner.set(x, y, z).project(camera);
+      const pixel = vortexPixel.set((p.x + 1) * rect.width / 2, (1 - p.y) * rect.height / 2);
       min.min(pixel); max.max(pixel);
     }
-    const padding = matchMedia('(pointer: coarse)').matches ? 12 : 6;
+    const padding = coarsePointer.matches ? 12 : 6;
     return { center: min.clone().add(max).multiplyScalar(.5), major: new THREE.Vector2(1, 0), minor: new THREE.Vector2(0, 1), majorLength: 1, minorLength: 1, rx: Math.max(22, (max.x - min.x) / 2 + padding), ry: Math.max(22, (max.y - min.y) / 2 + padding), rect };
   };
   const hitVortex = () => {
@@ -388,6 +407,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (!paused && !reduced) vortexTime += delta * (easterEgg.active ? 2.5 : 1);
     const portalScale = vortexAnimation?.mesh.parent?.parent?.scale.x ?? assetScale;
     vortexAnimation?.update(reduced ? 0 : vortexTime, easterEgg.active ? THREE.MathUtils.clamp((portalScale / assetScale - .16) / 2.34, 0, 1) : 1);
+    // At full takeover only the stationary header logo remains. Keep the live
+    // state above in sync, but reuse its pixels until scroll/resize/context changes.
+    if (ready && workProgress() === 1 && renderedWorkProgress === 1 && !reflectionDirty) return;
+    scene.updateMatrixWorld();
     // Capture after physics and camera updates. Hide the receiver during capture
     // and keep the panorama behind the real geometry, restoring the black page afterward.
     const reflectionInterval = width < 700 ? 1000 / 12 : 1000 / 20;
@@ -415,6 +438,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     updateVortexTarget();
     renderer.render(scene,camera);
+    renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
   frame=requestAnimationFrame(render);
@@ -463,12 +487,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     scene.environmentIntensity=config.lighting.environmentIntensity;
     for(const [index,model] of models.entries()) {
       const setting = config.plaques.items[index];
+      const overrides = new Map<THREE.Material, THREE.Material>();
       (model as THREE.Object3D).traverse(child => {
         if (!(child instanceof THREE.Mesh)) return;
-        const apply = (material: THREE.Material) => applyMaterial(material, {
-          ...config.plaques.material,
-          ...(material.name.startsWith("Resin") ? { color: setting.color, ...setting.material } : setting.letteringMaterial),
-        });
+        const apply = (material: THREE.Material) => {
+          if (overrides.has(material)) return overrides.get(material)!;
+          const result = applyMaterial(material, {
+            ...config.plaques.material,
+            ...(material.name.startsWith("Resin") ? { color: setting.color, ...setting.material } : setting.letteringMaterial),
+          });
+          overrides.set(material, result);
+          return result;
+        };
         child.material = Array.isArray(child.material) ? child.material.map(apply) : apply(child.material);
       });
       add(model as THREE.Object3D,config.plaques.items[index].size,index);
@@ -495,7 +525,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const image = cutout.image as { width: number; height: number };
     const skater = new THREE.Mesh(
       new THREE.PlaneGeometry(image.width / image.height, 1),
-      new THREE.MeshBasicMaterial({ ...config.skater.material, map: cutout }),
+      // A flat cutout has no back/front layers to sort; one double-sided pass
+      // produces the same pixels in the camera and reflection probe.
+      new THREE.MeshBasicMaterial({ ...config.skater.material, map: cutout, forceSinglePass: true }),
     );
     skater.name = "skater-billboard";
     add(skater, config.skater.size, 9 + characters.length, true);
@@ -504,7 +536,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       const image = texture.image as { width: number; height: number };
       const mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(image.width / image.height, 1),
-        new THREE.MeshBasicMaterial({ ...config.skater.material, map: texture }),
+        new THREE.MeshBasicMaterial({ ...config.skater.material, map: texture, forceSinglePass: true }),
       );
       mesh.name = `floating-cutout-${setting.file}`;
       add(mesh, setting.size, 10 + characters.length + index, true);

@@ -47,8 +47,8 @@ export type Project = {
 export const projects: Project[] = [
   {
     slug: "lemo-ai",
-    selectedWorkCover: "/assets/videos/lemo.mov",
-    title: "All about AIGC",
+    selectedWorkCover: "/assets/videos/lemo.mp4",
+    title: "Lemo Studio",
     english: "From experiments to tools",
     kind: "AIGC",
     client: "Lemon8",
@@ -81,7 +81,7 @@ export const projects: Project[] = [
   },
   {
     slug: "miaoshi-brand",
-    selectedWorkCover: "/assets/portfolio/miaoshi-brand/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/miaoshi-brand/miaoshi.png",
     title: "妙时品牌",
     english: "This way to love",
     kind: "品牌与 IP",
@@ -98,7 +98,7 @@ export const projects: Project[] = [
   },
   {
     slug: "inner-species",
-    selectedWorkCover: "/assets/portfolio/inner-species/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/cucumber/cucumber.png",
     title: "鉴一鉴你的内心物种",
     english: "Meet your inner creature",
     kind: "H5 营销",

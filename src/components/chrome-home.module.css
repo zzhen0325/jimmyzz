@@ -1,5 +1,5 @@
 .page { background: transparent; color: var(--home-foreground, #f1f1ef); }
-.hero { height: 100svh; min-height: 540px; position: relative; }
+.hero { height: 100svh; min-height: 540px; position: relative; background: linear-gradient(to bottom, #31beff, var(--home-background, #f7f7f7)) top / 100% 150px no-repeat; }
 .stage { position: sticky; top: 0; height: 100svh; min-height: 540px; overflow: hidden; isolation: isolate; background: #05050500; }
 .fallback { position: absolute; left: 50%; top: 43%; transform: translate(-50%,-50%); font-size: clamp(140px,28vw,440px); font-weight: 900; letter-spacing: -.11em; font-style: italic; color: #959595; background: linear-gradient(160deg,#fafafa 10%,#333 27%,#ddd 38%,#575757 51%,#fff 57%,#999 66%,#202020 72%,#eee 89%); background-clip: text; -webkit-text-fill-color: transparent; }
 .stage:has(canvas[data-ready="true"]) .fallback { visibility: hidden; }
