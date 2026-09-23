@@ -4,11 +4,11 @@ import { useEffect, useId, useRef, useState, type PointerEvent, type KeyboardEve
 import styles from "./portrait-warp.module.css";
 
 type Point = { x: number; y: number };
-// Saved from the user's adjusted portrait; reset returns to this shape.
+// A gently tilted, curved default that keeps the face comfortably proportioned.
 const initial: Point[] = [
-  { x: .173492, y: .19421 }, { x: .503686, y: .035 }, { x: .82, y: .18 },
-  { x: .644707, y: .530211 }, { x: .82, y: .82 }, { x: .519736, y: .965 },
-  { x: .18, y: .82 }, { x: .388421, y: .516413 },
+  { x: .14, y: .22 }, { x: .46, y: .12 }, { x: .80, y: .15 },
+  { x: .78, y: .48 }, { x: .87, y: .79 }, { x: .54, y: .88 },
+  { x: .20, y: .83 }, { x: .21, y: .53 },
 ];
 const names = ["左上", "上中", "右上", "右中", "右下", "下中", "左下", "左中"];
 const clamp = (n: number) => Math.max(.035, Math.min(.965, n));
@@ -27,6 +27,8 @@ function surface(p: Point[], u: number, v: number): Point {
 }
 
 const MESH_SEGMENTS = 24;
+const FRAME_SIZE = 600;
+const SMILE_FRAME = 136; // Smile before the export's final reset frames (24 fps).
 
 export function PortraitWarp() {
   const labelPathId = useId();
@@ -48,12 +50,12 @@ export function PortraitWarp() {
     const source = texture.getContext("2d");
     if (!source) return;
     const poster = new window.Image();
-    poster.src = "/assets/images/zz-portrait-smile.jpg";
-    // Original video frames, starting at 1.5s. Each sheet holds 32 frames.
+    poster.src = "/assets/images/fluted-portrait-smile.jpg?v=3";
+    // Fluted glass (1).mp4 sampled at 24 fps. Each sheet holds 32 frames.
     // A single frame is rendered at full opacity, including every transition.
-    const sheets = Array.from({ length: 4 }, (_, index) => {
+    const sheets = Array.from({ length: 5 }, (_, index) => {
       const image = new window.Image();
-      image.src = `/assets/images/portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp`;
+      image.src = `/assets/images/fluted-portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp?v=3`;
       return image;
     });
     let visible = false;
@@ -63,15 +65,12 @@ export function PortraitWarp() {
     let renderedPoints: Point[] | null = null;
     let meshPoints: Point[] | null = null;
     let triangles: (() => void)[] = [];
-    let position = 0;
+    let position = SMILE_FRAME;
     let direction = 1;
     let state: "smile" | "struggle" | "returning" = "smile";
-    let idleStart = 0;
-    let idleEnd = 24;
-    let returnTo = 24;
-    let speed = 1;
+    let velocity = 0;
     let consumedDeformation = -Infinity;
-    const shakeStart = 72, shakeEnd = 84;
+    const shakeStart = 24, shakeEnd = 108;
     const syncPlayback = () => {
       lastDraw = -Infinity;
       if (visible && !document.hidden) {
@@ -108,7 +107,7 @@ export function PortraitWarp() {
       frame = requestAnimationFrame(draw);
       const dt = Number.isFinite(lastDraw) ? Math.min((now - lastDraw) / 1000, .08) : 0;
       lastDraw = now;
-      const active = now - lastDeformation.current < 160;
+      const active = now - lastDeformation.current < 220;
       let frameIndex = -1;
       const ready = sheets.every(image => image.complete && image.naturalWidth > 0);
       if (ready) {
@@ -119,37 +118,38 @@ export function PortraitWarp() {
           state = "struggle";
           direction = position < shakeStart ? 1 : position > shakeEnd ? -1 : direction;
         } else if (!active && !newDeformation && state === "struggle") {
-          // Release plays the remaining action forward once; never replay it backwards.
+          // Ease into forward playback and settle on the final smile after release.
           state = "returning";
           direction = 1;
-          returnTo = 102;
         }
         const shaking = state === "struggle";
+        const entering = position < shakeStart || position > shakeEnd;
+        const distanceToTurn = direction > 0 ? shakeEnd - position : position - shakeStart;
+        // Brake before a turn, then accelerate out of it instead of reversing at full speed.
+        const turnEase = Math.min(1, Math.max(0, distanceToTurn) / 10);
         const targetSpeed = state === "returning"
-          ? 1 + 3 * Math.min(1, Math.abs(returnTo-position) / 12)
-          : shaking ? (position < shakeStart || position > shakeEnd ? 4 : 2.2) : 1;
-        speed += (targetSpeed - speed) * (1 - Math.exp(-dt / .09));
-        position += direction * dt * 24 * speed;
+          ? .45 + 1.95 * Math.min(1, Math.max(0, SMILE_FRAME-position) / 24)
+          : shaking ? (entering ? 3 : .35 + 1.65 * turnEase) : 0;
+        const targetVelocity = direction * targetSpeed;
+        velocity += (targetVelocity - velocity) * (1 - Math.exp(-dt / .08));
+        if (state !== "smile") position += dt * 24 * velocity;
         if (shaking) {
           const reachedEnd = direction > 0 && position >= shakeEnd;
           const reachedStart = direction < 0 && position <= shakeStart;
           if (reachedEnd || reachedStart) {
-            position = 2 * (reachedEnd ? shakeEnd : shakeStart) - position;
+            position = reachedEnd ? shakeEnd : shakeStart;
+            velocity = 0;
             direction = reachedEnd ? -1 : 1;
           }
         } else if (state === "returning") {
-          if ((direction > 0 && position >= returnTo) || (direction < 0 && position <= returnTo)) {
-            position = returnTo;
-            idleStart = returnTo === 24 ? 0 : 102;
-            idleEnd = returnTo === 24 ? 24 : 120;
-            direction = returnTo === 24 ? -1 : 1;
+          if (position >= SMILE_FRAME) {
+            position = SMILE_FRAME;
+            velocity = 0;
+            direction = -1;
             state = "smile";
           }
-        } else {
-          if (position >= idleEnd) { position = 2 * idleEnd - position; direction = -1; }
-          else if (position <= idleStart) { position = 2 * idleStart - position; direction = 1; }
         }
-        const index = Math.max(0, Math.min(120, Math.round(position)));
+        const index = Math.max(0, Math.min(SMILE_FRAME, Math.round(position)));
         frameIndex = index;
       } else {
         if (!poster.complete || !poster.naturalWidth) return;
@@ -162,7 +162,7 @@ export function PortraitWarp() {
       if (renderedFrame !== frameIndex) {
         if (frameIndex >= 0) {
           const tile = frameIndex % 32;
-          source.drawImage(sheets[Math.floor(frameIndex / 32)], (tile % 8) * 384, Math.floor(tile / 8) * 384, 384, 384, 0, 0, 600, 600);
+          source.drawImage(sheets[Math.floor(frameIndex / 32)], (tile % 8) * FRAME_SIZE, Math.floor(tile / 8) * FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, 0, 0, 600, 600);
           output.dataset.frame = String(frameIndex);
         } else source.drawImage(poster, 0, 0, 600, 600);
       }
@@ -236,9 +236,9 @@ export function PortraitWarp() {
       <svg className={styles.background} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
       <canvas ref={canvas} width={600} height={600} role="img" tabIndex={0} aria-label="可拖动的 ZZ 头像，拖动移动位置，方向键微调"
         onPointerDown={e=>{ e.preventDefault(); e.currentTarget.focus({preventScroll:true}); e.currentTarget.setPointerCapture(e.pointerId); moving.current={id:e.pointerId,x:e.clientX,y:e.clientY,origin:offset}; }}
-        onPointerMove={e=>{ const drag=moving.current; if (drag && drag.id===e.pointerId) setOffset({x:drag.origin.x+e.clientX-drag.x,y:drag.origin.y+e.clientY-drag.y}); }}
+        onPointerMove={e=>{ const drag=moving.current; if (drag && drag.id===e.pointerId) { const next={x:drag.origin.x+e.clientX-drag.x,y:drag.origin.y+e.clientY-drag.y}; if(next.x!==offset.x || next.y!==offset.y) deform(e.timeStamp); setOffset(next); } }}
         onPointerUp={()=>{moving.current=null;}} onPointerCancel={()=>{moving.current=null;}} onLostPointerCapture={()=>{moving.current=null;}}
-        onKeyDown={e=>{ const step=e.shiftKey?20:5; const delta: Record<string, Point>={ArrowLeft:{x:-step,y:0},ArrowRight:{x:step,y:0},ArrowUp:{x:0,y:-step},ArrowDown:{x:0,y:step}}; if(delta[e.key]) {e.preventDefault(); const d=delta[e.key]; setOffset(p=>({x:p.x+d.x,y:p.y+d.y}));} }} />
+        onKeyDown={e=>{ const step=e.shiftKey?20:5; const delta: Record<string, Point>={ArrowLeft:{x:-step,y:0},ArrowRight:{x:step,y:0},ArrowUp:{x:0,y:-step},ArrowDown:{x:0,y:step}}; if(delta[e.key]) {e.preventDefault(); deform(e.timeStamp); const d=delta[e.key]; setOffset(p=>({x:p.x+d.x,y:p.y+d.y}));} }} />
       <svg className={styles.outline} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
       <svg className={styles.dragLabel} viewBox="0 0 100 100" aria-hidden="true">
         <defs><path id={labelPathId} d={labelPath} /></defs>

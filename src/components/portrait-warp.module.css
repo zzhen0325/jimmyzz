@@ -8,7 +8,7 @@
   z-index: 10;
 }
 .background { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.background polygon { fill: #1B6AE8; }
+.background polygon { fill: #4087bb; }
 .area canvas { position: relative; display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
 .area canvas:active { cursor: grabbing; }
 .area canvas:focus-visible { outline: 1px dashed #858585; outline-offset: 4px; }

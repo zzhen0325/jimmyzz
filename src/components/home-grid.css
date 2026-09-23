@@ -228,10 +228,8 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
 /* Clip the entering images without creating a nested scrolling container. */
 .home-page .home-work-section { position: relative; overflow-x: clip; }
 .home-page .home-work-title {
-  position: absolute;
-  top: 24px;
-  left: calc(var(--home-primary-font-size) * .2);
-  margin: 0;
+  position: static;
+  margin: 24px var(--page-pad) 16px;
   font-size: var(--home-primary-font-size);
   line-height: 1.15;
   font-weight: 500;
