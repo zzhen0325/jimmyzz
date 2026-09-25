@@ -965,98 +965,20 @@
     ]
   },
   "lemo-ai": {
-    "nodeId": "4014:3256",
+    "nodeId": "101:8124",
     "assets": [
       {
-        "name": "cover",
-        "title": "项目封面",
-        "rect": [
-          160,
-          8148,
-          1600,
-          909
-        ],
-        "src": "/assets/portfolio/lemo-ai/cover.webp",
-        "width": 1600,
-        "height": 909
-      },
-      {
-        "name": "workshop",
-        "title": "AI Workshop",
+        "name": "lemo-studio-detail",
+        "title": "Lemo Studio · 产品与视觉设计",
         "rect": [
           0,
-          770,
-          1920,
-          2790
-        ],
-        "src": "/assets/portfolio/lemo-ai/workshop.webp",
-        "width": 1920,
-        "height": 2790
-      },
-      {
-        "name": "lora",
-        "title": "LoRA 模型训练",
-        "rect": [
           0,
-          3560,
-          1920,
-          2780
+          1934,
+          6651
         ],
-        "src": "/assets/portfolio/lemo-ai/lora.webp",
-        "width": 1920,
-        "height": 2780
-      },
-      {
-        "name": "playground-v1",
-        "title": "Playground V1",
-        "rect": [
-          0,
-          6340,
-          1920,
-          1070
-        ],
-        "src": "/assets/portfolio/lemo-ai/playground-v1.webp",
-        "width": 1920,
-        "height": 1070
-      },
-      {
-        "name": "playground-v2",
-        "title": "Playground V2",
-        "rect": [
-          0,
-          7410,
-          1920,
-          540
-        ],
-        "src": "/assets/portfolio/lemo-ai/playground-v2.webp",
-        "width": 1920,
-        "height": 540
-      },
-      {
-        "name": "studio",
-        "title": "Lemo AI Studio",
-        "rect": [
-          0,
-          7950,
-          1920,
-          1590
-        ],
-        "src": "/assets/portfolio/lemo-ai/studio.webp",
-        "width": 1920,
-        "height": 1590
-      },
-      {
-        "name": "goodcase",
-        "title": "Goodcase V3",
-        "rect": [
-          0,
-          9540,
-          1920,
-          1048
-        ],
-        "src": "/assets/portfolio/lemo-ai/goodcase.webp",
-        "width": 1920,
-        "height": 1048
+        "src": "/assets/portfolio/lemo-ai/detail-101-8124.png",
+        "width": 1934,
+        "height": 6651
       }
     ]
   },

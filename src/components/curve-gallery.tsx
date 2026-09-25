@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import images from "@/lib/curve-gallery-assets.json";
+import { curveGallery as images } from "@/lib/projects-config";
 import { projects } from "@/lib/site-data";
 import Image from "next/image";
 import "./ribbon-gallery.css";

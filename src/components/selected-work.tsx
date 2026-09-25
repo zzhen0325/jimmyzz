@@ -7,14 +7,14 @@ import Link from "next/link";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { projects, projectCover } from "@/lib/site-data";
+import { selectedWork } from "@/lib/projects-config";
 import styles from "./selected-work.module.css";
 
-const featuredSlugs = ["lemo-ai", "miaoshi-brand", "inner-species", "bandao"];
-const compactSlugs = new Set(["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"]);
-const selected = [
-  ...featuredSlugs.map((slug) => projects.find((project) => project.slug === slug)!),
-  ...projects.filter((project) => !featuredSlugs.includes(project.slug) && project.slug !== "visual-explorations"),
-];
+const compactSlugs = new Set(selectedWork.compact);
+const selected = selectedWork.order.flatMap((slug) => {
+  const project = projects.find((item) => item.slug === slug);
+  return project ? [project] : [];
+});
 
 export function SelectedWork() {
   const root = useRef<HTMLElement>(null);
@@ -52,16 +52,16 @@ export function SelectedWork() {
   }, { scope: root });
 
   return (
-    <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
-      <div className={styles.grid}>
+    <section ref={root} tabIndex={-1} id="work-index" className={`${styles.section} relative px-[var(--page-pad)] pt-6 pb-[clamp(64px,8vw,128px)] text-[#0b0b0b] scroll-mt-[100px] outline-none max-[809px]:pb-16 max-[599px]:pt-4`} aria-label="精选作品">
+      <div className="grid grid-cols-[var(--portfolio-grid)] items-start gap-x-[var(--grid-gap)] gap-y-[clamp(72px,8vw,144px)] max-[809px]:gap-y-16 max-[599px]:gap-y-9">
         {selected.map((project, index) => {
           const cover = project.selectedWorkCover;
           const isCompact = compactSlugs.has(project.slug);
           const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);
           return (
             <article key={project.slug} className={styles.project} data-project={project.slug} data-size={isCompact ? "compact" : "large"}>
-              <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
-                <div className={styles.caption}><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
+              <Link href={`/work/${project.slug}`} className={`${styles.projectLink} block`} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
+                <div className={styles.caption}><h3 className="text-[clamp(10px,1.15vw,20px)] font-medium tracking-[-.04em] wrap-anywhere max-[809px]:text-[14px]"><ScrambleText>{project.title}</ScrambleText></h3><span className="shrink-0 text-[clamp(10px,1.15vw,20px)] tracking-[-.05em] max-[809px]:text-[14px]"><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
                 <div className={styles.image} data-work-skew>
                   {isVideo ? (
                     <video src={cover} poster={projectCover(project.slug)}

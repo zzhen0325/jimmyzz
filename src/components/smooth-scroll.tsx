@@ -15,11 +15,13 @@ export function SmoothScroll() {
         else lenis.start();
       };
       window.addEventListener("hero-game-change", onGameChange);
+      window.addEventListener("project-transition", onGameChange);
       const tick = (time: number) => lenis.raf(time * 1000);
       lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add(tick);
       return () => {
         window.removeEventListener("hero-game-change", onGameChange);
+        window.removeEventListener("project-transition", onGameChange);
         gsap.ticker.remove(tick);
         lenis.off("scroll", ScrollTrigger.update);
         lenis.destroy();

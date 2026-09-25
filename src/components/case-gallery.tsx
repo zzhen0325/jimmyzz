@@ -1,11 +1,10 @@
 "use client";
-import Image from "next/image";
-import { MotionImage } from "./motion-image";
+/* Native images use their intrinsic proportions without configured dimensions. */
+/* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  Maximize2,
   X,
   ZoomIn,
   ZoomOut,
@@ -37,30 +36,15 @@ export function CaseGallery({
       <div className="case-gallery">
         {assets.map((asset, index) => (
           <section key={asset.name} id={asset.name} className="case-chapter">
-            <div className="chapter-heading">
-              <h2>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                {asset.title}
-              </h2>
-              <button
-                onClick={() => show(index)}
-                aria-label={`放大查看${asset.title}`}
-              >
-                <Maximize2 size={16} />
-                <span>查看大图</span>
-              </button>
-            </div>
             <button
               className="chapter-image"
               onClick={() => show(index)}
-              aria-label={`查看${asset.title}大图`}
+              aria-label={`查看${projectTitle}第 ${index + 1} 张大图`}
             >
-              <MotionImage
+              <img
                 src={asset.src}
-                width={asset.width}
-                height={asset.height}
-                alt={`${projectTitle}：${asset.title}`}
-                sizes="(max-width: 1000px) 100vw, 36vw"
+                alt={`${projectTitle} · ${index + 1}`}
+                decoding="async"
               />
             </button>
           </section>
@@ -80,7 +64,7 @@ export function CaseGallery({
       >
         <div className="lightbox-toolbar">
           <p id="asset-title">
-            {item?.title}{" "}
+            {projectTitle}{" "}
             <span>
               {active + 1} / {assets.length}
             </span>
@@ -109,12 +93,9 @@ export function CaseGallery({
         </div>
         <div className="lightbox-body" data-lenis-prevent>
           {item && (
-            <Image
+            <img
               src={item.src}
-              width={item.width}
-              height={item.height}
-              unoptimized
-              alt={`${projectTitle}：${item.title}`}
+              alt={`${projectTitle} · ${active + 1}`}
               className={zoom ? "is-zoomed" : ""}
             />
           )}
