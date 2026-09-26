@@ -1,7 +1,7 @@
 /* Shared home tracks with a margin-label editorial layout. */
 html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-page {
-  --home-background: #FCFcf5;
+  --home-background: #FFFFFF;
   --home-foreground: #0b0b0b;
   --muted: #666761;
   --line: rgb(32 33 30 / 10%);
@@ -15,7 +15,7 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-page .case-intro { padding: 0 0 0 calc(var(--case-label-width) + var(--grid-gap)); }
 .case-page .case-intro h1 {
   margin: 0;
-  font-size: var(--home-primary-font-size);
+  font-size: 30px;
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -.045em;
@@ -30,6 +30,18 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
   line-height: 1.3;
   font-weight: 500;
   letter-spacing: -.04em;
+}
+.case-page #case-info-title {
+  font-weight: 200;
+}
+.case-page #case-about-title {
+  font-weight: 200;
+}
+.case-page #case-challenge-title {
+  font-weight: 200;
+}
+.case-page #case-solution-title {
+  font-weight: 200;
 }
 .case-page .case-overview p {
   font-size: clamp(10px, .8vw, 14px);
@@ -48,7 +60,7 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-facts dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .case-facts dd span { display: block; }
 .case-impact dd { font-size: clamp(10px, 1.15vw, 20px); }
-.case-page .case-gallery { display: flex; flex-direction: column; gap: clamp(16px, 1vw, 32px); padding: 36px 0 0; margin: 0; }
+.case-page .case-gallery { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 32px); padding: 36px 0 0; margin: 0; }
 .case-visuals .case-chapter { margin: 0; }
 .case-visuals .chapter-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; }
 .case-visuals .chapter-image img { display: block; width: 100%; height: auto; max-width: none; max-height: none; }

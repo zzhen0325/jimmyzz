@@ -64,20 +64,32 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/lemo-ai/lemostudio_2.png",
       },
         {
-        "name": "lemo-studio-06",
-        "src": "/assets/portfolio/lemo-ai/lemostudio_6.png",
-      },
-      {
         "name": "lemo-studio-03",
         "src": "/assets/portfolio/lemo-ai/lemostudio_3.png",
-      },  
-       {
-        "name": "lemo-studio-04",
-        "src": "/assets/portfolio/lemo-ai/lemostudio_4.png",
-      },  
-       {
+      },
+      //    {
+      //   "name": "lemo-studio-04",
+      //   "src": "/assets/portfolio/lemo-ai/lemostudio_4.png",
+      // },
+      {
         "name": "lemo-studio-05",
-        "src": "/assets/portfolio/lemo-ai/lemostudio_5.png",  
+        "src": "/assets/portfolio/lemo-ai/lemostudio_5.png",
+      },  
+       {
+        "name": "lemo-studio-06",
+        "src": "/assets/portfolio/lemo-ai/lemostudio_6.png",
+      },  
+       {
+        "name": "lemo-studio-07",
+        "src": "/assets/portfolio/lemo-ai/lemostudio_7.png",  
+      },  
+       {
+        "name": "lemo-studio-08",
+        "src": "/assets/portfolio/lemo-ai/lemostudio_8.png",  
+      },  
+       {
+        "name": "lemo-studio-09",
+        "src": "/assets/portfolio/lemo-ai/lemostudio_9.png",  
       },  
     ],
     selectedWorkCover: "/assets/videos/lemo.mp4",
