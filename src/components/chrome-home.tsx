@@ -7,13 +7,14 @@ import type { FloatingMode } from "@/lib/chrome-world";
 import styles from "./chrome-home.module.css";
 import { HomeLoader } from "./home-loader";
 import { FloatingNav } from "./floating-nav";
+import { shouldShowHomeLoader } from "@/lib/home-loading";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
   const [floatingMode, setFloatingMode] = useState<FloatingMode>("physics");
   const [motionMenu, setMotionMenu] = useState(false);
   const hero = useRef<HTMLElement>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(shouldShowHomeLoader);
   const finishLoading = useCallback(() => setLoading(false), []);
   const workProgress = useRef(0);
   const [view, setView] = useState<"intro" | "transition" | "work">("intro");

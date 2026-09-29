@@ -267,6 +267,9 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
   .home-page .profile-statement { grid-column: 2; }
   .home-page .profile-statement > p { font-size: 13px; margin-top: 24px; }
 }
+@media (min-width: 760px) {
+  .home-page { --home-primary-font-size: 3vw; }
+}
 
 /* The gallery closes the page with one baseline for the entire film strip. */
 .home-page .ribbon-section { padding-bottom: 0; }
