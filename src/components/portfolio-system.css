@@ -1,0 +1,46 @@
+/* Shared tracks align the work index, project articles, and route curtain.
+   The primary size also drives proportional navigation and profile spacing. */
+:root {
+  --home-primary-font-size: 7.5vw;
+  --grid-gap: clamp(12px, 1.25vw, 24px);
+  --portfolio-grid: repeat(12, minmax(0, 1fr));
+}
+@media (min-width: 760px) { :root { --home-primary-font-size: 3vw; } }
+@media (max-width: 809px) {
+  :root { --portfolio-grid: repeat(8, minmax(0, 1fr)); --grid-gap: 20px; }
+}
+@media (max-width: 599px) {
+  :root { --portfolio-grid: repeat(2, minmax(0, 1fr)); --grid-gap: 16px; }
+}
+
+.route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  grid-template-columns: var(--portfolio-grid);
+  column-gap: var(--grid-gap);
+  padding-inline: var(--page-pad);
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+}
+.route-curtain[data-active="true"] { visibility: visible; pointer-events: auto; }
+.route-curtain > i {
+  display: block;
+  height: 100%;
+  background: #0b0b0b;
+  transform: translateY(100%);
+  /* Extend through gutters; every next rectangle starts on a column line. */
+  margin-right: calc(-1 * var(--grid-gap) - 1px);
+}
+.route-curtain > i:first-child { margin-left: calc(-1 * var(--page-pad)); }
+.route-curtain > i:last-child { margin-right: calc(-1 * var(--page-pad)); }
+@media (min-width: 600px) and (max-width: 809px) {
+  .route-curtain > i:nth-child(n + 9) { display: none; }
+  .route-curtain > i:nth-child(8) { margin-right: calc(-1 * var(--page-pad)); }
+}
+@media (max-width: 599px) {
+  .route-curtain > i:nth-child(n + 3) { display: none; }
+  .route-curtain > i:nth-child(2) { margin-right: calc(-1 * var(--page-pad)); }
+}

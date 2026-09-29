@@ -7,27 +7,18 @@ import Link from "next/link";
 import { TextRoll, textRollDuration, useTextRollInteraction } from "./text-roll";
 import { ArrowRight } from "lucide-react";
 import { projectCover, projects } from "@/lib/site-data";
+import { additionalExperience, timelineExcludedSlugs, type TimelineEntry } from "@/lib/projects-config";
 import "./experience-timeline.css";
 
-type TimelineEntry = {
-  company: string;
-  title: string;
-  category: string;
-  slug?: string;
-  // Populate only with confirmed dates. The original experience order is the fallback.
-  date: string | null;
-};
-
 const entries: TimelineEntry[] = [
-  ...projects.filter((project) => project.slug !== "visual-explorations").map((project) => ({
+  ...projects.filter((project) => !timelineExcludedSlugs.includes(project.slug)).map((project) => ({
     company: project.client === "Lemon8" ? "Lemon8" : "网易云音乐",
     title: project.title,
     category: project.kind,
     slug: project.slug,
     date: null,
   })),
-  { company: "马蜂窝", title: "旅行地图与成就勋章", category: "用户增长 / 成长体系", slug: "visual-explorations", date: null },
-  { company: "字节跳动", title: "今日头条 / 西瓜视频", category: "品牌 / 运营视觉", date: null },
+  ...additionalExperience,
 ];
 
 const chronologicalEntries = [...entries].sort((a, b) =>

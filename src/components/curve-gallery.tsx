@@ -6,13 +6,16 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import detailImages from "@/lib/curve-gallery-assets.json";
 import { projects, projectCover } from "@/lib/site-data";
-import { selectedProjects } from "@/lib/selected-projects";
+import { curveGallery as detailImages, selectedWork } from "@/lib/projects-config";
 import Image from "next/image";
 import "./ribbon-gallery.css";
 
 // The end of the grid becomes the beginning of the strip, with identical media.
+const selectedProjects = selectedWork.order.flatMap((slug) => {
+  const project = projects.find((item) => item.slug === slug);
+  return project ? [project] : [];
+});
 const images = [
   ...[...selectedProjects].reverse().map((project) => ({
     name: `cover-${project.slug}`, project: project.slug, title: project.title,

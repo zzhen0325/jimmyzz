@@ -6,13 +6,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import { projectCover } from "@/lib/site-data";
-import { selectedProjects } from "@/lib/selected-projects";
+import { projects, projectCover } from "@/lib/site-data";
+import { selectedWork } from "@/lib/projects-config";
 import styles from "./selected-work.module.css";
 import { ProjectCoverReveal } from "./project-cover-reveal";
 
-const compactSlugs = new Set(["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"]);
-
+const compactSlugs = new Set(selectedWork.compact);
+const selected = selectedWork.order.flatMap((slug) => {
+  const project = projects.find((item) => item.slug === slug);
+  return project ? [project] : [];
+});
 
 export function SelectedWork() {
   const root = useRef<HTMLElement>(null);
@@ -52,7 +55,7 @@ export function SelectedWork() {
   return (
     <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
       <div className={styles.grid}>
-        {selectedProjects.map((project, index) => {
+        {selected.map((project, index) => {
           const cover = project.selectedWorkCover;
           const isCompact = compactSlugs.has(project.slug);
           const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);

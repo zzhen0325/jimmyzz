@@ -1,21 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
-import homeStyles from "./chrome-home.module.css";
-
-const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
+import { FloatingNav } from "./floating-nav";
 
 export function ProjectHeader() {
-  const workProgress = useRef(1);
-  return <header className="case-home-header">
-    <Link href="/" className={`${homeStyles.wordmark} case-home-wordmark`} aria-label="Jimmy ZZ 首页">Jimmy ZZ<span>®</span></Link>
-    <div className="case-home-scene" aria-hidden="true"><ChromeScene workProgress={workProgress} interactive={false} /></div>
-    <Link href="/" className="case-home-logo" aria-label="返回首页">
-      <span className="case-logo-fallback">ZZ</span>
-    </Link>
-  </header>;
+  return <FloatingNav ready variant="project" />;
 }
 
 export function ProjectCopy({ children }: { children: ReactNode }) {

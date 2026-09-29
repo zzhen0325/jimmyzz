@@ -21,7 +21,7 @@ function NavigationLink({ label, href, index, enabled, close }: { label: string;
   </Link>;
 }
 
-export function FloatingNav({ ready }: { ready: boolean }) {
+export function FloatingNav({ ready, variant = "home" }: { ready: boolean; variant?: "home" | "project" }) {
   const [open, setOpen] = useState(false);
   const interaction = useTextRollInteraction(textRollDuration("More"));
   const header = useRef<HTMLElement>(null);
@@ -43,8 +43,8 @@ export function FloatingNav({ ready }: { ready: boolean }) {
     };
   }, [open]);
 
-  return <header ref={header} className={styles.header} data-ready={ready} data-open={open} inert={!ready}>
-      <Link href="/#top" className={styles.logo} onClick={() => setOpen(false)} aria-label="Jimmy.zz 返回顶部"><ScrambleText enabled={ready}>Jimmy.zz</ScrambleText></Link>
+  return <header ref={header} className={`${styles.header} ${variant === "project" ? styles.project : ""}`} data-ready={ready} data-open={open} inert={!ready}>
+      <Link href="/#top" className={styles.logo} onClick={() => setOpen(false)} aria-label="Jimmy.zz 返回顶部"><ScrambleText enabled={ready}>{variant === "project" ? "Jimmy.zz" : "Jimmy.zz"}</ScrambleText></Link>
     <div className={styles.controls}>
       <button {...interaction} ref={toggle} className={styles.toggle} type="button" aria-expanded={open} aria-controls="home-navigation" aria-label="More" onClick={() => setOpen((value) => !value)}>
         <TextRoll enabled={ready}>More</TextRoll>
