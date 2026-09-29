@@ -6,15 +6,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import { projects, projectCover } from "@/lib/site-data";
+import { projectCover } from "@/lib/site-data";
+import { selectedProjects } from "@/lib/selected-projects";
 import styles from "./selected-work.module.css";
+import { ProjectCoverReveal } from "./project-cover-reveal";
 
-const featuredSlugs = ["lemo-ai", "miaoshi-brand", "inner-species", "bandao"];
 const compactSlugs = new Set(["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"]);
-const selected = [
-  ...featuredSlugs.map((slug) => projects.find((project) => project.slug === slug)!),
-  ...projects.filter((project) => !featuredSlugs.includes(project.slug) && project.slug !== "visual-explorations"),
-];
+
 
 export function SelectedWork() {
   const root = useRef<HTMLElement>(null);
@@ -54,24 +52,24 @@ export function SelectedWork() {
   return (
     <section ref={root} tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
       <div className={styles.grid}>
-        {selected.map((project, index) => {
+        {selectedProjects.map((project, index) => {
           const cover = project.selectedWorkCover;
           const isCompact = compactSlugs.has(project.slug);
           const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);
           return (
             <article key={project.slug} className={styles.project} data-project={project.slug} data-size={isCompact ? "compact" : "large"}>
               <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
-                <div className={styles.caption}><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
-                <div className={styles.image} data-work-skew>
+                <div className={styles.caption} data-work-caption><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
+                <ProjectCoverReveal className={styles.image}>
                   {isVideo ? (
                     <video src={cover} poster={projectCover(project.slug)}
                       autoPlay muted loop playsInline preload="metadata"
                       aria-label={`${project.title}项目视频`} />
                   ) : (
                     <Image src={cover} alt={`${project.title}项目视觉`} fill
-                      sizes={isCompact ? "(max-width: 599px) 44vw, (max-width: 809px) 24vw, 16vw" : "(max-width: 599px) 94vw, 50vw"} />
+                      sizes={isCompact ? "(max-width: 599px) 46vw, (max-width: 999px) 32vw, 17vw" : "(max-width: 599px) 94vw, (max-width: 999px) 50vw, 34vw"} />
                   )}
-                </div>
+                </ProjectCoverReveal>
               </Link>
             </article>
           );

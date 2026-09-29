@@ -1,6 +1,6 @@
 /* Shared six-column grid with modest gutters and continuous rules. */
 .home-page {
-  --home-background: #F7F7F7;
+  --home-background: #FFFFFF;
   --home-primary-font-size: 7.5vw;
   --home-foreground:   #0B0B0B;
   --muted: #666761;
@@ -281,18 +281,26 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
 .home-credits { display: flex; justify-content: space-between; gap: 16px 32px; flex-wrap: wrap; padding: 20px var(--page-pad); font-size: 10px; color: var(--muted); }
 .home-credits a { text-decoration: underline; text-underline-offset: 3px; }
 
+/* Overlap the grid's final whitespace; only the stage pins, never the résumé. */
+.home-page #work-index { padding-bottom: 0; }
+.home-page .home-work-ending { display: flow-root; }
+.home-page .home-work-ending .ribbon-section { background: transparent; overflow-x: clip; }
 .home-page .ribbon-stage {
-  --ribbon-card-size: min(24vw, 330px);
-  min-height: 0;
-  height: calc(var(--ribbon-card-size) + 158px);
-  background: var(--home-background);
+  min-height: 520px;
+  height: 100svh;
+  background: transparent;
 }
+.home-page .ribbon-stage.is-animated { margin-top: clamp(-200px, -20svh, -80px); }
+.home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(32px, 10svh); }
+.home-page .ribbon-stage.is-animated .ribbon-guides { display: none; }
+.home-page .ribbon-stage.is-animated .ribbon-playhead { inset-block: 20% 24%; }
+.home-page .ribbon-stage:not(.is-animated) { height: auto; min-height: 0; }
 @media (max-width: 809px) {
-  .home-page .ribbon-stage {
-    --ribbon-card-size: min(62vw, 260px);
-    height: calc(var(--ribbon-card-size) + 174px);
-  }
+  .home-page .ribbon-stage.is-animated { margin-top: -80px; }
+  .home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(24px, 8svh); }
 }
-.home-page .ribbon-stage:not(.is-animated) { height: auto; }
 
-.home-work-ending { display: flow-root; background: var(--home-background); }
+/* Flying covers may cross the stage boundary before settling into the strip. */
+.home-page .ribbon-stage.is-transferring { overflow: visible; z-index: 2; }
+.home-page .ribbon-stage.is-transferring .ribbon-images { pointer-events: none; }
+.home-page .ribbon-card video { display: block; width: 100%; height: 100%; object-fit: cover; }

@@ -6,10 +6,20 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import images from "@/lib/curve-gallery-assets.json";
-import { projects } from "@/lib/site-data";
+import detailImages from "@/lib/curve-gallery-assets.json";
+import { projects, projectCover } from "@/lib/site-data";
+import { selectedProjects } from "@/lib/selected-projects";
 import Image from "next/image";
 import "./ribbon-gallery.css";
+
+// The end of the grid becomes the beginning of the strip, with identical media.
+const images = [
+  ...[...selectedProjects].reverse().map((project) => ({
+    name: `cover-${project.slug}`, project: project.slug, title: project.title,
+    src: project.selectedWorkCover, width: 960, height: 960, sourceProject: project.slug,
+  })),
+  ...detailImages.map((image) => ({ ...image, sourceProject: null })),
+];
 
 export function CurveGallery() {
   const section = useRef<HTMLElement>(null);
@@ -26,51 +36,105 @@ export function CurveGallery() {
       const cards = Array.from(root.querySelectorAll<HTMLElement>(".ribbon-card"));
       if (conditions?.reduced) {
         jump.current = (index) => {
-          current.current = index; setActive(index); cards[index]?.focus();
+          const clamped = Math.max(0, Math.min(images.length - 1, index));
+          current.current = clamped; setActive(clamped); cards[clamped]?.focus();
         };
         return;
       }
       root.classList.add("is-animated");
       const playhead = { value: 0 };
-      let previousSize = -1;
+      const entrance = { value: 0 };
+      const work = section.current?.closest(".home-content")?.querySelector("#work-index");
+      const sources = images.map((image) => image.sourceProject
+        ? work?.querySelector<HTMLElement>(`[data-project="${image.sourceProject}"] [data-work-skew]`) ?? null
+        : null);
+      const savedVisibility = sources.map((source) => source?.style.visibility ?? "");
+      let bounds: { x: number; y: number; width: number; height: number }[] = [];
+      const videos = cards.map((card) => card.querySelector("video"));
+      let playingVideo: HTMLVideoElement | null = null;
+      let stageWidth = 0;
+      let stageHeight = 0;
+      let size = 0;
+      const measure = () => {
+        stageWidth = root.clientWidth;
+        stageHeight = root.clientHeight;
+        size = stageWidth <= 809 ? Math.min(stageWidth * .62, 260) : Math.min(stageWidth * .24, 330);
+        const origin = section.current!.getBoundingClientRect();
+        // Measurements happen on refresh, never in the per-frame write loop.
+        bounds = sources.map((source) => {
+          if (!source) return { x: 0, y: 0, width: size, height: size };
+          const rect = source.getBoundingClientRect();
+          return { x: rect.left - origin.left, y: rect.top - origin.top,
+            width: source.offsetWidth, height: source.offsetHeight };
+        });
+      };
       const render = () => {
-        const w = root.clientWidth;
-        const h = root.clientHeight;
-        const size = w <= 809 ? Math.min(w * .62, 260) : Math.min(w * .24, 330);
-        const anchor = w * .5;
-        const resized = size !== previousSize;
-        previousSize = size;
+        const progress = entrance.value;
+        const landing = progress >= .9999;
+        root.classList.toggle("is-transferring", progress > 0 && !landing);
+        const baseline = Math.max(size + 64, stageHeight * .64);
         cards.forEach((card, i) => {
           const d = i - playhead.value;
           const focus = Math.exp(-Math.pow(d / 1.6, 2));
-          // Integrating the magnification spreads cards around the playhead,
-          // while the far-away images collapse into a continuous film strip.
-          const spread = Math.tanh(d * .48) * size * 1.5;
-          const x = anchor + d * Math.max(24, w * .029) + spread;
-          // A shared baseline keeps every scaled image bottom-aligned.
-          const baseline = h - (w <= 809 ? 142 : 110);
           const scale = .13 + .87 * focus;
-          const height = size;
-          if (resized) {
+          const targetSize = size * scale;
+          const targetX = stageWidth * .5 + d * Math.max(24, stageWidth * .029)
+            + Math.tanh(d * .48) * size * 1.5 - targetSize / 2;
+          const targetY = baseline - targetSize;
+          const source = sources[i];
+          const from = bounds[i];
+          if (source && from && !landing) {
+            // Each gallery card starts exactly over its original grid cover.
+            // Interpolating the crop box preserves the image's proportions.
+            const t = gsap.utils.clamp(0, 1, progress * 1.15 - (i % 4) * .05);
+            const eased = t * t * (3 - 2 * t);
+            const x = from.x + (targetX - from.x) * eased;
+            const y = from.y + (targetY - from.y) * eased;
+            card.style.width = `${from.width + (targetSize - from.width) * eased}px`;
+            card.style.height = `${from.height + (targetSize - from.height) * eased}px`;
+            card.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+            card.style.visibility = progress > 0 ? "visible" : "hidden";
+            card.style.opacity = "1";
+          } else {
             card.style.width = `${size}px`;
-            card.style.height = `${height}px`;
+            card.style.height = `${size}px`;
+            // Scaling about the bottom centre keeps the strip on one baseline.
+            card.style.transform = `translate3d(${targetX - (size - targetSize) / 2}px, ${baseline - size}px, 0) scale(${scale})`;
+            card.style.visibility = targetX < -size || targetX > stageWidth + size ? "hidden" : "visible";
+            card.style.opacity = source ? "1" : String(gsap.utils.clamp(0, 1, (progress - .75) * 4));
           }
-          card.style.transform = `translate3d(${x - size / 2}px, ${baseline - height}px, 0) scale(${scale})`;
           card.style.zIndex = String(Math.round(focus * 100));
-          card.style.visibility = x < -size || x > w + size ? "hidden" : "visible";
+          if (source) source.style.visibility = progress > 0 ? "hidden" : savedVisibility[i];
         });
         const index = Math.max(0, Math.min(images.length - 1, Math.round(playhead.value)));
+        const nextVideo = landing ? videos[index] : null;
+        if (nextVideo !== playingVideo) {
+          playingVideo?.pause();
+          playingVideo = nextVideo;
+          if (playingVideo) void playingVideo.play().catch(() => {});
+        }
         if (index !== current.current) { current.current = index; setActive(index); }
       };
-      // Keep the preceding list in view while the compact gallery scrubs.
-      // Pinning only the bottom-aligned stage leaves an empty upper viewport.
-      const pinRegion = root.closest<HTMLElement>(".home-work-ending") ?? root;
+      measure();
+      const transition = gsap.timeline({
+        scrollTrigger: {
+          id: "grid-to-ribbon", trigger: root, start: "top bottom", end: "top top", scrub: true,
+          invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
+        },
+      });
+      transition.to(entrance, { value: 1, duration: 1, ease: "none", onUpdate: render }, 0);
+      transition.to(work?.querySelectorAll("[data-work-caption]") ?? [], {
+        opacity: 0, duration: .18, ease: "none",
+      }, 0);
+      transition.fromTo(root.querySelector(".ribbon-footer"), { opacity: 0, y: 20 }, {
+        opacity: 1, y: 0, duration: .2, ease: "power2.out",
+      }, .8);
       const animation = gsap.to(playhead, {
         value: images.length - 1, ease: "none", onUpdate: render,
         scrollTrigger: {
-          id: "ribbon-gallery", trigger: root, start: "bottom bottom", pin: pinRegion,
+          id: "ribbon-gallery", trigger: root, start: "top top", pin: root,
           end: () => `+=${Math.max(1200, images.length * 90)}`, scrub: .65,
-          anticipatePin: 1, invalidateOnRefresh: true, onRefresh: render,
+          anticipatePin: 1, invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
         },
       });
       const trigger = animation.scrollTrigger!;
@@ -103,7 +167,9 @@ export function CurveGallery() {
       root.addEventListener("click", click, true);
       render();
       return () => {
-        root.classList.remove("is-animated");
+        root.classList.remove("is-animated", "is-transferring");
+        playingVideo?.pause();
+        sources.forEach((source, i) => { if (source) source.style.visibility = savedVisibility[i]; });
         root.removeEventListener("pointerdown", down);
         root.removeEventListener("pointermove", move);
         root.removeEventListener("click", click, true);
@@ -123,7 +189,10 @@ export function CurveGallery() {
           {images.map((item, i) => (
             <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
-              <span className="motion-image"><Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 330px" draggable={false} /></span>
+              <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
+                ? <video src={item.src} poster={projectCover(item.project)} muted loop playsInline preload="metadata" aria-label={item.title} />
+                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 440px" draggable={false} />
+              }</span>
             </Link>
           ))}
         </div>

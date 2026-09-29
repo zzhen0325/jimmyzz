@@ -50,8 +50,8 @@ export function HomePage() {
         <Introduction />
         <FeaturedProjects />
         <div className="home-work-ending">
-          <ExperienceTimeline />
           <CurveGallery />
+          <ExperienceTimeline />
         </div>
         <footer className="home-credits">
           <span><ScrambleText>©2026 ZZ · 张振</ScrambleText></span>

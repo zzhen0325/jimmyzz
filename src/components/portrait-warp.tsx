@@ -28,7 +28,10 @@ function surface(p: Point[], u: number, v: number): Point {
 
 const MESH_SEGMENTS = 24;
 const FRAME_SIZE = 600;
-const SMILE_FRAME = 136; // Smile before the export's final reset frames (24 fps).
+const PLAYBACK_FPS = 24;
+const SMILE_FRAME = 66; // Stable smile at 2.750s in video_20260929225527.mp4.
+const SHAKE_START = 9; // 0.375s: first head tilt.
+const SHAKE_END = 39; // 1.625s: last pronounced tilt, before the smile transition.
 
 export function PortraitWarp() {
   const labelPathId = useId();
@@ -50,12 +53,12 @@ export function PortraitWarp() {
     const source = texture.getContext("2d");
     if (!source) return;
     const poster = new window.Image();
-    poster.src = "/assets/images/fluted-portrait-smile.jpg?v=3";
-    // Fluted glass (1).mp4 sampled at 24 fps. Each sheet holds 32 frames.
+    poster.src = "/assets/images/fluted-portrait-smile.jpg?v=5";
+    // video_20260929225527.mp4 sampled at 24 fps. Each sheet holds 32 frames.
     // A single frame is rendered at full opacity, including every transition.
-    const sheets = Array.from({ length: 5 }, (_, index) => {
+    const sheets = Array.from({ length: Math.ceil((SMILE_FRAME + 1) / 32) }, (_, index) => {
       const image = new window.Image();
-      image.src = `/assets/images/fluted-portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp?v=3`;
+      image.src = `/assets/images/fluted-portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp?v=5`;
       return image;
     });
     let visible = false;
@@ -70,7 +73,7 @@ export function PortraitWarp() {
     let state: "smile" | "struggle" | "returning" = "smile";
     let velocity = 0;
     let consumedDeformation = -Infinity;
-    const shakeStart = 24, shakeEnd = 108;
+    const shakeStart = SHAKE_START, shakeEnd = SHAKE_END;
     const syncPlayback = () => {
       lastDraw = -Infinity;
       if (visible && !document.hidden) {
@@ -132,7 +135,7 @@ export function PortraitWarp() {
           : shaking ? (entering ? 3 : .35 + 1.65 * turnEase) : 0;
         const targetVelocity = direction * targetSpeed;
         velocity += (targetVelocity - velocity) * (1 - Math.exp(-dt / .08));
-        if (state !== "smile") position += dt * 24 * velocity;
+        if (state !== "smile") position += dt * PLAYBACK_FPS * velocity;
         if (shaking) {
           const reachedEnd = direction > 0 && position >= shakeEnd;
           const reachedStart = direction < 0 && position <= shakeStart;
