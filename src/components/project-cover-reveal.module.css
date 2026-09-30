@@ -1,14 +1,32 @@
+.cover {
+  isolation: isolate;
+}
+
+/* Refero's radial screen reveal, using the cover's blue-to-white palette. */
 .pastel {
   display: none;
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  z-index: 1;
   pointer-events: none;
-  contain: paint;
-  mask-image: linear-gradient(165deg, #000 38%, transparent 62%);
-  mask-size: 100% 300%;
-  mask-position: 0% 0%;
-  mask-repeat: no-repeat;
+  mix-blend-mode: screen;
+  background-color: #fff;
+  background-image: radial-gradient(
+    circle closest-side at 50% 50%,
+    #000 0%,
+    #000 4.59%,
+    #003b6d 6.77%,
+    #31beff 8.92%,
+    #8edaff 9.92%,
+    #bce5fa 10.92%,
+    #def0f8 11.92%,
+    #f0f5f7 12.92%,
+    #fff 14.25%,
+    #fff 100%
+  );
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pastel { display: none; }
 }

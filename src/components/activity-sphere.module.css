@@ -1,0 +1,31 @@
+.page { position: relative; width: 100%; height: 100svh; min-height: 360px; overflow: hidden; background: #000; color: #fff; }
+.canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+.canvas:active { cursor: grabbing; }
+.canvas:focus-visible { outline: 1px solid #888; outline-offset: -8px; }
+.toolbar { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; white-space: nowrap; }
+.hint { color: #888; font-size: 11px; letter-spacing: 0.04em; }
+.buttons { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid #292929; border-radius: 28px; background: rgb(14 14 14 / 94%); }
+.buttons button { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: #ccc; }
+.buttons button:hover { background: #282828; color: #fff; }
+.page button:focus-visible, .page input:focus-visible { outline: 1px solid #aaa; outline-offset: 3px; }
+.panel { position: absolute; top: 24px; right: 24px; width: 252px; max-height: calc(100svh - 48px); overflow-y: auto; padding: 18px; border: 1px solid #292929; border-radius: 16px; background: rgb(14 14 14 / 94%); font-size: 12px; }
+.panel header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; color: #eee; }
+.panel header button { display: grid; place-items: center; border: 0; background: transparent; color: #999; padding: 4px; }
+.control { display: block; margin-bottom: 18px; color: #aaa; }
+.control > span { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.control output { color: #eee; font-variant-numeric: tabular-nums; }
+.control input { display: block; width: 100%; height: 16px; margin: 0; accent-color: #eee; cursor: ew-resize; }
+.panel footer { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #292929; padding-top: 14px; color: #777; font-size: 10px; }
+.panel footer button { border: 0; padding: 0; background: transparent; color: #aaa; font: inherit; }
+.export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 16px; padding: 11px; border: 1px solid #393939; border-radius: 8px; background: #242424; color: #eee; font: inherit; }
+.export:hover { background: #303030; }
+.export:disabled { opacity: 0.4; cursor: wait; }
+.exportStatus { margin: 10px 0 0; text-align: center; color: #aaa; font-size: 11px; }
+.exportStatus a { margin-left: 8px; text-decoration: underline; text-underline-offset: 3px; }
+.exportPreview { display: block; margin-top: 12px; border-radius: 8px; overflow: hidden; background: conic-gradient(#333 25%, #222 0 50%, #333 0 75%, #222 0) 0 0 / 16px 16px; }
+.exportPreview img { display: block; width: 100%; height: 116px; object-fit: contain; }
+@media (max-width: 600px) {
+  .panel { top: 16px; right: 16px; width: 220px; padding: 14px; }
+  .control { margin-bottom: 14px; }
+  .panel header { margin-bottom: 14px; }
+}
