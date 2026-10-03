@@ -1,1 +1,122 @@
-[{"name":"0.webp","aspect":0.7502930832356389},{"name":"1.webp","aspect":0.7502930832356389},{"name":"2.webp","aspect":0.7502930832356389},{"name":"3.webp","aspect":0.7502930832356389},{"name":"4.webp","aspect":0.7502930832356389},{"name":"5.webp","aspect":0.7502930832356389},{"name":"6.webp","aspect":0.7502930832356389},{"name":"7.webp","aspect":0.7502930832356389},{"name":"8.webp","aspect":0.7502930832356389},{"name":"9.webp","aspect":0.7502930832356389},{"name":"10.webp","aspect":0.7502930832356389},{"name":"11.webp","aspect":0.7502930832356389},{"name":"12.webp","aspect":0.7502930832356389},{"name":"13.webp","aspect":0.7502930832356389},{"name":"14.webp","aspect":0.7502930832356389},{"name":"15.webp","aspect":0.7502930832356389},{"name":"16.webp","aspect":0.7502930832356389},{"name":"17.webp","aspect":0.7502930832356389},{"name":"18.webp","aspect":0.7502930832356389},{"name":"19.webp","aspect":0.7502930832356389},{"name":"20.webp","aspect":0.7502930832356389},{"name":"21.webp","aspect":0.7502930832356389},{"name":"22.webp","aspect":0.7502930832356389},{"name":"23.webp","aspect":0.7502930832356389},{"name":"24.webp","aspect":0.7502930832356389},{"name":"25.webp","aspect":0.7502930832356389},{"name":"26.webp","aspect":0.7502930832356389},{"name":"jp0.webp","aspect":0.7502930832356389},{"name":"jp1.webp","aspect":0.7502930832356389},{"name":"jp2.webp","aspect":0.7502930832356389},{"name":"jp3.webp","aspect":0.7502930832356389},{"name":"jp4.webp","aspect":0.7502930832356389},{"name":"jp5.webp","aspect":0.7502930832356389},{"name":"jp6.webp","aspect":0.7502930832356389},{"name":"jp7.webp","aspect":0.7502930832356389},{"name":"jp8.webp","aspect":0.7502930832356389},{"name":"jp9.webp","aspect":0.7502930832356389},{"name":"jp10.webp","aspect":0.7502930832356389},{"name":"jp11.webp","aspect":0.7502930832356389},{"name":"jp12.webp","aspect":0.7502930832356389},{"name":"jp13.webp","aspect":0.7502930832356389},{"name":"jp14.webp","aspect":0.7502930832356389}]
+[
+  {
+    "name": "figma-141-37/01-frame-4.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/02-frame-5.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/03-frame-6.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/04-frame-7.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/05-frame-8.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/06-frame-9.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/07-frame-11.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/08-frame-12.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/09-frame-13.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/10-frame-14.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/11-frame-15.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/12-frame-16.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/13-frame-17.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/14-frame-18.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/15-frame-19.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/16-frame-20.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/17-frame-21.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/18-frame-22.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/19-frame-23.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  },
+  {
+    "name": "figma-141-37/20-frame-24.png",
+    "aspect": 0.6506024096385542,
+    "width": 1080,
+    "height": 1660
+  }
+]

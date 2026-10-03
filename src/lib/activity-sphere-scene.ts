@@ -1,17 +1,25 @@
 import * as THREE from "three";
 import { gsap } from "@/lib/gsap";
 import atlasItems from "../../public/assets/activity-sphere/atlas.json";
+import { exportSpherePng } from "@/lib/activity-sphere-export";
+
+export const activityImageCount = atlasItems.length;
+const ATLAS_PADDING = 4;
+const ATLAS_COLUMNS = Math.ceil(Math.sqrt(activityImageCount));
+const ATLAS_ROWS = Math.ceil(activityImageCount / ATLAS_COLUMNS);
 
 export type SphereParameters = {
   speed: number;
   imageSize: number;
   spacing: number;
   sphereSize: number;
+  sphereWidth: number;
+  sphereHeight: number;
   depth: number;
   count: number;
 };
 export const sphereDefaults: SphereParameters = {
-  speed: 1, imageSize: 1, spacing: 1, sphereSize: 1, depth: 1, count: 294,
+  speed: 1, imageSize: 1, spacing: 1, sphereSize: 1, sphereWidth: 1, sphereHeight: 1, depth: 1, count: 294,
 };
 
 const MAX_CARDS = 1200;
@@ -23,9 +31,11 @@ const vertexShader = `
   uniform float phase;
   uniform vec2 rotation;
   uniform float sphereSize;
+  uniform vec2 sphereShape;
   uniform float spacing;
   uniform float imageSize;
   uniform float depthStrength;
+  uniform vec2 atlasTileSize;
   varying vec2 atlasUv;
   varying float brightness;
   vec3 rotateX(vec3 p, float a) {
@@ -47,13 +57,14 @@ const vertexShader = `
     float near=clamp((center.z+0.65)/1.3,0.0,1.0);
     float size=mix(1.0,0.12+pow(near,2.4)*1.12,depthStrength);
     brightness=mix(1.0,0.65+near*0.35,depthStrength);
+    center.xy*=sphereShape;
     vec4 viewCenter=modelViewMatrix*vec4(center*sphereSize*spacing,1.0);
     // Billboards face the camera. Their true z stays in the depth buffer;
     // a fixed tiny offset breaks exact ties without reordering the cards.
     viewCenter.z+=instanceId*0.000001;
     viewCenter.xy+=position.xy*instanceSize*imageSize*size*sphereSize;
     gl_Position=projectionMatrix*viewCenter;
-    atlasUv=instanceAtlas+uv*vec2(384.0/2716.0,384.0/2328.0);
+    atlasUv=instanceAtlas+uv*atlasTileSize;
   }
 `;
 const fragmentShader = `
@@ -71,8 +82,17 @@ const fragmentShader = `
 export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => void, onError: (message: string) => void) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Preserve every source pixel on supported GPUs; keep a lossless fallback
+  // within the 4096px texture limit of smaller devices.
+  const nativeAtlas = renderer.capabilities.maxTextureSize >= Math.max(1088 * ATLAS_COLUMNS, 1668 * ATLAS_ROWS);
+  const tileWidth = nativeAtlas ? 1080 : 640;
+  const tileHeight = nativeAtlas ? 1660 : 984;
+  const cellWidth = tileWidth + ATLAS_PADDING * 2;
+  const cellHeight = tileHeight + ATLAS_PADDING * 2;
+  const atlasWidth = cellWidth * ATLAS_COLUMNS;
+  const atlasHeight = cellHeight * ATLAS_ROWS;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 30);
   const plane = new THREE.PlaneGeometry(1, 1);
@@ -92,13 +112,14 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   geometry.setAttribute("instanceId", new THREE.InstancedBufferAttribute(ids, 1));
   for (let i = 0; i < MAX_CARDS; i++) {
     const image = (i * 17) % atlasItems.length;
-    atlasOffsets[i * 2] = ((image % 7) * 388 + 2) / 2716;
-    atlasOffsets[i * 2 + 1] = 1 - (Math.floor(image / 7) * 388 + 386) / 2328;
+    atlasOffsets[i * 2] = ((image % ATLAS_COLUMNS) * cellWidth + ATLAS_PADDING) / atlasWidth;
+    atlasOffsets[i * 2 + 1] = 1 - (Math.floor(image / ATLAS_COLUMNS) * cellHeight + ATLAS_PADDING + tileHeight) / atlasHeight;
     ids[i] = i;
   }
   let disposed = false;
   let loaded = false;
-  const texture = new THREE.TextureLoader().load("/assets/activity-sphere/atlas.webp", () => {
+  const atlasPath = nativeAtlas ? "atlas-native.webp" : "atlas-compatible.webp";
+  const texture = new THREE.TextureLoader().load(`/assets/activity-sphere/${atlasPath}?v=figma-141-37`, () => {
     if (disposed) { texture.dispose(); return; }
     loaded = true;
     canvas.dataset.ready = "true";
@@ -111,6 +132,8 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   const uniforms = {
     atlas: { value: texture }, phase: { value: 0 }, rotation: { value: new THREE.Vector2(0.35, -0.25) },
     sphereSize: { value: 1 }, spacing: { value: 1 }, imageSize: { value: 1 }, depthStrength: { value: 1 },
+    sphereShape: { value: new THREE.Vector2(1, 1) },
+    atlasTileSize: { value: new THREE.Vector2(tileWidth / atlasWidth, tileHeight / atlasHeight) },
   };
   const material = new THREE.ShaderMaterial({
     uniforms, vertexShader, fragmentShader,
@@ -149,7 +172,7 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
       const z = Math.sin(angle) * ring;
       centers.set([x, y, z], i * 3);
       const baseHeight = 0.24;
-      sizes.set([baseHeight * atlasItems[(i * 17) % 42].aspect, baseHeight], i * 2);
+      sizes.set([baseHeight * atlasItems[(i * 17) % activityImageCount].aspect, baseHeight], i * 2);
     }
     centerAttribute.needsUpdate = true;
     sizeAttribute.needsUpdate = true;
@@ -176,6 +199,7 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
     uniforms.phase.value = clock.phase;
     uniforms.rotation.value.set(orientation.yaw, orientation.pitch);
     uniforms.sphereSize.value = parameters.sphereSize;
+    uniforms.sphereShape.value.set(parameters.sphereWidth, parameters.sphereHeight);
     uniforms.spacing.value = parameters.spacing;
     uniforms.imageSize.value = parameters.imageSize;
     uniforms.depthStrength.value = parameters.depth;
@@ -228,14 +252,10 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
       dirty = true;
       syncPlayback();
     },
-    async exportPng() {
+    async exportPng(longEdge = 8192, trim = true) {
       if (!loaded || contextLost || disposed) throw new Error("图片尚未准备好");
-      // Capture this exact view immediately, before the next animation tick.
-      renderer.render(scene, camera);
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((value) => value ? resolve(value) : reject(new Error("导出失败")), "image/png");
-      });
-      return blob;
+      return exportSpherePng(geometry, material, camera, renderer.getSize(new THREE.Vector2()),
+        atlasItems.map(item => `/assets/activity-sphere/${item.name}`), longEdge, trim);
     },
     dispose() {
       disposed = true;

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Download, Pause, Play, RotateCcw, Settings2, X } from "lucide-react";
 import { useGSAP } from "@/lib/gsap";
-import { createActivitySphere, sphereDefaults, type SphereParameters } from "@/lib/activity-sphere-scene";
+import { activityImageCount, createActivitySphere, sphereDefaults, type SphereParameters } from "@/lib/activity-sphere-scene";
 import styles from "./activity-sphere.module.css";
 
 const controls: { key: keyof SphereParameters; label: string; min: number; max: number; step: number }[] = [
@@ -11,6 +11,8 @@ const controls: { key: keyof SphereParameters; label: string; min: number; max: 
   { key: "imageSize", label: "图片大小", min: 0.3, max: 2, step: 0.05 },
   { key: "spacing", label: "图片间距", min: 0.6, max: 1.8, step: 0.05 },
   { key: "sphereSize", label: "球体大小", min: 0.5, max: 1.5, step: 0.05 },
+  { key: "sphereWidth", label: "球体宽度", min: 0.5, max: 2, step: 0.05 },
+  { key: "sphereHeight", label: "球体高度", min: 0.5, max: 2, step: 0.05 },
   { key: "depth", label: "远近层次", min: 0, max: 1, step: 0.05 },
   { key: "count", label: "图片数量", min: 12, max: 1200, step: 1 },
 ];
@@ -31,6 +33,9 @@ export function ActivitySphere() {
   const [exporting, setExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState("");
   const [exportUrl, setExportUrl] = useState<string | null>(null);
+  const [exportResolution, setExportResolution] = useState(8192);
+  const [trimExport, setTrimExport] = useState(true);
+  const [exportFilename, setExportFilename] = useState("activity-sphere-transparent.png");
 
   useGSAP(() => {
     const canvas = canvasRef.current;
@@ -91,7 +96,7 @@ export function ActivitySphere() {
     setExporting(true);
     setExportStatus("");
     try {
-      const blob = await sceneRef.current.exportPng();
+      const { blob, width, height } = await sceneRef.current.exportPng(exportResolution, trimExport);
       if (!rootRef.current) return;
       const url = URL.createObjectURL(blob);
       if (exportUrlRef.current) URL.revokeObjectURL(exportUrlRef.current);
@@ -99,11 +104,13 @@ export function ActivitySphere() {
       setExportUrl(url);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "activity-sphere-transparent.png";
+      const filename = `activity-sphere-${width}x${height}.png`;
+      setExportFilename(filename);
+      link.download = filename;
       link.click();
-      setExportStatus("透明 PNG 已生成");
-    } catch {
-      setExportStatus("导出失败，请重试");
+      setExportStatus(`${width} × ${height} 透明 PNG 已生成`);
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : "导出失败，请重试");
     } finally {
       setExporting(false);
     }
@@ -113,7 +120,7 @@ export function ActivitySphere() {
     <canvas
       ref={canvasRef}
       className={styles.canvas}
-      aria-label="42 张活动海报组成的三维旋转图片球体，方向键旋转，空格暂停或播放"
+      aria-label={`${activityImageCount} 张活动海报组成的三维旋转图片球体，方向键旋转，空格暂停或播放`}
       tabIndex={0}
       onPointerDown={(event) => {
         if (drag.current) return;
@@ -153,10 +160,16 @@ export function ActivitySphere() {
         <span>{label}<output>{key === "count" ? Math.round(parameters[key]) : `${parameters[key].toFixed(2)}×`}</output></span>
         <input aria-label={label} type="range" min={min} max={max} step={step} value={parameters[key]} onChange={(event) => update(key, Number(event.target.value))} />
       </label>)}
-      <footer><span>42 张素材 · {Math.round(parameters.count)} 张卡片</span><button type="button" onClick={reset}>恢复默认</button></footer>
+      <footer><span>{activityImageCount} 张素材 · {Math.round(parameters.count)} 张卡片</span><button type="button" onClick={reset}>恢复默认</button></footer>
+      <label className={styles.exportResolution}>导出长边
+        <select aria-label="导出分辨率" value={exportResolution} disabled={exporting} onChange={event => setExportResolution(Number(event.target.value))}>
+          <option value={2048}>2048 px</option><option value={4096}>4096 px · 高清</option><option value={8192}>8192 px · 超清</option>
+        </select>
+      </label>
+      <label className={styles.exportTrim}><input type="checkbox" checked={trimExport} disabled={exporting} onChange={event => setTrimExport(event.target.checked)} />裁切透明留白</label>
       <button className={styles.export} type="button" disabled={!ready || exporting} onClick={() => void exportPng()}><Download size={14} />{exporting ? "正在导出…" : "导出透明 PNG"}</button>
-      {exportStatus && <p className={styles.exportStatus} role="status">{exportStatus}{exportUrl && <a href={exportUrl} download="activity-sphere-transparent.png">下载 PNG</a>}</p>}
-      {exportUrl && <a className={styles.exportPreview} href={exportUrl} download="activity-sphere-transparent.png" aria-label="下载透明图片预览">
+      {exportStatus && <p className={styles.exportStatus} role="status">{exportStatus}{exportUrl && <a href={exportUrl} download={exportFilename}>下载 PNG</a>}</p>}
+      {exportUrl && <a className={styles.exportPreview} href={exportUrl} download={exportFilename} aria-label="下载透明图片预览">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={exportUrl} alt="透明背景球体导出预览" />
       </a>}

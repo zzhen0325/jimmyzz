@@ -193,7 +193,7 @@ export function CurveGallery() {
             <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
               <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
-                ? <video src={item.src} poster={projectCover(item.project)} muted loop playsInline preload="metadata" aria-label={item.title} />
+                ? <video src={item.src} poster={projectCover(item.project)} muted loop playsInline preload="none" aria-label={item.title} />
                 : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 440px" draggable={false} />
               }</span>
             </Link>

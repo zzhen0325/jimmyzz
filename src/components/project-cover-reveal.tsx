@@ -21,6 +21,11 @@ export function ProjectCoverReveal({ children, className }: {
     const mm = gsap.matchMedia();
     mm.add(motionConditions, ({ conditions }) => {
       let entered = false;
+      const prepareVideo = () => {
+        if (!video || video.preload === "auto") return;
+        video.preload = "auto";
+        video.load();
+      };
       const resumeVideo = () => { if (entered && video) void video.play().catch(() => {}); };
       if (conditions?.reduced) {
         ScrollTrigger.create({
@@ -86,7 +91,7 @@ export function ProjectCoverReveal({ children, className }: {
         onToggle: (self) => {
           entered = self.isActive;
           reset();
-          if (entered) play();
+          if (entered) { prepareVideo(); play(); }
         },
       });
       if (!entered) video?.pause();

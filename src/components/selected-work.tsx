@@ -66,7 +66,7 @@ export function SelectedWork() {
                 <ProjectCoverReveal className={styles.image}>
                   {isVideo ? (
                     <video src={cover} poster={projectCover(project.slug)}
-                      autoPlay muted loop playsInline preload="metadata"
+                      muted loop playsInline preload="none"
                       aria-label={`${project.title}项目视频`} />
                   ) : (
                     <Image src={cover} alt={`${project.title}项目视觉`} fill

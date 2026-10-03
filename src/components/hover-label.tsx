@@ -16,6 +16,16 @@ export function HoverLabel() {
     let active: Element | null = null;
     let visible = false;
     let pointerKnown = false;
+    let targetDirty = false, needsHitTest = false;
+    let pendingHit: Element | null = null;
+    let activeText = "";
+    let labelWidth = 0, labelHeight = 0;
+    let viewportWidth = innerWidth, viewportHeight = innerHeight;
+    const sizeObserver = new ResizeObserver(([entry]) => {
+      labelWidth = entry.borderBoxSize[0]?.inlineSize ?? element.offsetWidth;
+      labelHeight = entry.borderBoxSize[0]?.blockSize ?? element.offsetHeight;
+    });
+    sizeObserver.observe(element);
     let x = 0, y = 0, targetX = 0, targetY = 0;
     let angle = 0, angularVelocity = 0;
 
@@ -30,24 +40,28 @@ export function HoverLabel() {
       visible = false;
       active?.removeAttribute("data-hover-label-active");
       active = null;
+      activeText = "";
       element.dataset.visible = "false";
       cancelAnimationFrame(frame);
       frame = 0;
     };
-    const updateTarget = () => {
-      const hit = document.elementFromPoint(targetX, targetY);
+    const updateTarget = (hit: Element | null) => {
       const surface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
       const control = hit?.closest("a, button, input, textarea, select, [role='button']");
       if (!finePointer.matches || !surface || (control && control !== surface)) {
         hide();
         return;
       }
-      if (active !== surface) {
-        active?.removeAttribute("data-hover-label-active");
-        active = surface;
-        surface.setAttribute("data-hover-label-active", "");
+      const text = surface.dataset.hoverLabel ?? "";
+      if (active !== surface || activeText !== text) {
+        if (active !== surface) {
+          active?.removeAttribute("data-hover-label-active");
+          active = surface;
+          surface.setAttribute("data-hover-label-active", "");
+        }
+        activeText = text;
         clearCharacters();
-        const characters = Array.from(surface.dataset.hoverLabel ?? "");
+        const characters = Array.from(text);
         element.replaceChildren(...characters.map((character, index) => {
           const span = document.createElement("span");
           span.textContent = character === " " ? "\u00a0" : character;
@@ -75,11 +89,17 @@ export function HoverLabel() {
         visible = true;
         element.dataset.visible = "true";
       }
-      if (!frame) frame = requestAnimationFrame(animate);
     };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(animate); };
     function animate(time: number) {
       if (!element) return;
       frame = 0;
+      if (targetDirty) {
+        targetDirty = false;
+        updateTarget(needsHitTest ? document.elementFromPoint(targetX, targetY) : pendingHit);
+        needsHitTest = false;
+      }
+      if (!visible) return;
       const dt = Math.min((time - previousTime) / 16.667 || 1, 2);
       previousTime = time;
       const dx = targetX - x;
@@ -90,8 +110,8 @@ export function HoverLabel() {
       const targetAngle = Math.max(-24, Math.min(24, dx * 0.3 - dy * 0.08));
       angularVelocity += ((targetAngle - angle) * 0.075 - angularVelocity * 0.23) * dt;
       angle = reducedMotion.matches ? 0 : angle + angularVelocity * dt;
-      const left = Math.max(12, Math.min(innerWidth - element.offsetWidth - 12, x + 20));
-      const top = Math.max(12, Math.min(innerHeight - element.offsetHeight - 12, y + 16));
+      const left = Math.max(12, Math.min(viewportWidth - labelWidth - 12, x + 20));
+      const top = Math.max(12, Math.min(viewportHeight - labelHeight - 12, y + 16));
       element.style.transform = `translate3d(${left}px, ${top}px, 0) rotate(${angle}deg)`;
       if (visible && (Math.abs(dx) + Math.abs(dy) + Math.abs(angle) + Math.abs(angularVelocity) > 0.05)) {
         frame = requestAnimationFrame(animate);
@@ -102,19 +122,29 @@ export function HoverLabel() {
       pointerKnown = true;
       targetX = event.clientX;
       targetY = event.clientY;
-      updateTarget();
+      pendingHit = event.target instanceof Element ? event.target : null;
+      targetDirty = true;
+      schedule();
     };
-    const scroll = () => { if (pointerKnown) updateTarget(); };
+    const scroll = () => {
+      if (!pointerKnown) return;
+      targetDirty = needsHitTest = true;
+      schedule();
+    };
+    const resize = () => { viewportWidth = innerWidth; viewportHeight = innerHeight; scroll(); };
     const leave = () => { pointerKnown = false; hide(); };
     const key = (event: KeyboardEvent) => { if (event.key === "Tab") leave(); };
     window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("scroll", scroll, { passive: true, capture: true });
+    window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("blur", leave);
     window.addEventListener("keydown", key);
     document.documentElement.addEventListener("pointerleave", leave);
     finePointer.addEventListener("change", hide);
     return () => {
       hide();
+      sizeObserver.disconnect();
+      window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("blur", leave);

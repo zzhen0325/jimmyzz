@@ -27,7 +27,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" className={`${bdo.variable} bg-[#090909] scroll-auto`}>
-      <Script src="/figma-export-prep.js" strategy="beforeInteractive" />
+      <head>
+        <Script src="/figma-export-prep.js" strategy="beforeInteractive" />
+      </head>
       <body className="m-0 overflow-x-hidden bg-[#090909] font-[family-name:var(--font-bdo)] text-[15px] leading-[1.25] text-[#f4f2ed] [--page-pad:40px] selection:bg-[#db3903] selection:text-[#f4f2ed] max-[1199px]:[--page-pad:24px] max-[809px]:text-[13px] max-[809px]:[--page-pad:16px] [&_a]:text-inherit [&_a]:no-underline [&_button]:cursor-pointer">
         <SmoothScroll />
         {children}

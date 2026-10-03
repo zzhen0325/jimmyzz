@@ -19,6 +19,8 @@
 .panel footer button { border: 0; padding: 0; background: transparent; color: #aaa; font: inherit; }
 .export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 16px; padding: 11px; border: 1px solid #393939; border-radius: 8px; background: #242424; color: #eee; font: inherit; }
 .export:hover { background: #303030; }
+.exportResolution { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; color: #aaa; }
+.exportResolution select { min-width: 126px; padding: 7px 8px; color: #eee; background: #242424; border: 1px solid #393939; border-radius: 6px; font: inherit; }
 .export:disabled { opacity: 0.4; cursor: wait; }
 .exportStatus { margin: 10px 0 0; text-align: center; color: #aaa; font-size: 11px; }
 .exportStatus a { margin-left: 8px; text-decoration: underline; text-underline-offset: 3px; }
@@ -29,3 +31,6 @@
   .control { margin-bottom: 14px; }
   .panel header { margin-bottom: 14px; }
 }
+
+.exportTrim { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #aaa; }
+.exportTrim input { accent-color: #eee; }

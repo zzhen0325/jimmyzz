@@ -53,15 +53,24 @@ export function PortraitWarp() {
     const source = texture.getContext("2d");
     if (!source) return;
     const poster = new window.Image();
-    poster.src = "/assets/images/fluted-portrait-smile.jpg?v=5";
+    poster.decoding = "async";
     // video_20260929225527.mp4 sampled at 24 fps. Each sheet holds 32 frames.
     // A single frame is rendered at full opacity, including every transition.
-    const sheets = Array.from({ length: Math.ceil((SMILE_FRAME + 1) / 32) }, (_, index) => {
+    const sheets = Array.from({ length: Math.ceil((SMILE_FRAME + 1) / 32) }, () => {
       const image = new window.Image();
-      image.src = `/assets/images/fluted-portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp?v=5`;
+      image.decoding = "async";
       return image;
     });
+    // Warm the small poster near the viewport; keep the large sprite sheets
+    // out of the hero's loading path until the portrait is actually visible.
+    const preload = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      poster.src = "/assets/images/fluted-portrait-smile.jpg?v=5";
+      preload.disconnect();
+    }, { rootMargin: "300px" });
+    preload.observe(output);
     let visible = false;
+    let sheetsRequested = false;
     let frame = 0;
     let lastDraw = -Infinity;
     let renderedFrame = -2;
@@ -77,6 +86,12 @@ export function PortraitWarp() {
     const syncPlayback = () => {
       lastDraw = -Infinity;
       if (visible && !document.hidden) {
+        if (!sheetsRequested) {
+          sheetsRequested = true;
+          sheets.forEach((image, index) => {
+            image.src = `/assets/images/fluted-portrait-frames/sheet-${String(index + 1).padStart(2, "0")}.webp?v=5`;
+          });
+        }
         if (!frame) frame = requestAnimationFrame(draw);
       } else {
         cancelAnimationFrame(frame);
@@ -189,6 +204,7 @@ export function PortraitWarp() {
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      preload.disconnect();
       document.removeEventListener("visibilitychange", syncPlayback);
     };
   }, []);
