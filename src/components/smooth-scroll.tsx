@@ -3,13 +3,16 @@
 import Lenis from "lenis";
 import { usePathname } from "next/navigation";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { useOverloadMotion } from "./overload-system";
 
 export function SmoothScroll() {
   const pathname = usePathname();
+  const { moving } = useOverloadMotion();
   useGSAP(() => {
+    if (!moving) return;
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const lenis = new Lenis({ lerp: 0.085, smoothWheel: true, syncTouch: false });
+      const lenis = new Lenis({ lerp: 0.085, smoothWheel: true, syncTouch: false, anchors: true });
       const onGameChange = (event: Event) => {
         if ((event as CustomEvent<boolean>).detail) lenis.stop();
         else lenis.start();
@@ -28,7 +31,7 @@ export function SmoothScroll() {
       };
     });
     return () => mm.revert();
-  }, []);
+  }, { dependencies: [moving], revertOnUpdate: true });
   useGSAP(() => {
     const refresh = gsap.delayedCall(0, () => ScrollTrigger.refresh());
     let mounted = true;

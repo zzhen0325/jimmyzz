@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
-import { Footer } from "@/components/site-chrome";
+import { OverloadFooter, OverloadReveal, Spark } from "@/components/overload-system";
 import { ProjectHeader, ProjectCopy } from "@/components/project-detail-chrome";
 import { CaseGallery } from "@/components/case-gallery";
 import { projects, projectAssets, projectCover } from "@/lib/site-data";
@@ -34,13 +34,16 @@ export default async function ProjectPage({
   const index = projects.indexOf(project);
   const next = projects[(index + 1) % projects.length];
   return (
-    <main id="top" className="case-page">
+    <main id="top" className="case-page ol-case">
       <ProjectHeader />
+      <header className="ol-case-heading">
+        <div className="ol-section-kicker"><Link href="/work">← ALL WORK / 全部作品</Link><span>PROJECT {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span></div>
+        <h1>{project.title}<Spark /></h1>
+        <div className="ol-case-lead"><p>{project.english}</p><span>{project.kind} / {project.client}</span></div>
+      </header>
+      <OverloadReveal>
       <article className="case-editorial mx-[var(--page-pad)] grid grid-cols-[var(--portfolio-grid)] items-start gap-x-[var(--grid-gap)] pb-[clamp(64px,8vw,128px)] max-[599px]:gap-y-10">
         <ProjectCopy>
-        <header className="case-intro">
-          <h1>{project.title}</h1>
-        </header>
         <section className="case-overview case-editorial-section case-info" aria-labelledby="case-info-title">
           <h2 id="case-info-title" className="case-margin-label">Info</h2>
             <dl className="case-facts">
@@ -78,7 +81,7 @@ export default async function ProjectPage({
           <CaseGallery assets={assets} projectTitle={project.title} />
         </div>
       </article>
-      <section className="next-project">
+      <section className="next-project" data-reveal>
         <p className="eyebrow">NEXT PROJECT / 继续探索</p>
         <Link href={`/work/${next.slug}`}>
           <div>
@@ -100,7 +103,8 @@ export default async function ProjectPage({
           <ArrowUpRight size={36} />
         </Link>
       </section>
-      <Footer variant="project" />
+      </OverloadReveal>
+      <OverloadFooter />
     </main>
   );
 }

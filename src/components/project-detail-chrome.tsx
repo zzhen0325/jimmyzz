@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { FloatingNav } from "./floating-nav";
+import { OverloadNav } from "./overload-system";
 import { markProjectVisited } from "@/lib/home-loading";
 
 export function ProjectHeader() {
   useEffect(markProjectVisited, []);
-  return <FloatingNav ready variant="project" />;
+  return <OverloadNav light />;
 }
 
 export function ProjectCopy({ children }: { children: ReactNode }) {

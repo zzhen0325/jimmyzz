@@ -29,8 +29,10 @@ export function ProjectTransition() {
       const fromProject = window.location.pathname.startsWith("/work/");
       const toProject = url.pathname.startsWith("/work/");
       if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
-      if (!(toProject && (window.location.pathname === "/" || fromProject)) && !(fromProject && url.pathname === "/")) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const fromPortfolio = window.location.pathname === "/" || window.location.pathname === "/work" || fromProject;
+      const toPortfolio = url.pathname === "/" || url.pathname === "/work" || toProject;
+      if (!fromPortfolio || !toPortfolio) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.querySelector('.overload-site[data-motion="off"]')) return;
       event.preventDefault();
       if (pending.current) return;
       pending.current = url.pathname;
@@ -65,7 +67,7 @@ export function ProjectTransition() {
     animation.current = gsap.timeline({ onComplete: () => {
       gsap.set(strips, { clearProps: "willChange" });
       finish();
-      const heading = document.querySelector<HTMLElement>(".case-intro h1");
+      const heading = document.querySelector<HTMLElement>("main h1");
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
     } })
       .to(strips, { yPercent: -100, duration: .7, ease: "power3.inOut", stagger: (index) => (index % 3) * .05 + Math.floor(index / 3) * .02 }, .08);
