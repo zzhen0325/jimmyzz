@@ -71,9 +71,6 @@
   .center { top: auto; bottom: 20px; }
 }
 
-/* Keep the cursor sticker out of the portal’s empty-screen beat. */
-:global(.home-page:has(canvas[data-vortex-phase]) .hover-label) { visibility: hidden; }
-
 /* Decorative layout boxes must not shield the moving canvas underneath. */
 .center, :global(.hero-profile) { pointer-events: none; }
 .dock, :global(.hero-profile a) { pointer-events: auto; }

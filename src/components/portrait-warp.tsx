@@ -251,7 +251,7 @@ export function PortraitWarp() {
     return `${i === 0 ? "M" : "L"}${point.x * 100 + nx * 7},${point.y * 100 + ny * 7}`;
   }).join(" ");
   return <figure className={styles.portrait}>
-    <div ref={area} className={styles.area} style={{ transform: `translate(calc(-7.7747% + ${offset.x}px), calc(-8.7347% + ${offset.y}px))` }} data-lenis-prevent>
+    <div ref={area} className={styles.area} style={{ transform: `translate(calc(-7.7747% + ${offset.x}px), calc(-8.7347% + ${offset.y}px))` }} data-native-scroll>
       <svg className={styles.background} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
       <canvas ref={canvas} width={600} height={600} role="img" tabIndex={0} aria-label="可拖动的 ZZ 头像，拖动移动位置，方向键微调"
         onPointerDown={e=>{ e.preventDefault(); e.currentTarget.focus({preventScroll:true}); e.currentTarget.setPointerCapture(e.pointerId); moving.current={id:e.pointerId,x:e.clientX,y:e.clientY,origin:offset}; }}

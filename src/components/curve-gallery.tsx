@@ -1,9 +1,10 @@
 "use client";
 
+import { playSound } from "@/lib/site-sound";
 import { ScrambleText } from "./scramble-text";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { projects, projectCover } from "@/lib/site-data";
@@ -19,7 +20,7 @@ const selectedProjects = selectedWork.order.flatMap((slug) => {
 const images = [
   ...[...selectedProjects].reverse().map((project) => ({
     name: `cover-${project.slug}`, project: project.slug, title: project.title,
-    src: project.selectedWorkCover, width: 960, height: 960, sourceProject: project.slug,
+    src: project.selectedWorkCover, width: project.coverWidth ?? 960, height: project.coverHeight ?? 540, sourceProject: project.slug,
   })),
   ...detailImages.map((image) => ({ ...image, sourceProject: null })),
 ];
@@ -40,6 +41,7 @@ export function CurveGallery() {
       if (conditions?.reduced) {
         jump.current = (index) => {
           const clamped = Math.max(0, Math.min(images.length - 1, index));
+          if (current.current !== clamped) playSound("step", { step: clamped % 6 });
           current.current = clamped; setActive(clamped); cards[clamped]?.focus();
         };
         return;
@@ -51,7 +53,22 @@ export function CurveGallery() {
       const sources = images.map((image) => image.sourceProject
         ? work?.querySelector<HTMLElement>(`[data-project="${image.sourceProject}"] [data-work-skew]`) ?? null
         : null);
-      const savedVisibility = sources.map((source) => source?.style.visibility ?? "");
+      // Hide the entire composited cover, including reveal overlays that explicitly
+      // set visibility: visible. Keep its layout box for reversible handoff.
+      const setTransferred = (source: HTMLElement, transferred: boolean) => {
+        source.toggleAttribute("data-work-transferred", transferred);
+      };
+      const layoutPosition = (element: HTMLElement) => {
+        let x = 0;
+        let y = 0;
+        let node: HTMLElement | null = element;
+        while (node) {
+          x += node.offsetLeft;
+          y += node.offsetTop;
+          node = node.offsetParent as HTMLElement | null;
+        }
+        return { x, y };
+      };
       let bounds: { x: number; y: number; width: number; height: number }[] = [];
       const videos = cards.map((card) => card.querySelector("video"));
       let playingVideo: HTMLVideoElement | null = null;
@@ -61,53 +78,95 @@ export function CurveGallery() {
       const measure = () => {
         stageWidth = root.clientWidth;
         stageHeight = root.clientHeight;
-        size = stageWidth <= 809 ? Math.min(stageWidth * .62, 260) : Math.min(stageWidth * .24, 330);
-        const origin = section.current!.getBoundingClientRect();
+        size = stageWidth <= 809 ? Math.min(stageWidth * .7, 295) : Math.min(stageWidth * .28, 385);
+        // Use the pin spacer's natural position while the stage is fixed.
+        // Layout offsets exclude the grid's transient scroll-skew transforms.
+        const anchor = root.parentElement?.classList.contains("pin-spacer")
+          ? root.parentElement : root;
+        const origin = layoutPosition(anchor);
         // Measurements happen on refresh, never in the per-frame write loop.
         bounds = sources.map((source) => {
           if (!source) return { x: 0, y: 0, width: size, height: size };
-          const rect = source.getBoundingClientRect();
-          return { x: rect.left - origin.left, y: rect.top - origin.top,
+          const position = layoutPosition(source);
+          return { x: position.x - origin.x, y: position.y - origin.y,
             width: source.offsetWidth, height: source.offsetHeight };
         });
       };
+      const smooth = (value: number) => {
+        const t = gsap.utils.clamp(0, 1, value);
+        return t * t * (3 - 2 * t);
+      };
+      const coverCount = sources.filter(Boolean).length;
       const render = () => {
         const progress = entrance.value;
         const landing = progress >= .9999;
         root.classList.toggle("is-transferring", progress > 0 && !landing);
         const baseline = Math.max(size + 64, stageHeight * .64);
+        const radiusX = stageWidth * .35;
+        const radiusY = Math.min(stageHeight * .12, stageWidth * .12);
+        const tilt = -18 * Math.PI / 180;
+        // Lift the orbit as the first cover lands, so visible content takes over
+        // before the orbit leaves the viewport. Preserve the existing stagger.
+        const firstCoverTravel = progress * (1 + (coverCount - 1) * .045);
+        const orbitExtentY = Math.hypot(radiusX * Math.sin(tilt), radiusY * Math.cos(tilt)) + size * .38;
+        const orbitOffset = Math.max(0, stageHeight * .46 + orbitExtentY - (baseline - size) + 32)
+          * smooth((firstCoverTravel - .8) / .2);
         cards.forEach((card, i) => {
+          // Let the strip move during the final part of the cover handoff.
           const d = i - playhead.value;
           const focus = Math.exp(-Math.pow(d / 1.6, 2));
           const scale = .13 + .87 * focus;
-          const targetSize = size * scale;
+          const ratio = images[i].width / images[i].height;
+          const widthFactor = Math.min(1, ratio);
+          const heightFactor = Math.min(1, 1 / ratio);
+          const targetWidth = size * scale * widthFactor;
+          const targetHeight = size * scale * heightFactor;
           const targetX = stageWidth * .5 + d * Math.max(24, stageWidth * .029)
-            + Math.tanh(d * .48) * size * 1.5 - targetSize / 2;
-          const targetY = baseline - targetSize;
+            + Math.tanh(d * .48) * size * 1.5 - targetWidth / 2;
+          const targetY = baseline - targetHeight;
           const source = sources[i];
           const from = bounds[i];
-          if (source && from && !landing) {
-            // Each gallery card starts exactly over its original grid cover.
-            // Interpolating the crop box preserves the image's proportions.
-            const t = gsap.utils.clamp(0, 1, progress * 1.15 - (i % 4) * .05);
-            const eased = t * t * (3 - 2 * t);
-            const x = from.x + (targetX - from.x) * eased;
-            const y = from.y + (targetY - from.y) * eased;
-            card.style.width = `${from.width + (targetSize - from.width) * eased}px`;
-            card.style.height = `${from.height + (targetSize - from.height) * eased}px`;
+          let stackOrder = Math.round(focus * 100);
+          if (source && from) {
+            // A delayed playhead per cover makes a single-file procession.
+            // Every cover uses the same entry point and ring, never a separate
+            // radial destination. Only the pickup and final ribbon slot differ.
+            const delay = .045;
+            const travel = gsap.utils.clamp(0, 1, progress * (1 + (coverCount - 1) * delay) - i * delay);
+            const gather = smooth(travel / .22);
+            const merge = smooth((travel - .8) / .2);
+            const revolution = gsap.utils.clamp(0, 1, (travel - .22) / .58);
+            const angle = -Math.PI / 2 + revolution * Math.PI * 2;
+            const near = (Math.sin(angle) + 1) / 2;
+            const orbitX = Math.cos(angle) * radiusX;
+            const orbitY = Math.sin(angle) * radiusY;
+            const orbitSize = size * (.42 + near * .34);
+            const orbitWidth = orbitSize * widthFactor;
+            const orbitHeight = orbitSize * heightFactor;
+            const ringX = stageWidth * .5 + orbitX * Math.cos(tilt) - orbitY * Math.sin(tilt) - orbitWidth / 2;
+            const ringY = stageHeight * .46 - orbitOffset + orbitX * Math.sin(tilt) + orbitY * Math.cos(tilt) - orbitHeight / 2;
+            const gatheredX = from.x + (ringX - from.x) * gather;
+            const gatheredY = from.y + (ringY - from.y) * gather;
+            const gatheredWidth = from.width + (orbitWidth - from.width) * gather;
+            const gatheredHeight = from.height + (orbitHeight - from.height) * gather;
+            const x = gatheredX + (targetX - gatheredX) * merge;
+            const y = gatheredY + (targetY - gatheredY) * merge;
+            card.style.width = `${gatheredWidth + (targetWidth - gatheredWidth) * merge}px`;
+            card.style.height = `${gatheredHeight + (targetHeight - gatheredHeight) * merge}px`;
             card.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            card.style.visibility = progress > 0 ? "visible" : "hidden";
+            stackOrder = Math.round((20 + near * 80) * (1 - merge) + focus * 100 * merge);
+            setTransferred(source, travel > 0);
+            card.style.visibility = travel > 0 && (!landing || (targetX >= -size && targetX <= stageWidth + size)) ? "visible" : "hidden";
             card.style.opacity = "1";
           } else {
-            card.style.width = `${size}px`;
-            card.style.height = `${size}px`;
-            // Scaling about the bottom centre keeps the strip on one baseline.
-            card.style.transform = `translate3d(${targetX - (size - targetSize) / 2}px, ${baseline - size}px, 0) scale(${scale})`;
+            // Use the same box geometry through landing and strip navigation.
+            card.style.width = `${targetWidth}px`;
+            card.style.height = `${targetHeight}px`;
+            card.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
             card.style.visibility = targetX < -size || targetX > stageWidth + size ? "hidden" : "visible";
-            card.style.opacity = source ? "1" : String(gsap.utils.clamp(0, 1, (progress - .75) * 4));
+            card.style.opacity = source ? "1" : String(gsap.utils.clamp(0, 1, (progress - .88) / .12));
           }
-          card.style.zIndex = String(Math.round(focus * 100));
-          if (source) source.style.visibility = progress > 0 ? "hidden" : savedVisibility[i];
+          card.style.zIndex = String(stackOrder);
         });
         const index = Math.max(0, Math.min(images.length - 1, Math.round(playhead.value)));
         const nextVideo = landing ? videos[index] : null;
@@ -116,18 +175,23 @@ export function CurveGallery() {
           playingVideo = nextVideo;
           if (playingVideo) void playingVideo.play().catch(() => {});
         }
-        if (index !== current.current) { current.current = index; setActive(index); }
+        if (index !== current.current) {
+          if (landing) playSound("step", { step: index % 6 });
+          current.current = index; setActive(index);
+        }
       };
       measure();
       const transition = gsap.timeline({
         scrollTrigger: {
-          id: "grid-to-ribbon", trigger: root, start: "top bottom", end: "top top", scrub: true,
+          // Leave another 35vh to view the final covers before pickup, and move
+          // the end by the same distance to preserve the transition's pace.
+          id: "grid-to-ribbon", trigger: root, start: "top 65%", end: () => `top top-=${window.innerHeight * 1.95}`, scrub: true,
           invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
         },
       });
       transition.to(entrance, { value: 1, duration: 1, ease: "none", onUpdate: render }, 0);
       transition.to(work?.querySelectorAll("[data-work-caption]") ?? [], {
-        opacity: 0, duration: .18, ease: "none",
+        opacity: 0, duration: .18, stagger: { each: .025, from: "end" }, ease: "none",
       }, 0);
       transition.fromTo(root.querySelector(".ribbon-footer"), { opacity: 0, y: 20 }, {
         opacity: 1, y: 0, duration: .2, ease: "power2.out",
@@ -135,15 +199,22 @@ export function CurveGallery() {
       const animation = gsap.to(playhead, {
         value: images.length - 1, ease: "none", onUpdate: render,
         scrollTrigger: {
-          id: "ribbon-gallery", trigger: root, start: "top top", pin: root,
-          end: () => `+=${Math.max(1200, images.length * 90)}`, scrub: .65,
-          anticipatePin: 1, invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
+          // Overlap the landing, and use the viewport's spring smoothing throughout.
+          // A second scrub delay here made the strip appear to stop and restart.
+          id: "ribbon-gallery", trigger: root, start: () => transition.scrollTrigger!.end - window.innerHeight * .12,
+          end: () => `+=${Math.max(1200, images.length * 90) + window.innerHeight * .12}`, scrub: true,
+          invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
         },
       });
       const trigger = animation.scrollTrigger!;
+      ScrollTrigger.create({
+        id: "ribbon-pin", trigger: root, start: "top top", pin: root,
+        end: () => trigger.end, anticipatePin: 1,
+        onRefresh: () => { measure(); render(); },
+      });
       jump.current = (index) => {
         const clamped = Math.max(0, Math.min(images.length - 1, index));
-        // Native scrolling also keeps Lenis and the pinned timeline in sync.
+        // Native scrolling also keeps the spring controller and pinned timeline in sync.
         window.scrollTo({ top: trigger.start + (clamped / (images.length - 1)) * (trigger.end - trigger.start), behavior: "instant" });
         ScrollTrigger.update();
       };
@@ -172,11 +243,13 @@ export function CurveGallery() {
       return () => {
         root.classList.remove("is-animated", "is-transferring");
         playingVideo?.pause();
-        sources.forEach((source, i) => { if (source) source.style.visibility = savedVisibility[i]; });
+        sources.forEach((source) => { if (source) setTransferred(source, false); });
         root.removeEventListener("pointerdown", down);
         root.removeEventListener("pointermove", move);
         root.removeEventListener("click", click, true);
-        cards.forEach((card) => card.removeAttribute("style"));
+        cards.forEach((card) => {
+          ["width", "height", "transform", "visibility", "opacity", "z-index"].forEach((property) => card.style.removeProperty(property));
+        });
         jump.current = () => {};
       };
     });
@@ -190,11 +263,11 @@ export function CurveGallery() {
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
           {images.map((item, i) => (
-            <Link className="ribbon-card" key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
+            <Link className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
               <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
                 ? <video src={item.src} poster={projectCover(item.project)} muted loop playsInline preload="none" aria-label={item.title} />
-                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 65vw, 440px" draggable={false} />
+                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 70vw, 440px" draggable={false} />
               }</span>
             </Link>
           ))}

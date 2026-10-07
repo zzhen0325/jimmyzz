@@ -2,6 +2,13 @@
   isolation: isolate;
 }
 
+/* Opacity composites descendants too; visibility alone can be overridden by
+   the reveal overlay and leave a white rectangle at the source position. */
+.cover[data-work-transferred] {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Refero's radial screen reveal, using the cover's blue-to-white palette. */
 .pastel {
   display: none;

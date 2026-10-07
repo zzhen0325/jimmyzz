@@ -7,8 +7,8 @@ import { useHomeReveals } from "./home-reveals";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
 import { HoverLabel } from "./hover-label";
-import { ExperienceTimeline } from "./experience-timeline";
 import { ChromeHero } from "./chrome-home";
+import { DissolveFooter } from "./dissolve-footer";
 import { PortraitWarp } from "./portrait-warp";
 import "./home-grid.css";
 
@@ -51,12 +51,14 @@ export function HomePage() {
         <FeaturedProjects />
         <div className="home-work-ending">
           <CurveGallery />
-          <ExperienceTimeline />
+          {/* 项目与经历目录暂时隐藏，保留组件以便后续恢复。 */}
         </div>
-        <footer className="home-credits">
+        <DissolveFooter>
+        <div className="home-credits">
           <span><ScrambleText>©2026 ZZ · 张振</ScrambleText></span>
           <span><ScrambleText>Black Hole by </ScrambleText><a href="https://sketchfab.com/3d-models/black-hole-e410da98b1e5445eae2acafaaa53587d"><ScrambleText>NestaEric</ScrambleText></a> <ScrambleText>· </ScrambleText><a href="https://creativecommons.org/licenses/by/4.0/"><ScrambleText>CC BY 4.0</ScrambleText></a> <ScrambleText>· Adapted for web</ScrambleText></span>
-        </footer>
+        </div>
+        </DissolveFooter>
       </div>
     </main>
   );

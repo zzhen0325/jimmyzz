@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="16" viewBox="0 0 256 16">
+  <!-- Quadratic vertical displacement: a soft bend anchored toward the right. -->
+  <defs>
+    <linearGradient id="curve" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0.00000" stop-color="rgb(0%,80.00000%,0%)" />
+      <stop offset="0.03125" stop-color="rgb(0%,77.23145%,0%)" />
+      <stop offset="0.06250" stop-color="rgb(0%,74.55078%,0%)" />
+      <stop offset="0.09375" stop-color="rgb(0%,71.95801%,0%)" />
+      <stop offset="0.12500" stop-color="rgb(0%,69.45312%,0%)" />
+      <stop offset="0.15625" stop-color="rgb(0%,67.03613%,0%)" />
+      <stop offset="0.18750" stop-color="rgb(0%,64.70703%,0%)" />
+      <stop offset="0.21875" stop-color="rgb(0%,62.46582%,0%)" />
+      <stop offset="0.25000" stop-color="rgb(0%,60.31250%,0%)" />
+      <stop offset="0.28125" stop-color="rgb(0%,58.24707%,0%)" />
+      <stop offset="0.31250" stop-color="rgb(0%,56.26953%,0%)" />
+      <stop offset="0.34375" stop-color="rgb(0%,54.37988%,0%)" />
+      <stop offset="0.37500" stop-color="rgb(0%,52.57812%,0%)" />
+      <stop offset="0.40625" stop-color="rgb(0%,50.86426%,0%)" />
+      <stop offset="0.43750" stop-color="rgb(0%,49.23828%,0%)" />
+      <stop offset="0.46875" stop-color="rgb(0%,47.70020%,0%)" />
+      <stop offset="0.50000" stop-color="rgb(0%,46.25000%,0%)" />
+      <stop offset="0.53125" stop-color="rgb(0%,44.88770%,0%)" />
+      <stop offset="0.56250" stop-color="rgb(0%,43.61328%,0%)" />
+      <stop offset="0.59375" stop-color="rgb(0%,42.42676%,0%)" />
+      <stop offset="0.62500" stop-color="rgb(0%,41.32812%,0%)" />
+      <stop offset="0.65625" stop-color="rgb(0%,40.31738%,0%)" />
+      <stop offset="0.68750" stop-color="rgb(0%,39.39453%,0%)" />
+      <stop offset="0.71875" stop-color="rgb(0%,38.55957%,0%)" />
+      <stop offset="0.75000" stop-color="rgb(0%,37.81250%,0%)" />
+      <stop offset="0.78125" stop-color="rgb(0%,37.15332%,0%)" />
+      <stop offset="0.81250" stop-color="rgb(0%,36.58203%,0%)" />
+      <stop offset="0.84375" stop-color="rgb(0%,36.09863%,0%)" />
+      <stop offset="0.87500" stop-color="rgb(0%,35.70312%,0%)" />
+      <stop offset="0.90625" stop-color="rgb(0%,35.39551%,0%)" />
+      <stop offset="0.93750" stop-color="rgb(0%,35.17578%,0%)" />
+      <stop offset="0.96875" stop-color="rgb(0%,35.04395%,0%)" />
+      <stop offset="1.00000" stop-color="rgb(0%,35.00000%,0%)" />
+    </linearGradient>
+  </defs>
+  <path fill="url(#curve)" d="M0 0H256V16H0Z" />
+</svg>

@@ -68,9 +68,11 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
         gl_FragColor = vec4(color, alpha);
         #include <colorspace_fragment>
       }`,
-    side: THREE.DoubleSide, depthWrite: true, toneMapped: false,
+    // Draw as the scene's backdrop without occluding any released geometry.
+    side: THREE.DoubleSide, depthTest: false, depthWrite: false, toneMapped: false,
   });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1), material);
   mesh.name = "floating-pixel-vortex";
+  mesh.renderOrder = -1000;
   return { mesh, update: (seconds: number, formation = 1) => { material.uniforms.time.value = seconds; material.uniforms.formation.value = formation; } };
 }

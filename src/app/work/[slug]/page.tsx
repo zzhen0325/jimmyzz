@@ -1,4 +1,5 @@
 import "./project.css";
+import { V1Experience } from "@/components/v1-experience";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +31,7 @@ export default async function ProjectPage({
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
+  if (slug === "portfolio-v1") return <V1Experience />;
   const assets = projectAssets(slug);
   const index = projects.indexOf(project);
   const next = projects[(index + 1) % projects.length];
@@ -58,11 +60,11 @@ export default async function ProjectPage({
             </div>
 
           </section>
-          <section className="case-overview case-editorial-section" aria-labelledby="case-challenge-title">
+          {project.challenge && <section className="case-overview case-editorial-section" aria-labelledby="case-challenge-title">
             <h2 id="case-challenge-title" className="case-margin-label">Challenge</h2>
             <div className="case-section-body"><p>{project.challenge}</p></div>
-          </section>
-          <section className="case-overview case-editorial-section" aria-labelledby="case-solution-title">
+          </section>}
+          {project.approach && <section className="case-overview case-editorial-section" aria-labelledby="case-solution-title">
             <h2 id="case-solution-title" className="case-margin-label">Solution</h2>
             <div className="case-section-body">
             <p>{project.approach}</p>
@@ -70,7 +72,7 @@ export default async function ProjectPage({
               {project.results.map((result) => <div key={result.label}><dt>{result.label}</dt><dd>{result.value}</dd></div>)}
             </dl>}
             </div>
-          </section>
+          </section>}
 
         </div>
         </ProjectCopy>
@@ -90,8 +92,8 @@ export default async function ProjectPage({
           <div className="next-art">
             <Image
               src={projectCover(next.slug)}
-              width={960}
-              height={540}
+              width={next.coverWidth ?? 960}
+              height={next.coverHeight ?? 540}
               unoptimized
               alt={next.title}
               className="object-contain"

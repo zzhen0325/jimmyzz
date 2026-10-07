@@ -34,6 +34,11 @@ export type Project = {
   slug: string;
   /** 首页精选作品封面：填写 /assets/... 路径，支持图片或 .mp4 / .webm / .mov 视频。 */
   selectedWorkCover: string;
+  /** 封面的原始尺寸，用于保持展示比例。 */
+  coverWidth?: number;
+  coverHeight?: number;
+  /** 悬停或键盘聚焦时播放；默认始终展示静态封面。 */
+  hoverVideo?: string;
   /** 列表、下一项目和视频 poster 使用的静态封面。 */
   thumbnail: string;
   /** 详情页图片，按数组顺序展示；name 在当前项目内保持唯一。 */
@@ -52,8 +57,115 @@ export type Project = {
 };
 export const projects: Project[] = [
   {
+    slug: "portfolio-v1",
+    title: "Portfolio V1",
+    english: "Portfolio V1",
+    kind: "视觉探索",
+    client: "Jimmy ZZ",
+    summary: "第一版个人网站 · 影像、拼贴与实时交互",
+    description: "以动态影像与 Risograph 拼贴构建的交互首页，保留滚动、拖拽与隐藏扫雷彩蛋。",
+    tags: ["Creative Coding", "WebGL", "Interaction"],
+    color: "#090909",
+    thumbnail: "/assets/portfolio/portfolio-v1/cover.jpg",
+    selectedWorkCover: "/assets/portfolio/portfolio-v1/cover.jpg",
+    hoverVideo: "/assets/portfolio/portfolio-v1/preview.webm",
+    coverWidth: 1440,
+    coverHeight: 900,
+    assets: [],
+    challenge: "",
+    approach: "",
+  },
+  {
+    "slug": "cucumber",
+    "thumbnail": "/assets/portfolio/covers/cucumber.png",
+    "selectedWorkCover": "/assets/portfolio/covers/cucumber.png",
+    "coverWidth": 1920,
+    "coverHeight": 1080,
+    "assets": [
+      {
+        "name": "cover",
+        "src": "/assets/portfolio/covers/cucumber.png"
+      }
+    ],
+    "title": "Cucumber",
+    "english": "Cucumber",
+    "kind": "视觉探索",
+    "client": "Cucumber",
+    "summary": "Cucumber",
+    "tags": [],
+    "color": "#eeeeee",
+    "description": "",
+    "challenge": "",
+    "approach": ""
+  },
+  {
+    "slug": "welcome-lemon8",
+    "thumbnail": "/assets/portfolio/covers/welcome-lemon8.png",
+    "selectedWorkCover": "/assets/portfolio/covers/welcome-lemon8.png",
+    "coverWidth": 1080,
+    "coverHeight": 1440,
+    "assets": [
+      {
+        "name": "cover",
+        "src": "/assets/portfolio/covers/welcome-lemon8.png"
+      }
+    ],
+    "title": "Welcome to Lemon8",
+    "english": "Welcome to Lemon8",
+    "kind": "海外活动",
+    "client": "Lemon8",
+    "summary": "Welcome to Lemon8",
+    "tags": [],
+    "color": "#eeeeee",
+    "description": "",
+    "challenge": "",
+    "approach": ""
+  },
+  {
+    "slug": "look-live",
+    "thumbnail": "/assets/portfolio/covers/look-live.png",
+    "selectedWorkCover": "/assets/portfolio/covers/look-live.png",
+    "coverWidth": 1920,
+    "coverHeight": 1080,
+    "assets": [
+      {
+        "name": "cover",
+        "src": "/assets/portfolio/covers/look-live.png"
+      },
+      {
+        "name": "annual",
+        "src": "/assets/portfolio/visual-explorations/annual.webp"
+      },
+      {
+        "name": "annual-chapters",
+        "src": "/assets/portfolio/visual-explorations/annual-chapters.webp"
+      },
+      {
+        "name": "annual-scenes",
+        "src": "/assets/portfolio/visual-explorations/annual-scenes.webp"
+      },
+      {
+        "name": "annual-detail",
+        "src": "/assets/portfolio/visual-explorations/annual-detail.webp"
+      }
+    ],
+    "title": "LOOK 直播盛典",
+    "english": "LOOK 直播盛典",
+    "kind": "视觉探索",
+    "client": "LOOK 直播",
+    "summary": "LOOK 直播盛典",
+    "tags": [],
+    "color": "#eeeeee",
+    "description": "",
+    "challenge": "",
+    "approach": ""
+  },
+  {
     slug: "lemo-ai",
-    thumbnail: "/assets/portfolio/lemo-ai/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/lemo-ai.png",
+    coverWidth: 1920,
+    coverHeight: 1080,
+    hoverVideo: "/assets/videos/lemo.mp4",
     assets: [
       {
         "name": "lemo-studio-01",
@@ -92,7 +204,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/lemo-ai/lemostudio_9.png",  
       },  
     ],
-    selectedWorkCover: "/assets/videos/lemo.mp4",
+    selectedWorkCover: "/assets/portfolio/covers/lemo-ai.png",
     title: "LEMO Studio",
     english: "From experiments to tools",
     kind: "AIGC",
@@ -109,7 +221,9 @@ export const projects: Project[] = [
   },
   {
     slug: "lemon8-campaigns",
-    thumbnail: "/assets/portfolio/lemon8-campaigns/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/lemon8-campaigns.png",
+    coverWidth: 1920,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -132,8 +246,8 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/lemon8-campaigns/operations.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/lemohuodong.png",
-    title: "Lemon8 Campaigns",
+    selectedWorkCover: "/assets/portfolio/covers/lemon8-campaigns.png",
+    title: "泰国活动 · 欢迎来玩 Lemon8",
     english: "Across cultures, beyond borders",
     kind: "海外活动",
     client: "Lemon8",
@@ -150,6 +264,8 @@ export const projects: Project[] = [
   {
     slug: "miaoshi-brand",
     thumbnail: "/assets/portfolio/miaoshi-brand/thumbnail.webp",
+    coverWidth: 960,
+    coverHeight: 640,
     assets: [
       {
         "name": "cover",
@@ -176,7 +292,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/miaoshi-brand/application.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/miaoshi-brand/miaoshi.png",
+    selectedWorkCover: "/assets/portfolio/miaoshi-brand/thumbnail.webp",
     title: "妙时品牌",
     english: "This way to love",
     kind: "品牌与 IP",
@@ -193,7 +309,9 @@ export const projects: Project[] = [
   },
   {
     slug: "inner-species",
-    thumbnail: "/assets/portfolio/inner-species/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/inner-species.png",
+    coverWidth: 1920,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -228,7 +346,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/inner-species/outcome.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/jian.png",
+    selectedWorkCover: "/assets/portfolio/covers/inner-species.png",
     title: "鉴一鉴你的内心物种",
     english: "Meet your inner creature",
     kind: "H5 营销",
@@ -250,7 +368,9 @@ export const projects: Project[] = [
   },
   {
     slug: "bandao",
-    thumbnail: "/assets/portfolio/bandao/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/bandao-brand.png",
+    coverWidth: 1920,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -285,7 +405,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/bandao/application.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/bandao.png",
+    selectedWorkCover: "/assets/portfolio/covers/bandao-brand.png",
     title: "伴岛",
     english: "A little island, a shared world",
     kind: "品牌与 IP",
@@ -302,7 +422,9 @@ export const projects: Project[] = [
   },
   {
     slug: "meetup-plan",
-    thumbnail: "/assets/portfolio/meetup-plan/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/meetup-plan.png",
+    coverWidth: 1080,
+    coverHeight: 1440,
     assets: [
       {
         "name": "cover",
@@ -329,7 +451,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/meetup-plan/materials.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/miao.png",
+    selectedWorkCover: "/assets/portfolio/covers/meetup-plan.png",
     title: "奇妙接头计划",
     english: "Take the connection outside",
     kind: "品牌与 IP",
@@ -346,7 +468,9 @@ export const projects: Project[] = [
   },
   {
     slug: "winter-gathering",
-    thumbnail: "/assets/portfolio/winter-gathering/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/winter-gathering.png",
+    coverWidth: 1080,
+    coverHeight: 1440,
     assets: [
       {
         "name": "cover",
@@ -377,7 +501,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/winter-gathering/outcome.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/jiu.png",
+    selectedWorkCover: "/assets/portfolio/covers/winter-gathering.png",
     title: "冬至有酒局",
     english: "A warm encounter on a cold night",
     kind: "H5 营销",
@@ -399,7 +523,9 @@ export const projects: Project[] = [
   },
   {
     slug: "vinyl-anniversary",
-    thumbnail: "/assets/portfolio/vinyl-anniversary/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/vinyl-anniversary.png",
+    coverWidth: 1080,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -422,7 +548,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/vinyl-anniversary/outcome.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/10.png",
+    selectedWorkCover: "/assets/portfolio/covers/vinyl-anniversary.png",
     title: "黑胶纪念墙",
     english: "Ten years, one shared record",
     kind: "H5 营销",
@@ -445,7 +571,9 @@ export const projects: Project[] = [
   },
   {
     slug: "youth-album",
-    thumbnail: "/assets/portfolio/youth-album/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/youth-album.png",
+    coverWidth: 1080,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -456,7 +584,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/youth-album/experience.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/qing.png",
+    selectedWorkCover: "/assets/portfolio/covers/youth-album.png",
     title: "青春纪念册",
     english: "The songs we grew up with",
     kind: "H5 营销",
@@ -473,7 +601,9 @@ export const projects: Project[] = [
   },
   {
     slug: "social-live",
-    thumbnail: "/assets/portfolio/social-live/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/social-live.png",
+    coverWidth: 1920,
+    coverHeight: 1440,
     assets: [
       {
         "name": "cover",
@@ -504,8 +634,8 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/social-live/components.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/long.png",
-    title: "社交直播业务群",
+    selectedWorkCover: "/assets/portfolio/covers/social-live.png",
+    title: "社交品牌体系",
     english: "One family, many connections",
     kind: "品牌与 IP",
     client: "网易云音乐 · 社交直播",
@@ -521,7 +651,9 @@ export const projects: Project[] = [
   },
   {
     slug: "design-operations",
-    thumbnail: "/assets/portfolio/design-operations/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/design-operations.png",
+    coverWidth: 1080,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -548,7 +680,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/design-operations/resources.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/design-operations/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/covers/design-operations.png",
     title: "设计团队与资源规划",
     english: "Make space for better work",
     kind: "设计管理",
@@ -565,7 +697,9 @@ export const projects: Project[] = [
   },
   {
     slug: "visual-explorations",
-    thumbnail: "/assets/portfolio/visual-explorations/thumbnail.webp",
+    thumbnail: "/assets/portfolio/covers/visual-explorations.png",
+    coverWidth: 1920,
+    coverHeight: 1080,
     assets: [
       {
         "name": "cover",
@@ -608,7 +742,7 @@ export const projects: Project[] = [
         "src": "/assets/portfolio/visual-explorations/more.webp",
       }
     ],
-    selectedWorkCover: "/assets/portfolio/visual-explorations/thumbnail.webp",
+    selectedWorkCover: "/assets/portfolio/covers/visual-explorations.png",
     title: "视觉探索与更多",
     english: "A collection of possibilities",
     kind: "视觉探索",
@@ -627,7 +761,7 @@ export const projects: Project[] = [
 
 /** 首页展示顺序；compact 中的项目使用小尺寸卡片。 */
 export const selectedWork = {
-  order: ["lemo-ai", "miaoshi-brand", "inner-species", "bandao", "lemon8-campaigns", "meetup-plan", "winter-gathering", "vinyl-anniversary", "youth-album", "social-live", "design-operations"],
+  order: ["portfolio-v1", "lemo-ai", "cucumber", "welcome-lemon8", "lemon8-campaigns", "vinyl-anniversary", "social-live", "bandao", "look-live", "inner-species", "miaoshi-brand", "meetup-plan", "winter-gathering", "youth-album", "design-operations"],
   compact: ["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"],
 };
 
@@ -646,7 +780,7 @@ export const additionalExperience: TimelineEntry[] = [
 ];
 
 /** 这些项目用上方补充经历展示，不重复生成普通经历条目。 */
-export const timelineExcludedSlugs = ["visual-explorations"];
+export const timelineExcludedSlugs = ["visual-explorations", "cucumber", "welcome-lemon8", "look-live"];
 
 /** 首页底部画廊；project 对应上方项目的 slug。 */
 export const curveGallery: (Asset & { project: string; title: string; width: number; height: number })[] = [

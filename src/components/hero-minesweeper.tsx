@@ -65,7 +65,7 @@ export function HeroMinesweeper({ origin, onClose }: {
   }, [board.status]);
   const remaining = board.mines - board.cells.filter(cell => cell.flagged).length;
   const message = board.status === "won" ? "漂亮！所有安全方格已找到。" : board.status === "lost" ? "踩到雷了，再试一次？" : board.status === "ready" ? "点开任意方格，第一步总是安全的。" : "数字代表周围八格的雷数。";
-  return <section ref={surface} className="hero-minesweeper" aria-label="S04 隐藏扫雷游戏" data-lenis-prevent style={{ "--origin-x": `${origin.x}%`, "--origin-y": `${origin.y}%` } as CSSProperties}>
+  return <section ref={surface} className="hero-minesweeper" aria-label="S04 隐藏扫雷游戏" data-native-scroll style={{ "--origin-x": `${origin.x}%`, "--origin-y": `${origin.y}%` } as CSSProperties}>
     <div className="mines-content">
       <div className="mines-toolbar">
         <span className="mines-edition">S04 / 扫雷</span>

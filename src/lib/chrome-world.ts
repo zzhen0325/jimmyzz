@@ -13,7 +13,9 @@ import { createChromePortalGun } from "./chrome-portal-gun";
 import { createChromePlanet, createChromeRainCloud } from "./chrome-celestial";
 import { mergeRigidMeshes } from "./merge-rigid-meshes";
 import { createBakedPropMaterials } from "./baked-prop-materials";
-import { createIncrementalCubeProbe } from "./incremental-cube-probe";
+import { createSmoothCubeProbe } from "./incremental-cube-probe";
+import { createFloatingPlasterMaterials } from "./floating-plaster-materials";
+import { applyReferencePropMaterials } from "./reference-prop-materials";
 
 export type FloatingMode = "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
 
@@ -60,6 +62,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let paused = !!options.paused;
   let disposed = false;
   let bakedMaterials: ReturnType<typeof createBakedPropMaterials> | undefined;
+  const plasterMaterials = createFloatingPlasterMaterials(config.plaster);
   let ready = false;
   let visible = true;
   let contextLost = false;
@@ -124,8 +127,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     minFilter: THREE.LinearMipmapLinearFilter,
   });
   const reflectionCamera = new THREE.CubeCamera(.05, 50, reflectionTarget);
-  const updateReflection = createIncrementalCubeProbe(reflectionCamera);
-  let reflectionTime = -Infinity;
+  const reflectionProbe = createSmoothCubeProbe(reflectionCamera, chrome);
   let reflectionFrames = 0;
   let reflectionDirty = true;
   let renderedWorkProgress = -1;
@@ -242,8 +244,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const rect=host.getBoundingClientRect();pointerRect=rect;pointerRectDirty=false;width=rect.width;height=rect.height;
     camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.zoom=(width+height)/9;camera.updateProjectionMatrix();
     viewWidth=width/camera.zoom;viewHeight=height/camera.zoom;
-    const oldScale=assetScale;assetScale=width<config.sizing.mobileBreakpoint?config.sizing.mobile:config.sizing.desktop;
-    logoScale = Math.min(config.logo.scale,viewWidth*config.logo.maxViewportWidth/3.1);
+    const compact = width < config.sizing.mobileBreakpoint;
+    // Keep desktop props proportional to screen width, independent of viewport height.
+    const referenceViewWidth = 9 * config.sizing.referenceAspect / (1 + config.sizing.referenceAspect);
+    const oldScale = assetScale;
+    assetScale = compact ? config.sizing.mobile : config.sizing.desktop * viewWidth / referenceViewWidth;
+    logoScale = Math.min(config.logo.scale, viewWidth * (compact ? config.logo.mobileViewportWidth : config.logo.maxViewportWidth) / 3.1, viewHeight * config.logo.maxViewportHeight / 1.05);
     logo.scale.setScalar(logoScale);
     shapeBody(logoBody,new THREE.Vector3(3.1*logo.scale.x,1.05*logo.scale.y,.16));
     items.forEach(item=>{shapeBody(item.body,item.originalSize.clone().multiplyScalar(assetScale),item.billboard);item.object.scale.setScalar(assetScale);if(ready&&oldScale!==assetScale)item.body.position.scale(assetScale/oldScale,item.body.position);});
@@ -499,7 +505,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     pointerYaw = THREE.MathUtils.lerp(pointerYaw, reduced ? 0 : pointer.x * .45, .08);
     logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn + pointerYaw * (1 - p)));
     canvas.dataset.pointerYaw = String(pointerYaw);
-    logo.position.set(0, (height / 2 - 44) / camera.zoom * travel, 0).applyQuaternion(camera.quaternion);
+    const introY = width < config.sizing.mobileBreakpoint ? 0 : height * (.5 - config.logo.centerY) / camera.zoom;
+    const logoY = THREE.MathUtils.lerp(introY, (height / 2 - 44) / camera.zoom, travel);
+    logo.position.set(0, logoY, 0).applyQuaternion(camera.quaternion);
+    logoBody.position.set(logo.position.x, logo.position.y, logo.position.z);
+    logoBody.aabbNeedsUpdate = true;
     const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
     const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
@@ -515,7 +525,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     canvas.dataset.workProgress = p.toFixed(4);
     canvas.dataset.logoTurn = String(turn);
-    canvas.dataset.logoTop = String(height / 2 - (height / 2 - 44) * travel);
+    canvas.dataset.logoTop = String(height / 2 - logoY * camera.zoom);
     canvas.dataset.visibleItems = String(p < .7 ? items.length : 0);
   };
   const render=(time:number)=>{
@@ -549,11 +559,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     vortexAnimation?.update(reduced ? 0 : vortexTime, easterEgg.active ? THREE.MathUtils.clamp((portalScale / assetScale - .16) / 2.34, 0, 1) : 1);
     scene.updateMatrixWorld();
     camera.updateMatrixWorld();
-    // Capture at most 30 faces/second. The main scene and pointer still render
-    // every display frame; full cube/PMREM refreshes run about 5 times/second.
-    // Initial/invalidation captures stay atomic.
-    const reflectionInterval = 1000 / 30;
-    if (ready && (reflectionDirty || (!paused && !reduced && workProgress()<1 && time-reflectionTime >= reflectionInterval))) {
+    plasterMaterials.update(camera, logo, assetScale);
+    // Capture one face per display frame and blend completed reflections between
+    // captures. Initial/invalidation captures stay atomic, including static views.
+    if (ready && (reflectionDirty || (!paused && !reduced && workProgress()<1))) {
       const background = scene.background;
       const backgroundIntensity = scene.backgroundIntensity;
       const logoVisible = logo.visible;
@@ -563,17 +572,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       reflectionCamera.position.set(0, 0, .28).applyQuaternion(logo.quaternion).add(logo.position);
       let complete = false;
       try {
-        complete = updateReflection(renderer, scene, reflectionDirty);
+        complete = reflectionProbe.update(renderer, scene, reflectionDirty);
       } finally {
         logo.visible = logoVisible;
         scene.background = background;
         scene.backgroundIntensity = backgroundIntensity;
       }
-      if (chrome.envMap !== reflectionTarget.texture) {
-        chrome.envMap = reflectionTarget.texture;
-        chrome.needsUpdate = true;
-      }
-      reflectionTime = time; reflectionDirty = false;
+      reflectionDirty = false;
       if (complete) {
         reflectionFrames++;
         canvas.dataset.reflections = String(reflectionFrames);
@@ -618,10 +623,36 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     return model;
   });
-  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, Promise.all([
+  const sculptedModels = Promise.all(config.sculptedProps.map(({ file }) =>
+    loader.loadAsync(`/assets/models/figma-symbols/${file}.glb`).then(({ scene: model }) => {
+      model.name = `floating-sculpted-${file}`;
+      track(model);
+      if (disposed) {
+        geometries.forEach(geometry => geometry.dispose());
+        materials.forEach(material => material.dispose());
+        resources.forEach(texture => texture.dispose());
+      }
+      return model;
+    })
+  ));
+  const materialStudyModels = Promise.all(config.materialStudies.map(({ file }) =>
+    loader.loadAsync(`/assets/models/material-studies/${file}.glb`).then(({ scene: model }) => {
+      model.name = `floating-material-study-${file}`;
+      track(model);
+      applyReferencePropMaterials(model);
+      track(model);
+      if (disposed) {
+        geometries.forEach(geometry => geometry.dispose());
+        materials.forEach(material => material.dispose());
+        resources.forEach(texture => texture.dispose());
+      }
+      return model;
+    })
+  ));
+  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, sculptedModels, materialStudyModels, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/home-optimized/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(([cutout, characters, floatingTextures, portalGun, [environment,...models]])=>{
+  ])]).then(([cutout, characters, floatingTextures, portalGun, sculptures, materialStudies, [environment,...models]])=>{
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
@@ -684,8 +715,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       mesh.name = `floating-cutout-${setting.file}`;
       add(mesh, setting.size, 10 + characters.length + index, true);
     });
+    sculptures.forEach((model, index) => add(model, config.sculptedProps[index].size, items.length));
+    canvas.dataset.sculptedProps = String(sculptures.length);
+    materialStudies.forEach((model, index) => add(model, config.materialStudies[index].size, items.length));
+    canvas.dataset.materialStudies = String(materialStudies.length);
     vortexAnimation = createPixelVortex(config.vortex);
-    add(vortexAnimation.mesh, config.vortex.size, 10 + characters.length + floatingTextures.length, true);
+    add(vortexAnimation.mesh, config.vortex.size, items.length, true);
     vortexAnimation.mesh.parent!.parent!.visible = false;
     // A hidden effect must not collide with the floating toys.
     const portalBody = items[items.length - 1].body;
@@ -696,7 +731,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.characters = String(characters.length);
     bakedMaterials = createBakedPropMaterials(renderer, scene);
     // Retain the plaques' embossed highlights and all metallic reflections.
-    items.slice(models.length).forEach(item => bakedMaterials!.apply(item.object));
+    items.slice(models.length).forEach(item => {
+      if (!item.object.name.startsWith("floating-material-study-")) bakedMaterials!.apply(item.object);
+    });
+    items.forEach((item, index) => {
+      // Image cutouts and the portal gun retain their original materials at every depth.
+      if (item.billboard || item.object.name === "floating-pixel-vortex" || item.object.name === "floating-green-portal-gun" || item.object.name.startsWith("floating-material-study-")) return;
+      const permanent = index < models.length || item.object.name === "emotion-02_meh";
+      plasterMaterials.apply(item.object, permanent, !!item.billboard);
+    });
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
@@ -726,6 +769,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (options.vortexTarget) options.vortexTarget.style.display = 'none';observer.disconnect();visibility.disconnect();
       canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       bakedMaterials?.dispose();
+      plasterMaterials.dispose();
+      reflectionProbe.dispose();
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;
     },
   };

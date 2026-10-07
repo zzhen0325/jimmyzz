@@ -3,6 +3,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { HoverCoverVideo } from "./hover-cover-video";
 import {
   categories,
   projects,
@@ -45,7 +46,7 @@ export function ProjectIndex() {
           >
             <div
               className="project-art"
-              style={{ backgroundColor: project.color }}
+              style={{ backgroundColor: project.color, aspectRatio: `${project.coverWidth ?? 16} / ${project.coverHeight ?? 9}` }}
             >
               <Image
                 src={projectCover(project.slug)}
@@ -53,8 +54,9 @@ export function ProjectIndex() {
                 loading={index < 2 ? "eager" : "lazy"}
                 fill
                 sizes="(max-width:809px) 100vw, 50vw"
-                className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+                className="object-contain"
               />
+              {project.hoverVideo && <HoverCoverVideo src={project.hoverVideo} />}
             </div>
             <div className="work-tile-heading">
               <h2>{project.title}</h2>

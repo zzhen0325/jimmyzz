@@ -8,7 +8,12 @@ const ATLAS_PADDING = 4;
 const ATLAS_COLUMNS = Math.ceil(Math.sqrt(activityImageCount));
 const ATLAS_ROWS = Math.ceil(activityImageCount / ATLAS_COLUMNS);
 
+export type ActivityLayout = "sphere" | "orbit";
+
 export type SphereParameters = {
+  orbitTilt: number;
+  orbitDepth: number;
+  direction: number;
   speed: number;
   imageSize: number;
   spacing: number;
@@ -19,8 +24,11 @@ export type SphereParameters = {
   count: number;
 };
 export const sphereDefaults: SphereParameters = {
+  orbitTilt: -18, orbitDepth: 0.33, direction: 1,
   speed: 1, imageSize: 1, spacing: 1, sphereSize: 1, sphereWidth: 1, sphereHeight: 1, depth: 1, count: 294,
 };
+
+export const orbitDefaults: SphereParameters = { ...sphereDefaults, count: 16 };
 
 const MAX_CARDS = 1200;
 const vertexShader = `
@@ -29,6 +37,10 @@ const vertexShader = `
   attribute vec2 instanceAtlas;
   attribute float instanceId;
   uniform float phase;
+  uniform float orbitPhase;
+  uniform float orbitMode;
+  uniform float orbitTilt;
+  uniform float orbitDepth;
   uniform vec2 rotation;
   uniform float sphereSize;
   uniform vec2 sphereShape;
@@ -54,9 +66,20 @@ const vertexShader = `
     vec3 center=rotateZ(instanceCenter,sin(phase*0.1)*0.05);
     center=rotateY(center,rotation.x+phase*0.5);
     center=rotateX(center,rotation.y+sin(phase*0.2)*0.12);
+    if (orbitMode > 0.5) {
+      // Rotate around the ring, then tilt its plane. Cards remain upright billboards.
+      float angle=instanceCenter.x+orbitPhase+rotation.x;
+      center=vec3(cos(angle)*2.0, -sin(angle)*orbitDepth, sin(angle)*0.65);
+      center=rotateX(center,rotation.y);
+      center=rotateZ(center,-orbitTilt);
+    }
     float near=clamp((center.z+0.65)/1.3,0.0,1.0);
     float size=mix(1.0,0.12+pow(near,2.4)*1.12,depthStrength);
     brightness=mix(1.0,0.65+near*0.35,depthStrength);
+    if (orbitMode > 0.5) {
+      size=mix(1.0,mix(0.72,1.12,near),depthStrength);
+      brightness=1.0;
+    }
     center.xy*=sphereShape;
     vec4 viewCenter=modelViewMatrix*vec4(center*sphereSize*spacing,1.0);
     // Billboards face the camera. Their true z stays in the depth buffer;
@@ -130,6 +153,8 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
   const uniforms = {
+    orbitMode: { value: 0 }, orbitPhase: { value: 0 }, orbitTilt: { value: -Math.PI / 10 },
+    orbitDepth: { value: 0.33 },
     atlas: { value: texture }, phase: { value: 0 }, rotation: { value: new THREE.Vector2(0.35, -0.25) },
     sphereSize: { value: 1 }, spacing: { value: 1 }, imageSize: { value: 1 }, depthStrength: { value: 1 },
     sphereShape: { value: new THREE.Vector2(1, 1) },
@@ -154,9 +179,12 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   let playing = true;
   let dragging = false;
   let count = 0;
+  let layout: ActivityLayout = "sphere";
   let dirty = true;
   let contextLost = false;
   let lastPhase = -1;
+  let lastOrbitTime = 0;
+  let orbitPhase = 0;
   let frames = 0;
   let fpsStart = performance.now();
 
@@ -170,8 +198,8 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
       const ring = Math.sqrt(1 - y * y);
       const x = Math.cos(angle) * ring;
       const z = Math.sin(angle) * ring;
-      centers.set([x, y, z], i * 3);
-      const baseHeight = 0.24;
+      centers.set(layout === "orbit" ? [i / count * Math.PI * 2, 0, 0] : [x, y, z], i * 3);
+      const baseHeight = layout === "orbit" ? 0.96 : 0.24;
       sizes.set([baseHeight * atlasItems[(i * 17) % activityImageCount].aspect, baseHeight], i * 2);
     }
     centerAttribute.needsUpdate = true;
@@ -181,13 +209,17 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   }
   updateDensity();
 
+  function fitCamera() {
+    const extent = layout === "orbit" ? Math.max(1.65, 2.6 / camera.aspect) : 1.65 / Math.min(1, camera.aspect);
+    camera.position.z = extent / Math.tan(THREE.MathUtils.degToRad(19));
+    camera.updateProjectionMatrix();
+  }
   const resize = new ResizeObserver(([entry]) => {
     const { width, height } = entry.contentRect;
     if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.position.z = 1.65 / Math.tan(THREE.MathUtils.degToRad(19)) / Math.min(1, camera.aspect);
-    camera.updateProjectionMatrix();
+    fitCamera();
     dirty = true;
   });
   resize.observe(canvas);
@@ -197,6 +229,12 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
     if (!dirty && clock.phase === lastPhase && !gsap.isTweening(parameters) && !gsap.isTweening(orientation)) return;
     updateDensity();
     uniforms.phase.value = clock.phase;
+    const orbitTime = tween.totalTime();
+    orbitPhase = (orbitPhase + (orbitTime - lastOrbitTime) * Math.PI / 6 * parameters.direction) % (Math.PI * 2);
+    lastOrbitTime = orbitTime;
+    uniforms.orbitPhase.value = orbitPhase;
+    uniforms.orbitTilt.value = THREE.MathUtils.degToRad(parameters.orbitTilt);
+    uniforms.orbitDepth.value = parameters.orbitDepth;
     uniforms.rotation.value.set(orientation.yaw, orientation.pitch);
     uniforms.sphereSize.value = parameters.sphereSize;
     uniforms.sphereShape.value.set(parameters.sphereWidth, parameters.sphereHeight);
@@ -237,6 +275,17 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
   document.addEventListener("visibilitychange", onVisibility);
 
   return {
+    setLayout(value: ActivityLayout, values: SphereParameters) {
+      layout = value;
+      gsap.killTweensOf(parameters);
+      Object.assign(parameters, values);
+      uniforms.orbitMode.value = value === "orbit" ? 1 : 0;
+      canvas.dataset.layout = value;
+      count = 0;
+      updateDensity();
+      fitCamera();
+      this.reset();
+    },
     setParameters(values: Partial<SphereParameters>) {
       const { speed, ...visual } = values;
       if (speed !== undefined) { parameters.speed = speed; syncPlayback(); }
@@ -246,8 +295,9 @@ export function createActivitySphere(canvas: HTMLCanvasElement, onReady: () => v
     setDragging(value: boolean) { dragging = value; syncPlayback(); },
     rotate(dx: number, dy: number) { targetYaw += dx; targetPitch += dy; yawTo(targetYaw); pitchTo(targetPitch); dirty = true; },
     reset() {
-      tween.pause().time(0);
-      targetYaw = 0.35; targetPitch = -0.25;
+      tween.pause().totalTime(0);
+      orbitPhase = 0; lastOrbitTime = 0;
+      targetYaw = layout === "orbit" ? 0 : 0.35; targetPitch = layout === "orbit" ? 0 : -0.25;
       yawTo(targetYaw); pitchTo(targetPitch);
       dirty = true;
       syncPlayback();

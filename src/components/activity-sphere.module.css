@@ -34,3 +34,10 @@
 
 .exportTrim { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #aaa; }
 .exportTrim input { accent-color: #eee; }
+
+.modes { display: flex; gap: 4px; padding: 3px; margin-bottom: 16px; border: 1px solid #292929; border-radius: 8px; }
+.modes button { flex: 1; border: 0; border-radius: 5px; padding: 8px 4px; color: #999; background: transparent; font: inherit; cursor: pointer; }
+.modes button[aria-pressed="true"] { background: #333; color: #fff; }
+.modes button:hover { color: #fff; }
+.modeHint { margin: -6px 0 18px; color: #888; font-size: 10px; }
+.page select:focus-visible { outline: 1px solid #aaa; outline-offset: 3px; }

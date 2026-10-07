@@ -4,15 +4,15 @@
 .ribbon-playhead { display: none; position: absolute; left: 50%; inset-block: 95px; width: 1px; background: var(--line); pointer-events: none; z-index: 105; }
 .ribbon-playhead i { position: absolute; left: -4px; top: 0; border: 4px solid transparent; border-top-color: #f4f2ed; }
 .ribbon-playhead i:last-child { top: auto; bottom: 0; transform: rotate(180deg); }
-.ribbon-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 120px 32px; }
-.ribbon-card { display: block; aspect-ratio: 1; overflow: hidden; transform-origin: center; }
-.ribbon-card .motion-image { height: 100%; aspect-ratio: 1; }
-.ribbon-card .motion-image > img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; }
+.ribbon-images { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: center; padding: 120px 32px; }
+.ribbon-card { display: block; aspect-ratio: var(--cover-ratio); overflow: hidden; transform-origin: center; }
+.ribbon-card .motion-image { display: block; width: 100%; height: 100%; aspect-ratio: var(--cover-ratio); }
+.ribbon-card .motion-image > img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
 .ribbon-card:focus-visible { outline: 2px solid #f4f2ed; outline-offset: 6px; }
 .ribbon-stage:not(.is-animated) { height: auto; }
 .is-animated .ribbon-images { display: block; position: absolute; inset: 0; padding: 0; touch-action: pan-y; cursor: grab; }
 .is-animated .ribbon-images:active { cursor: grabbing; }
-.is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(24vw, 330px); will-change: transform; }
+.is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(28vw, 385px); will-change: transform; }
 .is-animated .ribbon-playhead { display: block; }
 .ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; }
 .ribbon-count { font: 20px Georgia, serif; }
@@ -32,5 +32,8 @@
   .ribbon-images { grid-template-columns: repeat(2, 1fr); padding-inline: 18px; }
 }
 
-.is-animated .ribbon-card .motion-image { height: 100%; }
-.is-animated .ribbon-card img { height: 100%; object-fit: cover; }
+.is-animated .ribbon-card .motion-image { display: block; width: 100%; height: 100%; }
+.is-animated .ribbon-card img { height: 100%; object-fit: contain; }
+
+/* The strip's focus marker belongs to the landed layout, not the orbit. */
+.is-transferring .ribbon-playhead { visibility: hidden; }

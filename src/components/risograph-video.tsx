@@ -9,6 +9,7 @@ import { collagePanels, createRisographRenderer, risographSettings, type Risogra
 
 export function RisographVideo({
   videoRef,
+  settleToWorkflow = false,
   enabled = risographSettings.enabled,
   skipEntrance = false,
   entranceAt,
@@ -18,6 +19,7 @@ export function RisographVideo({
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
   enabled?: boolean;
+  settleToWorkflow?: boolean;
   skipEntrance?: boolean;
   entranceAt?: number;
   onReady?: () => void;
@@ -143,7 +145,7 @@ export function RisographVideo({
       };
       collage?.draw(video, positions, labelWidth, labelHeight, motionTime, fitProgress, rotations, drawPanelLabels);
     };
-    let renderer = createRisographRenderer(canvas);
+    let renderer = createRisographRenderer(canvas, settleToWorkflow);
     rendererRef.current = renderer;
     if (!renderer) onReadyRef.current?.();
     renderer?.setStyle(styleRef.current);
@@ -369,7 +371,7 @@ export function RisographVideo({
       renderer = null;
     };
     const restored = () => {
-      renderer = createRisographRenderer(canvas);
+      renderer = createRisographRenderer(canvas, settleToWorkflow);
       rendererRef.current = renderer;
       renderer?.setStyle(styleRef.current);
       if (timedEntranceStarted || (entranceAt === undefined && (skipEntrance || section?.dataset.filmRevealed === "true"))) beginEntrance();
@@ -420,7 +422,7 @@ export function RisographVideo({
       rendererRef.current = null;
       for (const property of ["position", "max-width", "width", "height", "left", "top"]) video.style.removeProperty(property);
     };
-  }, [videoRef, enabled, secretTriggerRef, skipEntrance, entranceAt]);
+  }, [videoRef, enabled, secretTriggerRef, skipEntrance, entranceAt, settleToWorkflow]);
 
   if (!enabled) return null;
   return <>

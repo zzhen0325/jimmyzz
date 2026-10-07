@@ -9,6 +9,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { ScrollBend } from "./scroll-bend";
 import type { Asset } from "@/lib/site-data";
 export function CaseGallery({
   assets,
@@ -33,11 +34,12 @@ export function CaseGallery({
   };
   return (
     <>
-      <div className="case-gallery">
+      <ScrollBend key={projectTitle} className="case-gallery">
         {assets.map((asset, index) => (
           <section key={asset.name} id={asset.name} className="case-chapter">
             <button
               className="chapter-image"
+              data-work-skew
               onClick={() => show(index)}
               aria-label={`查看${projectTitle}第 ${index + 1} 张大图`}
             >
@@ -49,7 +51,7 @@ export function CaseGallery({
             </button>
           </section>
         ))}
-      </div>
+      </ScrollBend>
       <dialog
         ref={dialog}
         className="asset-lightbox"
@@ -91,7 +93,7 @@ export function CaseGallery({
             </button>
           </div>
         </div>
-        <div className="lightbox-body" data-lenis-prevent>
+        <div className="lightbox-body" data-native-scroll>
           {item && (
             <img
               src={item.src}

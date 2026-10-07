@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { playSound } from "@/lib/site-sound";
 import { gsap, useGSAP } from "@/lib/gsap";
 
 export function ProjectTransition() {
@@ -34,6 +35,7 @@ export function ProjectTransition() {
       event.preventDefault();
       if (pending.current) return;
       pending.current = url.pathname;
+      playSound("transition", { delay: .12 });
       curtain.dataset.active = "true";
       window.dispatchEvent(new CustomEvent("project-transition", { detail: true }));
       const href = url.pathname + url.search + url.hash;

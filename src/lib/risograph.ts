@@ -267,7 +267,7 @@ function loadGrainImage() {
   });
 }
 
-export function createRisographRenderer(canvas: HTMLCanvasElement) {
+export function createRisographRenderer(canvas: HTMLCanvasElement, settleToWorkflow = false) {
   const gl = canvas.getContext("webgl2", {
     alpha: false,
     antialias: false,
@@ -493,15 +493,32 @@ export function createRisographRenderer(canvas: HTMLCanvasElement) {
       const orbitTime = orbitPhase * 24 / (Math.PI * 2);
       canvas.dataset.orbitPhase = String(orbitPhase);
       exiting = scrollProgress > 0.08;
+      // V1's five destination cards, measured in the final source-video frame.
+      const workflowCards = [
+        [0.183, 0.492, 0.148, 0.450], [0.341, 0.491, 0.148, 0.455],
+        [0.499, 0.491, 0.149, 0.455], [0.657, 0.491, 0.149, 0.453],
+        [0.815, 0.492, 0.147, 0.449],
+      ];
+      const progress = settleToWorkflow && lastSource.endsWith("/11.mp4")
+        ? Math.max(0, Math.min(1, (lastTime - 7.5) / 1.5)) : 0;
+      const alignment = progress * progress * (3 - 2 * progress);
       collagePanels.forEach((_, index) => {
         // Staggered contraction follows scroll position, so stopping never respawns panels.
         const exit = Math.max(0, Math.min(1, (scrollProgress - 0.08 - index * 0.035) / 0.32));
-        const remaining = 1 - exit * exit * (3 - 2 * exit);
+        const card = settleToWorkflow ? workflowCards[index] : undefined;
+        const remaining = card ? 1 : 1 - exit * exit * (3 - 2 * exit);
         const pose = sampleCollageMotion(entranceTime, index, orbitTime);
-        const w = side / canvas.width * pose.scale * remaining;
-        const h = side * 3 / 4 / canvas.height * pose.scale * remaining;
-        const targetX = centerX + pose.x * radius * (0.35 + 0.65 * remaining) / canvas.width;
-        const targetY = centerY + pose.y * radius * (0.35 + 0.65 * remaining) / canvas.height;
+        let w = side / canvas.width * pose.scale * remaining;
+        let h = side * 3 / 4 / canvas.height * pose.scale * remaining;
+        let targetX = centerX + pose.x * radius * (0.35 + 0.65 * remaining) / canvas.width;
+        let targetY = centerY + pose.y * radius * (0.35 + 0.65 * remaining) / canvas.height;
+        if (card) {
+          const [x, y, width, height] = card;
+          targetX += ((videoRect.x + x * videoRect.w) / canvas.width - targetX) * alignment;
+          targetY += (1 - (videoRect.y + y * videoRect.h) / canvas.height - targetY) * alignment;
+          w += (videoRect.w * width * 1.04 / canvas.width - w) * alignment;
+          h += (videoRect.h * height * 1.04 / canvas.height - h) * alignment;
+        }
         windowRotations[index] = 0;
         windowPositions.set([targetX, targetY, w, h], index * 4);
       });

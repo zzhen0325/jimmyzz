@@ -46,13 +46,16 @@ export function HoverLabel() {
       frame = 0;
     };
     const updateTarget = (hit: Element | null) => {
-      const surface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
+      const labeledSurface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
       const control = hit?.closest("a, button, input, textarea, select, [role='button']");
-      if (!finePointer.matches || !surface || (control && control !== surface)) {
+      if (!finePointer.matches) {
         hide();
         return;
       }
-      const text = surface.dataset.hoverLabel ?? "";
+      const surface = labeledSurface && (!control || control === labeledSurface)
+        ? labeledSurface
+        : document.documentElement;
+      const text = surface.dataset.hoverLabel?.trim() || "scroll";
       if (active !== surface || activeText !== text) {
         if (active !== surface) {
           active?.removeAttribute("data-hover-label-active");

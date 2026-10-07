@@ -3,8 +3,13 @@
 import { useRef, useState } from "react";
 import { Download, Pause, Play, RotateCcw, Settings2, X } from "lucide-react";
 import { useGSAP } from "@/lib/gsap";
-import { activityImageCount, createActivitySphere, sphereDefaults, type SphereParameters } from "@/lib/activity-sphere-scene";
+import { activityImageCount, createActivitySphere, sphereDefaults, orbitDefaults, type ActivityLayout, type SphereParameters } from "@/lib/activity-sphere-scene";
 import styles from "./activity-sphere.module.css";
+
+const orbitControls: { key: keyof SphereParameters; label: string; min: number; max: number; step: number }[] = [
+  { key: "orbitTilt", label: "轨道倾斜", min: -90, max: 90, step: 1 },
+  { key: "orbitDepth", label: "轨道纵深", min: 0, max: 1, step: 0.01 },
+];
 
 const controls: { key: keyof SphereParameters; label: string; min: number; max: number; step: number }[] = [
   { key: "speed", label: "旋转速度", min: 0, max: 3, step: 0.05 },
@@ -23,6 +28,9 @@ export function ActivitySphere() {
   const sceneRef = useRef<ReturnType<typeof createActivitySphere> | null>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   const playingRef = useRef(true);
+  const layoutRef = useRef<ActivityLayout>("sphere");
+  const savedParameters = useRef({ sphere: { ...sphereDefaults }, orbit: { ...orbitDefaults } });
+  const [layout, setLayout] = useState<ActivityLayout>("sphere");
   const parametersRef = useRef({ ...sphereDefaults });
   const exportUrlRef = useRef<string | null>(null);
   const [parameters, setParameters] = useState({ ...sphereDefaults });
@@ -48,7 +56,7 @@ export function ActivitySphere() {
       return;
     }
     sceneRef.current = scene;
-    scene.setParameters(parametersRef.current);
+    scene.setLayout(layoutRef.current, parametersRef.current);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const applyPreference = () => {
       playingRef.current = !reduced.matches;
@@ -79,6 +87,15 @@ export function ActivitySphere() {
     setParameters(parametersRef.current);
     sceneRef.current?.setParameters({ [key]: value });
   };
+  const changeLayout = (value: ActivityLayout) => {
+    if (value === layoutRef.current) return;
+    savedParameters.current[layoutRef.current] = { ...parametersRef.current };
+    layoutRef.current = value;
+    setLayout(value);
+    parametersRef.current = { ...savedParameters.current[value] };
+    setParameters(parametersRef.current);
+    sceneRef.current?.setLayout(value, parametersRef.current);
+  };
   const togglePlaying = () => {
     playingRef.current = !playingRef.current;
     setPlaying(playingRef.current);
@@ -86,10 +103,9 @@ export function ActivitySphere() {
   };
   const endDrag = () => { drag.current = null; sceneRef.current?.setDragging(false); };
   const reset = () => {
-    parametersRef.current = { ...sphereDefaults };
+    parametersRef.current = { ...(layoutRef.current === "orbit" ? orbitDefaults : sphereDefaults) };
     setParameters(parametersRef.current);
-    sceneRef.current?.setParameters(sphereDefaults);
-    sceneRef.current?.reset();
+    sceneRef.current?.setLayout(layoutRef.current, parametersRef.current);
   };
   const exportPng = async () => {
     if (!sceneRef.current || exporting) return;
@@ -120,7 +136,7 @@ export function ActivitySphere() {
     <canvas
       ref={canvasRef}
       className={styles.canvas}
-      aria-label={`${activityImageCount} 张活动海报组成的三维旋转图片球体，方向键旋转，空格暂停或播放`}
+      aria-label={`${activityImageCount} 张活动海报组成的${layout === "orbit" ? "倾斜环绕轨道" : "三维旋转图片球体"}，方向键旋转，空格暂停或播放`}
       tabIndex={0}
       onPointerDown={(event) => {
         if (drag.current) return;
@@ -154,12 +170,23 @@ export function ActivitySphere() {
         <button type="button" onClick={() => setPanelOpen(!panelOpen)} aria-label={panelOpen ? "隐藏参数" : "显示参数"} aria-expanded={panelOpen} aria-controls="sphere-parameters"><Settings2 size={16} /></button>
       </div>
     </div>
-    {panelOpen && <aside className={styles.panel} id="sphere-parameters" aria-label="球体参数">
+    {panelOpen && <aside className={styles.panel} id="sphere-parameters" aria-label="排列与动效参数">
       <header><span>参数</span><button type="button" onClick={() => setPanelOpen(false)} aria-label="关闭参数面板"><X size={16} /></button></header>
-      {controls.map(({ key, label, min, max, step }) => <label className={styles.control} key={key}>
-        <span>{label}<output>{key === "count" ? Math.round(parameters[key]) : `${parameters[key].toFixed(2)}×`}</output></span>
+      <div className={styles.modes} role="group" aria-label="排列方式">
+        <button type="button" aria-pressed={layout === "sphere"} onClick={() => changeLayout("sphere")}>球体分布</button>
+        <button type="button" aria-pressed={layout === "orbit"} onClick={() => changeLayout("orbit")}>轨道环绕</button>
+      </div>
+      {layout === "orbit" && <p className={styles.modeHint}>Orbit Showcase · 默认 12 秒一圈</p>}
+      {[...controls, ...(layout === "orbit" ? orbitControls : [])].map(({ key, label: originalLabel, min, max, step }) => {
+        const label = layout === "orbit" ? originalLabel.replace("球体", "轨道") : originalLabel;
+        return <label className={styles.control} key={key}>
+        <span>{label}<output>{key === "orbitTilt" ? `${parameters[key]}°` : key === "count" ? Math.round(parameters[key]) : `${parameters[key].toFixed(2)}×`}</output></span>
         <input aria-label={label} type="range" min={min} max={max} step={step} value={parameters[key]} onChange={(event) => update(key, Number(event.target.value))} />
-      </label>)}
+      </label>; })}
+      {layout === "orbit" && <div className={styles.modes} role="group" aria-label="旋转方向">
+        <button type="button" aria-pressed={parameters.direction === 1} onClick={() => update("direction", 1)}>顺时针</button>
+        <button type="button" aria-pressed={parameters.direction === -1} onClick={() => update("direction", -1)}>逆时针</button>
+      </div>}
       <footer><span>{activityImageCount} 张素材 · {Math.round(parameters.count)} 张卡片</span><button type="button" onClick={reset}>恢复默认</button></footer>
       <label className={styles.exportResolution}>导出长边
         <select aria-label="导出分辨率" value={exportResolution} disabled={exporting} onChange={event => setExportResolution(Number(event.target.value))}>
@@ -171,7 +198,7 @@ export function ActivitySphere() {
       {exportStatus && <p className={styles.exportStatus} role="status">{exportStatus}{exportUrl && <a href={exportUrl} download={exportFilename}>下载 PNG</a>}</p>}
       {exportUrl && <a className={styles.exportPreview} href={exportUrl} download={exportFilename} aria-label="下载透明图片预览">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={exportUrl} alt="透明背景球体导出预览" />
+        <img src={exportUrl} alt="透明背景排列导出预览" />
       </a>}
     </aside>}
   </main>;

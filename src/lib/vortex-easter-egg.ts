@@ -14,9 +14,13 @@ const impactDuration = .36;
 const stagger = .075;
 const absorbDuration = .56;
 const collapseDuration = .24;
-const hiddenDuration = .12;
+const transferDuration = .18;
+const collapseOverlap = .1;
+const emitOverlap = .16;
+const throatScale = .16;
 const appearDuration = .28;
 const emitDuration = .86;
+const mouthImpulseDuration = .078;
 const exitCloseDuration = .16;
 const settleDuration = .16;
 type FlightObject = { object: THREE.Object3D; billboard?: boolean };
@@ -64,15 +68,23 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     ].sort((a, b) => a.distance - b.distance);
     const order = new Map(queue.map(({ item }, index) => [item, index]));
     const absorbEnd = impactDuration + Math.max(0, queue.length - 1) * stagger + absorbDuration;
-    const disappearEnd = absorbEnd + collapseDuration;
-    const appearStart = disappearEnd + hiddenDuration;
-    const emitStart = appearStart + appearDuration;
-    const emitEnd = emitStart + Math.max(0, queue.length - 1) * stagger + emitDuration;
+    const collapseStart = absorbEnd - collapseOverlap;
+    const disappearEnd = collapseStart + collapseDuration;
+    const appearStart = disappearEnd + transferDuration;
+    const appearEnd = appearStart + appearDuration;
+    const emitStart = appearEnd - emitOverlap;
+    // A few deliberate releases lead into a rapid stream. Share this schedule
+    // with flights and mouth reactions so the portal follows the same rhythm.
+    const lastIndex = Math.max(0, queue.length - 1);
+    const emitSpan = Math.min(2.4, lastIndex * stagger);
+    const emitDelays = queue.map((_, index) => lastIndex === 0 ? 0
+      : emitSpan * Math.log1p(15 * index / lastIndex) / Math.log(16));
+    const emitEnd = emitStart + emitSpan + emitDuration;
     // Close once the last object has cleared the mouth; its settling flight continues.
-    const exitCloseStart = emitEnd - emitDuration + .18;
+    const exitCloseStart = emitEnd - emitDuration + emitDuration * .3;
     const duration = emitEnd + settleDuration;
     const inverseCamera = camera.quaternion.clone().invert();
-    return { gun, gunLocal, gunQuaternion: gun.quaternion.clone(), aimedQuaternion: gun.quaternion.clone(), muzzle: new THREE.Vector3(), order, absorbEnd, disappearEnd, appearStart, emitStart, emitEnd, exitCloseStart, duration, vortex, origin, destination, originLocal: origin.clone().applyQuaternion(inverseCamera), destinationLocal: destination.clone().applyQuaternion(inverseCamera), returnPosition: origin.clone(), from, to, dom, meshes, reduced, onComplete, time: 0, scale: vortex.scale.clone(), quaternion: vortex.quaternion.clone() };
+    return { gun, gunLocal, gunQuaternion: gun.quaternion.clone(), aimedQuaternion: gun.quaternion.clone(), muzzle: new THREE.Vector3(), order, emitDelays, absorbEnd, collapseStart, disappearEnd, appearStart, appearEnd, emitStart, emitEnd, exitCloseStart, duration, vortex, origin, destination, originLocal: origin.clone().applyQuaternion(inverseCamera), destinationLocal: destination.clone().applyQuaternion(inverseCamera), returnPosition: origin.clone(), from, to, dom, meshes, reduced, onComplete, time: 0, scale: vortex.scale.clone(), quaternion: vortex.quaternion.clone() };
   }
   function restore(completed: boolean) {
     if (!running) return;
@@ -95,13 +107,23 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
   }
   // Short overlapping flights: objects shrink only as they reach the mouth,
   // and grow as they leave it, rather than scaling the whole scene together.
-  function flight(t: number, index: number, emitStart: number) {
-    const delay = index * stagger;
+  function flight(t: number, index: number, emitStart: number, emitDelays: number[]) {
     const incoming = t < emitStart;
+    const delay = incoming ? index * stagger : emitDelays[index];
     const p = incoming ? clamp((t - impactDuration - delay) / absorbDuration) : clamp((t - emitStart - delay) / emitDuration);
-    const travel = incoming ? easeIn(p) : easeOut(p);
+    // Start the release at rest, accelerate through the mouth, then coast home.
+    // Both endpoint velocities are zero, avoiding a kick at the phase boundary.
+    const travel = incoming ? easeIn(p) : 1 - (1 - p) ** 4 * (1 + 4 * p);
     const scale = incoming ? 1 - smooth((travel - .55) / .45) : smooth(travel / .45);
-    return { incoming, travel, scale, angle: (incoming ? travel : 1 - travel) * Math.PI * 1.35, visible: incoming ? p < 1 : p > 0 };
+    // Use the same real-time impulse in both directions. Mapping pressure to
+    // travel stretched the outgoing reaction to ~258ms versus ~78ms on intake.
+    // The outgoing center is where its travel curve reaches .225 (mid-mouth).
+    const elapsed = t - (incoming ? impactDuration : emitStart) - delay;
+    const impulseStart = incoming ? absorbDuration - mouthImpulseDuration
+      : emitDuration * .181333101454 - mouthImpulseDuration / 2;
+    const impulse = (elapsed - impulseStart) / mouthImpulseDuration;
+    const pressure = impulse > 0 && impulse < 1 ? Math.sin(impulse * Math.PI) ** 2 : 0;
+    return { incoming, travel, scale, pressure, angle: (incoming ? travel : travel - 1) * Math.PI * 1.35, visible: incoming ? p < 1 : p > 0 };
   }
   return {
     get active() { return !!running; },
@@ -171,31 +193,60 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
           gunMesh.quaternion.copy(s.aimedQuaternion.clone().slerp(gunMesh.quaternion, easeOut(t / impactDuration)));
         }
       }
-      canvas.dataset.vortexPhase = t < impactDuration ? "impact" : t < s.absorbEnd ? "absorb" : t < s.appearStart ? "hidden" : t < s.emitStart ? "appear" : "emit";
-      const exit = t >= s.appearStart;
+      canvas.dataset.vortexPhase = t < impactDuration ? "impact" : t < s.absorbEnd ? "absorb" : t < s.appearStart ? "transfer" : t < s.emitStart ? "appear" : "emit";
+      const transfer = smooth((t - s.disappearEnd) / transferDuration);
       let size = t < impactDuration ? .16 + easeOut(t / impactDuration) * 2.34
-        : t < s.absorbEnd ? 2.5
-        : t < s.disappearEnd ? 2.5 * (1 - easeIn((t - s.absorbEnd) / collapseDuration))
-        : t < s.appearStart ? 0
-        : t < s.emitStart ? 2.5 * easeOut((t - s.appearStart) / appearDuration)
+        : t < s.collapseStart ? 2.5
+        : t < s.disappearEnd ? throatScale + (2.5 - throatScale) * (1 - smooth((t - s.collapseStart) / collapseDuration))
+        : t < s.appearStart ? throatScale
+        : t < s.appearEnd ? throatScale + (2.5 - throatScale) * smooth((t - s.appearStart) / appearDuration)
         : 2.5 * (1 - easeIn((t - s.exitCloseStart) / exitCloseDuration));
       size = Math.max(0, size);
       s.vortex.visible = size > .001;
-      const inhale = smooth(t / impactDuration) * (1 - easeIn((t - s.absorbEnd) / collapseDuration));
-      const exhale = smooth((t - s.appearStart) / appearDuration) * (1 - easeIn((t - s.exitCloseStart) / exitCloseDuration));
-      const pulse = .72 + .28 * Math.pow(Math.sin(seconds * 14), 2);
-      const shake = (.035 * inhale + .05 * exhale) * pulse;
-      s.vortex.scale.copy(s.scale).multiplyScalar(size * (1 + Math.sin(seconds * 28) * .025 * exhale));
-      // Oscillate in real time; only the amplitude fades with the choreography.
-      const offset = new THREE.Vector3(Math.sin(seconds * 93) * shake, Math.cos(seconds * 117) * shake, 0).applyQuaternion(camera.quaternion);
-      s.vortex.position.copy(exit ? s.destination : s.origin).add(offset);
-      s.vortex.quaternion.copy(camera.quaternion);
-      s.vortex.rotateZ(Math.sin(seconds * 61) * shake * 1.4);
-      const screenShake = screen(s.vortex.position).sub(exit ? s.to : s.from);
       const inverseCamera = camera.quaternion.clone().invert();
+      const reaction = new THREE.Vector3();
+      let intake = 0, release = 0;
+      const respond = (index: number, x: number, y: number) => {
+        const f = flight(t, index, s.emitStart, s.emitDelays);
+        if (f.pressure === 0) return;
+        const length = Math.hypot(x, y) || 1;
+        // Pull toward arriving objects; recoil away from departing objects.
+        const force = f.pressure * (f.incoming ? .075 : -.075) / length;
+        reaction.x += (x * Math.cos(f.angle) - y * Math.sin(f.angle)) * force;
+        reaction.y += (x * Math.sin(f.angle) + y * Math.cos(f.angle)) * force;
+        if (f.incoming) intake += f.pressure; else release += f.pressure;
+      };
+      const mouth = t < s.emitStart ? s.origin : s.destination;
+      for (const mesh of s.meshes) {
+        if (!mesh.visible) continue;
+        const direction = mesh.position.clone().sub(mouth).applyQuaternion(inverseCamera);
+        respond(s.order.get(mesh)!, direction.x, direction.y);
+      }
+      const mouthScreen = t < s.emitStart ? s.from : s.to;
+      for (const item of s.dom) {
+        respond(s.order.get(item)!, item.center.x - mouthScreen.x, mouthScreen.y - item.center.y);
+      }
+      // Bound overlapping reactions without letting idle time generate movement.
+      reaction.multiplyScalar(1 / Math.max(1, intake + release));
+      const compression = clamp(intake), expansion = clamp(release);
+      const activity = clamp(intake + release);
+      // Both directions share a fine, fast tremor over the larger mouth reaction.
+      // Gate every oscillation with crossing pressure so idle gaps stay still.
+      const tremorX = Math.sin(seconds * 83) * .008 * activity;
+      const tremorY = Math.sin(seconds * 107) * .008 * activity;
+      const tremorTurn = Math.sin(seconds * 97) * .009 * activity;
+      reaction.x += tremorX;
+      reaction.y += tremorY;
+      s.vortex.scale.copy(s.scale).multiplyScalar(size * (1 - .05 * compression + .05 * expansion));
+      const offset = reaction.applyQuaternion(camera.quaternion);
+      // Keep a visible, compressed core moving between mouths: no empty cut.
+      s.vortex.position.lerpVectors(s.origin, s.destination, transfer).add(offset);
+      s.vortex.quaternion.copy(camera.quaternion);
+      s.vortex.rotateZ(.045 * (compression - expansion) + tremorTurn);
+      const screenShake = screen(s.vortex.position).sub(screen(s.origin.clone().lerp(s.destination, transfer)));
       s.meshes.forEach(mesh => {
         const { object, position, quaternion, scale, visible } = mesh;
-        const f = flight(t, s.order.get(mesh)!, s.emitStart);
+        const f = flight(t, s.order.get(mesh)!, s.emitStart, s.emitDelays);
         const mouth = f.incoming ? s.origin : s.destination;
         const relative = position.clone().sub(mouth).applyQuaternion(inverseCamera);
         const radial = f.incoming ? 1 - f.travel : f.travel;
@@ -210,7 +261,7 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       });
       s.dom.forEach(item => {
         const { node, center } = item;
-        const f = flight(t, s.order.get(item)!, s.emitStart);
+        const f = flight(t, s.order.get(item)!, s.emitStart, s.emitDelays);
         const mouth = f.incoming ? s.from : s.to;
         const radial = f.incoming ? 1 - f.travel : f.travel;
         const x = center.x - mouth.x, y = center.y - mouth.y;

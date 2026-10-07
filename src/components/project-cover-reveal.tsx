@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useRef, type ReactNode, type CSSProperties } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import styles from "./project-cover-reveal.module.css";
 
-export function ProjectCoverReveal({ children, className }: {
+export function ProjectCoverReveal({ children, className, style }: {
   children: ReactNode;
   className: string;
+  style?: CSSProperties;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -107,7 +108,7 @@ export function ProjectCoverReveal({ children, className }: {
   }, { scope: root });
 
   return (
-    <div ref={root} className={`${className} ${styles.cover}`} data-work-skew>
+    <div ref={root} className={`${className} ${styles.cover}`} style={style} data-work-skew>
       {children}
       <div ref={overlayRef} className={styles.pastel} aria-hidden="true" />
     </div>
