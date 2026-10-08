@@ -8,16 +8,15 @@ import { ArrowUpRight } from "lucide-react";
 import { Footer } from "@/components/site-chrome";
 import { ProjectHeader, ProjectCopy } from "@/components/project-detail-chrome";
 import { CaseGallery } from "@/components/case-gallery";
-import { projects, projectAssets, projectCover } from "@/lib/site-data";
-export function generateStaticParams() {
-  return projects.map((p) => ({ slug: p.slug }));
-}
+import { readContent } from "@/lib/content-store";
+export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const { projects } = await readContent();
   const project = projects.find((p) => p.slug === slug);
   return project
     ? { title: project.title, description: project.summary }
@@ -29,10 +28,11 @@ export default async function ProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const { projects } = await readContent();
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
   if (slug === "portfolio-v1") return <V1Experience />;
-  const assets = projectAssets(slug);
+  const assets = project.assets;
   const index = projects.indexOf(project);
   const next = projects[(index + 1) % projects.length];
   return (
@@ -91,7 +91,7 @@ export default async function ProjectPage({
           </div>
           <div className="next-art">
             <Image
-              src={projectCover(next.slug)}
+              src={next.thumbnail}
               width={next.coverWidth ?? 960}
               height={next.coverHeight ?? 540}
               unoptimized

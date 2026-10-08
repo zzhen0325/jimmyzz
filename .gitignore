@@ -39,3 +39,6 @@ next-env.d.ts
 /output
 /test-results
 /playwright-report
+
+# Personal CMS content and uploads (back up this directory separately)
+/data/

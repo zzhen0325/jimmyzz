@@ -61,3 +61,8 @@
   .caption h3 { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .image img, .image video, .image canvas { transition: none; } }
+
+/* Explicit admin sizing overrides the default stagger without changing its order. */
+.project[data-admin-size="small"] { width: 65%; justify-self: center; }
+.project[data-admin-size="large"] { width: 100%; justify-self: stretch; }
+.project[data-admin-size="large"][data-portrait] { width: 100%; }

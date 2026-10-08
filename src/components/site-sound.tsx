@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { initSound, playSound, setSoundEnabled, soundDisabledOnServer, soundEnabled, subscribeSound, suspendSound, unlockSound } from "@/lib/site-sound";
@@ -12,8 +13,10 @@ function target(event: Event) {
 }
 
 export function SiteSound() {
+  const admin = usePathname().startsWith("/admin");
   const enabled = useSyncExternalStore(subscribeSound, soundEnabled, soundDisabledOnServer);
   useEffect(() => {
+    if (admin) return;
     initSound();
     let transitioning = false;
     const hover = (event: PointerEvent) => {
@@ -46,7 +49,8 @@ export function SiteSound() {
       window.removeEventListener("project-transition", transition);
       suspendSound();
     };
-  }, []);
+  }, [admin]);
+  if (admin) return null;
   return <button type="button" className={styles.toggle} data-sound-toggle aria-label={enabled ? "关闭音效" : "开启音效"} aria-pressed={enabled} title={enabled ? "关闭音效" : "开启音效"} onClick={() => {
     unlockSound();
     setSoundEnabled(!enabled);

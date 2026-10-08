@@ -35,37 +35,25 @@ export const home3DConfig = {
     size: 1.85,
     material: { color: "#25282d", metalness: .72, roughness: .25, envMapIntensity: 1.15, clearcoat: .8, clearcoatRoughness: .16 },
   },
-  // Figma 177:9287 + 白鸟邮差：独立实体模型，与原有漂浮物共用碰撞和材质景深。
+  // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
     { file: "asterisk", size: .65 },
     { file: "c-mark", size: .75 },
-    { file: "arrow", size: .95 },
     { file: "vinyl", size: 1.1 },
-    { file: "bird-courier", size: 1.85 },
   ],
   // 材质参考物件：保留实时 PBR，不参与 matcap 简化和后景石膏覆盖。
   materialStudies: [
     { file: "iridescent-lattice", size: 1.05 },
-    { file: "lemon-bulb", size: .55 },
-    { file: "mint-starburst", size: .95 },
     { file: "chrome-pebble", size: .85 },
     { file: "pink-soft-blob", size: 1.1 },
-    { file: "lemon-molecule", size: .5 },
-    { file: "aqua-squiggle", size: .7 },
     { file: "coral-pleated-tower", size: 1.15 },
     { file: "lemon-chain", size: .65 },
     { file: "cobalt-twist", size: .85 },
-    { file: "cloth-cloud", size: .8 },
-    { file: "orange-pendant", size: .85 },
     { file: "chrome-curl", size: .7 },
     { file: "cloth-three-prong", size: .85 },
-    { file: "blue-resin-seed", size: .85 },
     { file: "clear-glass-clover", size: .65 },
-    { file: "cobalt-branch", size: .9 },
     { file: "amber-glass-spindle", size: 1.05 },
     { file: "chrome-wrapped-lemon", size: 1.05 },
-    { file: "cherry-chess-knight", size: 1.15 },
-    { file: "lime-resin-bubble", size: 1.35 },
   ],
   plaques: {
     // 每个立牌可用 material 覆盖下方共用参数；letteringMaterial 单独调整文字。
@@ -116,7 +104,12 @@ export const home3DConfig = {
     material: { color: "#ffffff", opacity: 1, transparent: true, alphaTest: .04, depthWrite: true, side: DoubleSide, toneMapped: false },
   },
   // 透明抠图始终朝向镜头，与现有物件共享漂浮和碰撞。
-  cutouts: [] as { file: string; size: number }[],
+  cutouts: [
+    { file: "weather-cylinder", size: 1.15 },
+    { file: "flat-apple", size: 1.25 },
+    { file: "tufted-flower", size: 1.4 },
+    { file: "cape-horse", size: 1.85 },
+  ] satisfies { file: string; size: number }[],
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
     size: 1, pixels: 80, speed: .65, arms: 5,

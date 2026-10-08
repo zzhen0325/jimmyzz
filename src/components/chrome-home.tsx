@@ -44,7 +44,6 @@ export function ChromeHero() {
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
       {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
       <div className={styles.stage} inert={loading}>
-        <div className={styles.fallback} aria-hidden="true">ZZ</div>
         <ChromeScene floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} paused={loading} />
         {view === "intro" && <div className={styles.motionControl} onKeyDown={event => { if (event.key === "Escape") { setMotionMenu(false); event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus(); } }}>
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>

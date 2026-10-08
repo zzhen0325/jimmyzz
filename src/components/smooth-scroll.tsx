@@ -7,6 +7,7 @@ import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 export function SmoothScroll() {
   const pathname = usePathname();
   useGSAP(() => {
+    if (pathname.startsWith("/admin")) return;
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", createInertialScroll);
     return () => mm.revert();

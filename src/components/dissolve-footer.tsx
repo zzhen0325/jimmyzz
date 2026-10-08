@@ -52,6 +52,27 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
     let fontSize = 0;
     let widths: number[] = [];
     const letters = [..."Jimmyzz"];
+    const copies = 18;
+    const pointer = { x: 0, y: 0 };
+    const echoes = Array.from({ length: copies + 1 }, () => ({ x: 0, y: 0 }));
+
+    const resetPointer = () => { pointer.x = 0; pointer.y = 0; };
+    const movePointer = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || pausedRef.current || motion.matches) return;
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      pointer.x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
+      pointer.y = Math.max(-1, Math.min(1, (event.clientY - rect.top) / rect.height * 2 - 1));
+    };
+
+    const followPointer = (elapsed: number) => {
+      // Each contour catches up at a different rate, leaving a soft directional trail.
+      echoes.forEach((echo, index) => {
+        const ease = 1 - Math.exp(-elapsed / (85 + index * 22));
+        echo.x += (pointer.x - echo.x) * ease;
+        echo.y += (pointer.y - echo.y) * ease;
+      });
+    };
 
     const measure = () => {
       const rect = canvas.getBoundingClientRect();
@@ -81,16 +102,17 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
       maskContext.textBaseline = "middle";
       maskContext.fillStyle = "#fff";
       const textWidth = widths.reduce((sum, width) => sum + width, 0);
-      const copies = 18;
       const spacing = Math.min(h * .026, fontSize * .085);
       const amplitude = Math.min(h * .075, fontSize * .27);
       const baseY = h * .43 - copies * spacing * .25;
+      const travelX = Math.min(w * .065, fontSize * .35);
+      const travelY = Math.min(h * .085, fontSize * .4);
       for (let echo = copies; echo >= 0; echo--) {
         const fade = Math.pow(1 - echo / copies, 1.5);
-        let x = (w - textWidth) / 2;
+        let x = (w - textWidth) / 2 + echoes[echo].x * travelX;
         for (let index = 0; index < letters.length; index++) {
           const phase = time * .75 + index * .4 - echo * .3;
-          const y = baseY + echo * spacing + Math.sin(phase) * amplitude;
+          const y = baseY + echo * spacing + Math.sin(phase) * amplitude + echoes[echo].y * travelY;
           maskContext.save();
           maskContext.translate(x + widths[index] / 2, y);
           maskContext.scale(1, 1.22);
@@ -134,7 +156,11 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
       if (disposed || !visible || document.hidden) return;
       const elapsed = lastTime ? now - lastTime : 0;
       if (elapsed >= 1000 / 24 || !lastTime || dirty) {
-        if (!pausedRef.current && !motion.matches) time += Math.min(elapsed, 80) / 1000;
+        if (!pausedRef.current && !motion.matches) {
+          const delta = Math.min(elapsed, 80);
+          time += delta / 1000;
+          followPointer(delta);
+        }
         if (dirty || (!pausedRef.current && !motion.matches)) draw();
         lastTime = now;
       }
@@ -153,7 +179,16 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
       resume();
     });
     intersection.observe(canvas);
-    const motionChanged = () => { dirty = true; resume(); };
+    const motionChanged = () => {
+      resetPointer();
+      echoes.forEach(echo => { echo.x = 0; echo.y = 0; });
+      dirty = true;
+      resume();
+    };
+    canvas.addEventListener("pointermove", movePointer);
+    canvas.addEventListener("pointerleave", resetPointer);
+    canvas.addEventListener("pointercancel", resetPointer);
+    window.addEventListener("blur", resetPointer);
     motion.addEventListener("change", motionChanged);
     document.addEventListener("visibilitychange", resume);
     void document.fonts.ready.then(() => { if (!disposed) { measure(); resume(); } });
@@ -163,6 +198,10 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
       cancelAnimationFrame(frame);
       resize.disconnect();
       intersection.disconnect();
+      canvas.removeEventListener("pointermove", movePointer);
+      canvas.removeEventListener("pointerleave", resetPointer);
+      canvas.removeEventListener("pointercancel", resetPointer);
+      window.removeEventListener("blur", resetPointer);
       motion.removeEventListener("change", motionChanged);
       document.removeEventListener("visibilitychange", resume);
     };

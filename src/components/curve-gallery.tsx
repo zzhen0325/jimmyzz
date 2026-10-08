@@ -7,36 +7,24 @@ import Link from "next/link";
 import { useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
-import { projects, projectCover } from "@/lib/site-data";
-import { curveGallery as detailImages, selectedWork } from "@/lib/projects-config";
+import { useContent } from "./content-provider";
 import Image from "next/image";
 import "./ribbon-gallery.css";
 
-// The end of the grid becomes the beginning of the strip, with identical media.
-const selectedProjects = selectedWork.order.flatMap((slug) => {
-  const project = projects.find((item) => item.slug === slug);
-  return project ? [project] : [];
-});
-const images = [
-  ...[...selectedProjects].reverse().map((project) => ({
-    name: `cover-${project.slug}`, project: project.slug, title: project.title,
-    src: project.selectedWorkCover, width: project.coverWidth ?? 960, height: project.coverHeight ?? 540, sourceProject: project.slug,
-  })),
-  ...detailImages.map((image) => ({ ...image, sourceProject: null })),
-];
-
 export function CurveGallery() {
+  const { projects, gallery: images } = useContent();
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const jump = useRef<(index: number) => void>(() => {});
   const current = useRef(0);
   const [active, setActive] = useState(0);
-  const project = projects.find((item) => item.slug === images[active].project)!;
+  const project = projects.find((item) => item.slug === images[active]?.project)!;
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add(motionConditions, ({ conditions }) => {
-      const root = stage.current!;
+      const root = stage.current;
+      if (!root || !images.length) return;
       const cards = Array.from(root.querySelectorAll<HTMLElement>(".ribbon-card"));
       if (conditions?.reduced) {
         jump.current = (index) => {
@@ -97,6 +85,8 @@ export function CurveGallery() {
         return t * t * (3 - 2 * t);
       };
       const coverCount = sources.filter(Boolean).length;
+      let entranceSoundStep = 0;
+      let refreshingEntrance = false;
       const render = () => {
         const progress = entrance.value;
         const landing = progress >= .9999;
@@ -119,8 +109,8 @@ export function CurveGallery() {
           const ratio = images[i].width / images[i].height;
           const widthFactor = Math.min(1, ratio);
           const heightFactor = Math.min(1, 1 / ratio);
-          const targetWidth = size * scale * widthFactor;
-          const targetHeight = size * scale * heightFactor;
+          const targetWidth = size * scale * (images[i].scale ?? 1) * widthFactor;
+          const targetHeight = size * scale * (images[i].scale ?? 1) * heightFactor;
           const targetX = stageWidth * .5 + d * Math.max(24, stageWidth * .029)
             + Math.tanh(d * .48) * size * 1.5 - targetWidth / 2;
           const targetY = baseline - targetHeight;
@@ -186,10 +176,28 @@ export function CurveGallery() {
           // Leave another 35vh to view the final covers before pickup, and move
           // the end by the same distance to preserve the transition's pace.
           id: "grid-to-ribbon", trigger: root, start: "top 65%", end: () => `top top-=${window.innerHeight * 1.95}`, scrub: true,
-          invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
+          invalidateOnRefresh: true,
+          onRefreshInit: () => { refreshingEntrance = true; },
+          onRefresh: () => {
+            measure(); render();
+            entranceSoundStep = Math.floor(entrance.value * 12);
+            refreshingEntrance = false;
+          },
         },
       });
-      transition.to(entrance, { value: 1, duration: 1, ease: "none", onUpdate: render }, 0);
+      transition.to(entrance, {
+        value: 1, duration: 1, ease: "none",
+        onUpdate: () => {
+          // Sound each crossed interval in either direction through pickup and orbit.
+          const step = Math.floor(entrance.value * 12);
+          if (coverCount > 0 && step !== entranceSoundStep && !refreshingEntrance) {
+            const crossedStep = Math.max(step, entranceSoundStep) - 1;
+            playSound("step", { step: crossedStep % 6 });
+          }
+          entranceSoundStep = step;
+          render();
+        },
+      }, 0);
       transition.to(work?.querySelectorAll("[data-work-caption]") ?? [], {
         opacity: 0, duration: .18, stagger: { each: .025, from: "end" }, ease: "none",
       }, 0);
@@ -256,6 +264,7 @@ export function CurveGallery() {
     return () => mm.revert();
   }, { scope: section });
 
+  if (!images.length) return null;
   return (
     <section id="gallery" ref={section} className="ribbon-section" aria-label="视觉漫游">
       <div ref={stage} className="ribbon-stage" aria-label="滚动画廊">
@@ -266,7 +275,7 @@ export function CurveGallery() {
             <Link className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
               <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
-                ? <video src={item.src} poster={projectCover(item.project)} muted loop playsInline preload="none" aria-label={item.title} />
+                ? <video src={item.src} poster={projects.find(p => p.slug === item.project)?.thumbnail} muted loop playsInline preload="none" aria-label={item.title} />
                 : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 70vw, 440px" draggable={false} />
               }</span>
             </Link>
@@ -274,7 +283,7 @@ export function CurveGallery() {
         </div>
         <div className="ribbon-footer">
           <span className="ribbon-count"><ScrambleText>{String(active + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>
-          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{project.title}</ScrambleText></span><small><ScrambleText>{images[active].title}</ScrambleText></small></div>
+          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{project?.title}</ScrambleText></span><small><ScrambleText>{images[active].title}</ScrambleText></small></div>
           <div className="ribbon-actions"><button onClick={() => jump.current(active - 1)} disabled={active === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(active + 1)} disabled={active === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button><Link href={`/work/${project.slug}`}><ScrambleText>查看项目 </ScrambleText><ArrowUpRight size={16} /></Link></div>
         </div>
       </div>
