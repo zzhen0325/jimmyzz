@@ -25,9 +25,9 @@ cash-roll 额外要求：Remove the stray black fragment at the left edge.
 
 当前首页改用以下四张透明 WebP（目录 `public/assets/images/floating/`）：
 - `weather-cylinder.webp`：好天气气罐，size 1.15。
-- `flat-apple.webp`：扁苹果，size 1.25。
-- `tufted-flower.webp`：绒毛花瓶，size 1.4。
-- `cape-horse.webp`：红披风奔马，size 1.85；原图已有 alpha，直接保留。
+- `flat-apple.png`：扁苹果，size 1.25。
+- `tufted-flower.png`：绒毛花瓶，size 1.4。
+- `cape-horse.png`：红披风奔马，size 1.85；原图已有 alpha，直接保留。
 
 前三张使用内置 image_gen 分别抠图，提示词（name 分别为 weather-cylinder、flat-apple、tufted-flower）：
 

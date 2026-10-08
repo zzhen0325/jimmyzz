@@ -1,4 +1,5 @@
 import { DoubleSide, type MeshPhysicalMaterialParameters } from "three";
+import type { GlassShapeConfig } from "./floating-glass";
 
 export type ModelMaterialConfig = MeshPhysicalMaterialParameters & { normalStrength?: number };
 export type FloatingModelConfig = {
@@ -21,9 +22,9 @@ export const home3DConfig = {
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .5, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .6, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   logo: {
-    scale: 1.4, // 正常尺寸上限
+    scale: 1, // 正常尺寸上限
     maxViewportWidth: .87, // 参考图：两侧各留约 6.5%。
     mobileViewportWidth: .82,
     maxViewportHeight: .54,
@@ -37,47 +38,44 @@ export const home3DConfig = {
   },
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
-    { file: "asterisk", size: .65 },
     { file: "c-mark", size: .75 },
     { file: "vinyl", size: 1.1 },
   ],
-  // 材质参考物件：保留实时 PBR，不参与 matcap 简化和后景石膏覆盖。
-  materialStudies: [
-    { file: "iridescent-lattice", size: 1.05 },
-    { file: "chrome-pebble", size: .85 },
-    { file: "pink-soft-blob", size: 1.1 },
-    { file: "coral-pleated-tower", size: 1.15 },
-    { file: "lemon-chain", size: .65 },
-    { file: "cobalt-twist", size: .85 },
-    { file: "chrome-curl", size: .7 },
-    { file: "cloth-three-prong", size: .85 },
-    { file: "clear-glass-clover", size: .65 },
-    { file: "amber-glass-spindle", size: 1.05 },
-    { file: "chrome-wrapped-lemon", size: 1.05 },
-  ],
+  // 七个彩边模拟玻璃：灰度高度图驱动形变，共用背景采样；保留实体厚度与圆角。
+  glass: {
+    items: [
+      { name: "lavender-square", shape: "square", color: "#b875ff", size: .86 },
+      { name: "lime-square", shape: "square", color: "#dfff58", size: .80 },
+      { name: "pink-circle", shape: "circle", color: "#ff79f3", size: .88 },
+      { name: "cyan-hexagon", shape: "hexagon", color: "#4de6ff", size: .91 },
+      { name: "green-rosette", shape: "rosette", color: "#32d46d", size: .85 },
+      { name: "lime-triangle", shape: "triangle", color: "#dfff58", size: .95 },
+      { name: "coral-double-pill", shape: "double-pill", color: "#ff8987", size: .90 },
+    ] satisfies GlassShapeConfig[],
+    finish: {
+      depth: .09, bevel: .17, dome: .009, refraction: .32,
+      dispersion: .025, glow: .32,
+    },
+  },
+  // 黑胶：同心沟槽沿径向拉长高光，中心纸标单独保留原图。
+  vinyl: {
+    color: "#090a0c", roughness: .27, anisotropy: .9, ior: 1.54,
+    envMapIntensity: 1, grooveCount: 180, grooveStrength: .12,
+    labelRoughness: .78,
+  },
   plaques: {
     // 每个立牌可用 material 覆盖下方共用参数；letteringMaterial 单独调整文字。
     // 留空保留现有颜色和纹理，例：letteringMaterial: { color: "#101010" }。
     items: [
-      { file: "01_think", size: 0.8, color: "#ffffff", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
       { file: "02_plan", size: 0.8, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
       { file: "03_do", size: 0.8, color: "#ffffff", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
       { file: "04_review", size: 0.6, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
-      { file: "05_repeat", size: 0.8, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
     ],
     material: { roughness: .18, metalness: 0.2, envMapIntensity: .95, clearcoat: .8, clearcoatRoughness: .18 },
   },
-  // Blender 模型：灰色情绪角色、蓝色 ZZ 与笑脸键帽。
+  // Blender 模型：蓝色 ZZ 与笑脸键帽。
   characters: {
     items: [
-
-      {
-        file: "02_meh", size: 1.0, axisScale: [1, 1, 1],
-        materials: {
-          "Cloud clay": { color: "#FFFFFF", metalness: 0, roughness: .54, clearcoat: .12, clearcoatRoughness: .4, envMapIntensity: .8 },
-          "Raised charcoal expressions": { color: "#101311", metalness: 0, roughness: .48, clearcoat: .08, clearcoatRoughness: .3, envMapIntensity: .65 },
-        },
-      },
       {
         file: "06_blue_zz", size: .6, axisScale: [1, 1, 1], // 第三个值调整厚度。
         materials: {
@@ -115,7 +113,7 @@ export const home3DConfig = {
     size: 1, pixels: 80, speed: .65, arms: 5,
   },
   portalGun: {
-    size: .9,
+    size: 1.3,
     materials: {
       shell: { color: "#35B221", metalness: .08, roughness: .4, clearcoat: 0.8, clearcoatRoughness: .16, envMapIntensity: 1.1 },
       trim: { color: "#FAFF66", metalness: .02, roughness: .25, clearcoat: .65 },
@@ -135,7 +133,7 @@ export const home3DConfig = {
   },
   // 金属外观也受环境与灯光影响。
   lighting: {
-    // 参考站原图：https://www.twomuch.studio/glb/bg_medium.jpg
+   
     exposure: 1, environment: "/assets/environments/twomuch-bg-medium.jpg", environmentIntensity: .9,
     // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。
     reflectionBackgroundIntensity: 1.1,

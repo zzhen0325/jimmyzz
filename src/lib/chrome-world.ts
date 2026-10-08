@@ -15,18 +15,20 @@ import { mergeRigidMeshes } from "./merge-rigid-meshes";
 import { createBakedPropMaterials } from "./baked-prop-materials";
 import { createSmoothCubeProbe } from "./incremental-cube-probe";
 import { createFloatingPlasterMaterials } from "./floating-plaster-materials";
-import { applyReferencePropMaterials } from "./reference-prop-materials";
+import { applyVinylMaterial } from "./vinyl-material";
+import { createFloatingGlass } from "./floating-glass";
+import { createGlassComposite } from "./glass-composite";
 
 export type FloatingMode = "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
 
 export type ChromeWorldOptions = { floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
-type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; billboard?: boolean };
+type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean };
 
 // SOURCE: twomuch.studio module 3614 / 3645 / 5743, captured 2026-09-11.
-// The scene is zero-gravity inside a 20-plane cylinder. Initial body overlap
-// contributes to the entrance burst, alongside a radial launch velocity.
+// The scene is zero-gravity inside a 20-plane cylinder. A choreographed
+// entrance hands each body to this simulation at its orbital release point.
 export const referencePhysics = {
-  step: 1 / 60, maxSubSteps: 1, iterations: 5, stiffness: 1e6,
+  step: 1 / 60, maxSubSteps: 6, iterations: 5, stiffness: 1e6,
   friction: 0, angularDamping: .5, linearDamping: .01,
   releaseImpulse: 15, localForce: .02, wheelDivisor: 800,
   orbitDecay: .98, idlePower: .01, orbitRadians: 2 * Math.PI / 10,
@@ -39,6 +41,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = config.lighting.exposure;
+  const glassComposite = createGlassComposite(renderer);
   const scene = new THREE.Scene();
   // Physics and the portal effect finish before rendering. All six probe faces
   // and the main camera can share one world-matrix update for that frame.
@@ -69,6 +72,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let frame = 0;
   let previous = 0;
   let elapsed = 0;
+  let entranceActive = false;
+  const entrance = { stagger: .025, launch: .16, orbit: 1.2, releaseDrag: 1.4, coast: .12, dragRamp: .45, settle: 3.2 };
+  const lastReleaseTime = () => entrance.launch + entrance.orbit + Math.max(0, items.length - 2) * entrance.stagger;
+  const entrancePosition = new THREE.Vector3();
+  const entranceVelocity = new THREE.Vector3();
   let vortexTime = 0;
   let vortexAnimation: ReturnType<typeof createPixelVortex> | undefined;
   let floatingMode: FloatingMode = options.floatingMode ?? "physics";
@@ -174,6 +182,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     for(const material of Array.isArray(child.material)?child.material:[child.material]){
       materials.add(material);
       for(const value of Object.values(material))if(value instanceof THREE.Texture)resources.add(value);
+      if (material.userData.heightMap instanceof THREE.Texture) resources.add(material.userData.heightMap);
     }
   });
   const applyMaterial = (source: THREE.Material, setting: ModelMaterialConfig) => {
@@ -221,15 +230,22 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     lastVortexHover = null;
     reflectionDirty=true;
     beltAngle=0;beltSpeed=.10;orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
+    entranceActive = !reduced && usesPhysics();
+    world.defaultContactMaterial.restitution = entranceActive ? .8 : 0;
     items.forEach((item,index)=>{
+      item.entranceScale = entranceActive ? 0 : 1;
+      item.entranceReleased = false;
+      const portal = item.object.name === 'floating-pixel-vortex';
+      item.body.type = entranceActive && !portal ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC;
+      item.body.collisionFilterMask = entranceActive || portal ? 0 : -1;
+      item.body.linearDamping = referencePhysics.linearDamping;
+      item.body.updateMassProperties();
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
       item.body.quaternion.set(0,0,0,1);item.body.velocity.setZero();item.body.angularVelocity.setZero();item.body.force.setZero();item.body.torque.setZero();item.body.wakeUp();
       if(!reduced && usesPhysics()){
-        // Launch in evenly spread screen directions, with a little depth and tumble.
+        // Tumble continues unchanged when the orbital entrance releases the bodies.
         const a=2*Math.PI*index/items.length + .35;
-        const speed=2.4 + (index % 3)*.35;
-        item.body.velocity.set(Math.cos(a)*speed,Math.sin(a)*speed,(index % 2 ? 1 : -1)*.45);
-        item.body.angularVelocity.set(Math.sin(a)*2,Math.cos(a)*2,(index % 2 ? 1 : -1)*1.2);
+        item.body.angularVelocity.set(Math.sin(a)*.35,Math.cos(a)*.35,(index % 2 ? 1 : -1)*.2);
       }
       if(reduced){const a=2*Math.PI*index/items.length;item.body.position.set(Math.cos(a)*viewWidth*.35,Math.sin(a)*viewHeight*.35,.2);}
       item.object.position.copy(item.body.position);item.object.quaternion.copy(item.body.quaternion);
@@ -256,6 +272,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // Preserve native display resolution, including Retina and browser zoom.
     renderer.setPixelRatio(window.devicePixelRatio);
     makeWalls();renderer.setSize(width,height,false);
+    glassComposite.resize(width, height, renderer.getPixelRatio());
     // Viewport changes invalidate wall containment; restart the same entrance instead of
     // teleporting individual bodies into arrangement slots or leaving bodies outside walls.
     if(ready)reset();
@@ -292,7 +309,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const startVortex = () => {
     const vortex = items.find(item => item.object.name === "floating-pixel-vortex");
     const gun = items.find(item => item.object.name === "floating-green-portal-gun");
-    if (!vortex || !gun || easterEgg.active || !ready || paused || workProgress() > 0) return;
+    if (!vortex || !gun || easterEgg.active || entranceActive || !ready || paused || workProgress() > 0) return;
     activePointer = null;
     easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard }) => ({ object, billboard }))], reduced, position => {
       vortex.body.position.set(position.x, position.y, position.z); vortex.body.velocity.setZero(); vortex.body.angularVelocity.setZero();
@@ -448,8 +465,93 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.phase = reduced ? 'static' : floatingMode;
     canvas.dataset.motionMode = floatingMode;
   };
+  // Release the constraint after two turns. Velocity is the analytic derivative
+  // of the ellipse (v = omega × radius), never a tween toward a destination.
+  const sampleEntrance = (index: number, age: number, out: THREE.Vector3, velocity: THREE.Vector3) => {
+    const count = items.length - 1;
+    const start = -index / count * Math.PI * 2 + .35;
+    const launch = THREE.MathUtils.smootherstep(age, 0, entrance.launch);
+    const progress = THREE.MathUtils.clamp((age - entrance.launch) / entrance.orbit, 0, 1);
+    // No braking phase: the same angular speed drives both laps and the
+    // tangent velocity at release. Only the trajectory changes at that instant.
+    const angularSpeed = Math.PI * 4 / entrance.orbit;
+    const launchAngle = Math.min(0, age - entrance.launch) * angularSpeed;
+    const theta = start + progress * Math.PI * 4 + launchAngle;
+    const radius = .88 + beltSeed(index, 4) * .20;
+    const along = Math.cos(theta) * radius;
+    const across = Math.sin(theta) * radius;
+    out.set(
+      (along * .35 - across * .08) * viewWidth,
+      (along * .19 + across * .24) * viewHeight,
+      -across * viewHeight * .20,
+    ).multiplyScalar(launch);
+    velocity.set(
+      (-across * .35 - along * .08) * viewWidth,
+      (-across * .19 + along * .24) * viewHeight,
+      -along * viewHeight * .20,
+    ).multiplyScalar(angularSpeed);
+  };
+  const updateReleaseDrag = () => {
+    // A zero-restitution boundary absorbs the entire normal velocity on impact.
+    // Keep the toss elastic, then ease back to the original idle contacts.
+    world.defaultContactMaterial.restitution = .8
+      * (1 - THREE.MathUtils.smootherstep(elapsed, lastReleaseTime() + .5, lastReleaseTime() + entrance.settle));
+    items.forEach((item, index) => {
+      if (!item.entranceReleased) return;
+      const flightAge = elapsed - index * entrance.stagger - entrance.launch - entrance.orbit;
+      const onset = THREE.MathUtils.smootherstep(flightAge, entrance.coast, entrance.coast + entrance.dragRamp);
+      const drag = entrance.releaseDrag * onset
+        * (1 - THREE.MathUtils.smootherstep(flightAge, entrance.coast + entrance.dragRamp, entrance.settle));
+      item.body.linearDamping = 1 - (1 - referencePhysics.linearDamping * onset) * Math.exp(-drag);
+    });
+  };
+  const stepEntrance = (delta: number) => {
+    cameraFrame();
+    updateReleaseDrag();
+    // Released props already collide and coast while later props finish orbiting.
+    world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+    items.forEach((item, index) => {
+      if (item.object.name === 'floating-pixel-vortex') return;
+      if (item.entranceReleased) {
+        item.object.position.copy(item.body.position);
+        return;
+      }
+      const age = elapsed - index * entrance.stagger;
+      const releaseAt = entrance.launch + entrance.orbit;
+      item.entranceScale = THREE.MathUtils.smootherstep(age, 0, entrance.launch);
+      sampleEntrance(index, Math.min(age, releaseAt), entrancePosition, entranceVelocity);
+      const tumble = Math.max(0, Math.min(age, releaseAt));
+      item.body.quaternion.setFromEuler(
+        item.body.angularVelocity.x * tumble,
+        item.body.angularVelocity.y * tumble,
+        item.body.angularVelocity.z * tumble,
+      );
+      if (age >= releaseAt) {
+        item.entranceReleased = true;
+        item.body.type = CANNON.Body.DYNAMIC;
+        item.body.collisionFilterMask = -1;
+        item.body.updateMassProperties();
+        const overshoot = age - releaseAt;
+        // Advance any fraction of the release frame at the exact orbital
+        // tangent speed. Drag starts later; it must not scale the handoff.
+        entrancePosition.addScaledVector(entranceVelocity, overshoot);
+        item.body.velocity.set(entranceVelocity.x, entranceVelocity.y, entranceVelocity.z);
+        item.body.linearDamping = 0;
+        item.body.wakeUp();
+      }
+      item.body.position.set(entrancePosition.x, entrancePosition.y, entrancePosition.z);
+      item.body.aabbNeedsUpdate = true;
+      item.object.position.copy(item.body.position);
+    });
+    const lastAge = elapsed - Math.max(0, items.length - 2) * entrance.stagger;
+    entranceActive = lastAge < entrance.launch + entrance.orbit;
+    canvas.dataset.phase = elapsed < entrance.launch ? 'entrance-launch'
+      : elapsed < entrance.launch + entrance.orbit ? 'entrance-orbit' : 'entrance-release';
+    if (!entranceActive) canvas.dataset.phase = 'orbit';
+  };
   const step=(delta:number)=>{
     elapsed+=delta;
+    if (entranceActive) { stepEntrance(delta); return; }
     if (!usesPhysics()) {
       if (floatingMode === 'planet-belt') {
         const holding = (activePointer !== null || beltKeys.size > 0) && !easterEgg.active && workProgress() === 0;
@@ -467,7 +569,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if(workProgress()>0&&activePointer!==null)pointerCancel();
     const holding=activePointer!==null&&!easterEgg.active&&!reduced;
     if(holding)power=.29;
-    orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : power)*frameRatio;
+    const idleEntrance = THREE.MathUtils.smootherstep(elapsed, lastReleaseTime(), lastReleaseTime() + .65);
+    orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : holding ? power : power * idleEntrance)*frameRatio;
     // Retain the held speed on release, then ease back to the idle orbit.
     if(!holding)power=referencePhysics.idlePower+(power-referencePhysics.idlePower)*Math.pow(referencePhysics.orbitDecay,frameRatio);
     cameraFrame();
@@ -489,7 +592,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         body.applyForce(waveForce);
       }
     }
-    world.step(1/60,delta,1);
+    updateReleaseDrag();
+    world.step(referencePhysics.step,delta,referencePhysics.maxSubSteps);
     for(const {body,object} of items){object.position.copy(body.position);object.quaternion.copy(body.quaternion);}
     if(elapsed>1.5&&activePointer===null)canvas.dataset.phase='orbit';
   };
@@ -514,9 +618,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
-    for (const { object, body, phase, billboard } of items) {
-      object.visible = p < .7 && object.name !== "floating-pixel-vortex";
-      object.scale.setScalar(assetScale * (usesPhysics() ? 1 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
+    for (const { object, body, phase, billboard, entranceScale = 1 } of items) {
+      const itemEntranceScale = entranceActive ? entranceScale : 1;
+      object.visible = p < .7 && itemEntranceScale > 0 && object.name !== "floating-pixel-vortex";
+      object.scale.setScalar(assetScale * itemEntranceScale * (usesPhysics() ? 1 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
       object.quaternion.copy(billboard ? camera.quaternion : body.quaternion);
       if (p > 0 && !reduced && !billboard) {
         object.rotateY(p * p * (22 + phase));
@@ -531,7 +636,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const render=(time:number)=>{
     frame=requestAnimationFrame(render);
     const frameMs = time - previous;
-    const delta=Math.min(frameMs/1000,1/30);previous=time;
+    // One wall-time clock spans launch, orbit, release and drift. Fixed physics
+    // substeps preserve collision stability without slowing down at the handoff.
+    const delta=Math.min(frameMs/1000,referencePhysics.step * referencePhysics.maxSubSteps);previous=time;
     if(disposed||!visible||document.hidden||contextLost)return;
     // Once the hero becomes the stationary header logo, skip scene updates as
     // well as drawing. Scroll, resize and context restoration invalidate this.
@@ -585,7 +692,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
     }
     updateVortexTarget();
-    renderer.render(scene,camera);
+    if (ready) glassComposite.render(scene, camera); else renderer.render(scene, camera);
     renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
@@ -627,6 +734,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     loader.loadAsync(`/assets/models/figma-symbols/${file}.glb`).then(({ scene: model }) => {
       model.name = `floating-sculpted-${file}`;
       track(model);
+      if (file === "vinyl") {
+        applyVinylMaterial(model, config.vinyl);
+        track(model);
+      }
       if (disposed) {
         geometries.forEach(geometry => geometry.dispose());
         materials.forEach(material => material.dispose());
@@ -635,24 +746,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       return model;
     })
   ));
-  const materialStudyModels = Promise.all(config.materialStudies.map(({ file }) =>
-    loader.loadAsync(`/assets/models/material-studies/${file}.glb`).then(({ scene: model }) => {
-      model.name = `floating-material-study-${file}`;
-      track(model);
-      applyReferencePropMaterials(model);
-      track(model);
-      if (disposed) {
-        geometries.forEach(geometry => geometry.dispose());
-        materials.forEach(material => material.dispose());
-        resources.forEach(texture => texture.dispose());
-      }
-      return model;
-    })
-  ));
-  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, sculptedModels, materialStudyModels, Promise.all([
+  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, sculptedModels, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/home-optimized/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(([cutout, characters, floatingTextures, portalGun, sculptures, materialStudies, [environment,...models]])=>{
+  ])]).then(([cutout, characters, floatingTextures, portalGun, sculptures, [environment,...models]])=>{
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
@@ -677,10 +774,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       });
       add(model as THREE.Object3D,config.plaques.items[index].size,index);
     }
-    add(portalGun,config.portalGun.size,5);
+    add(portalGun,config.portalGun.size,items.length);
     const wordmark = new THREE.Mesh(createJimmyWordmarkGeometry(), new THREE.MeshPhysicalMaterial(config.wordmark.material));
     wordmark.name = "floating-jimmy-wordmark";
-    add(wordmark, config.wordmark.size, 6);
+    add(wordmark, config.wordmark.size, items.length);
     characters.forEach((model, index) => {
       const setting: FloatingModelConfig = config.characters.items[index];
       model.scale.fromArray(setting.axisScale);
@@ -692,10 +789,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         };
         child.material = Array.isArray(child.material) ? child.material.map(apply) : apply(child.material);
       });
-      add(model, setting.size, 7 + index);
+      add(model, setting.size, items.length);
     });
-    add(createChromePlanet(), config.celestial.planet.size, 7 + characters.length);
-    add(createChromeRainCloud(), config.celestial.cloud.size, 8 + characters.length);
+    add(createChromePlanet(), config.celestial.planet.size, items.length);
+    add(createChromeRainCloud(), config.celestial.cloud.size, items.length);
     const image = cutout.image as { width: number; height: number };
     const skater = new THREE.Mesh(
       new THREE.PlaneGeometry(image.width / image.height, 1),
@@ -704,7 +801,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       new THREE.MeshBasicMaterial({ ...config.skater.material, map: cutout, forceSinglePass: true }),
     );
     skater.name = "skater-billboard";
-    add(skater, config.skater.size, 9 + characters.length, true);
+    add(skater, config.skater.size, items.length, true);
     floatingTextures.forEach((texture, index) => {
       const setting = config.cutouts[index];
       const image = texture.image as { width: number; height: number };
@@ -713,12 +810,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         new THREE.MeshBasicMaterial({ ...config.skater.material, map: texture, forceSinglePass: true }),
       );
       mesh.name = `floating-cutout-${setting.file}`;
-      add(mesh, setting.size, 10 + characters.length + index, true);
+      add(mesh, setting.size, items.length, true);
     });
     sculptures.forEach((model, index) => add(model, config.sculptedProps[index].size, items.length));
     canvas.dataset.sculptedProps = String(sculptures.length);
-    materialStudies.forEach((model, index) => add(model, config.materialStudies[index].size, items.length));
-    canvas.dataset.materialStudies = String(materialStudies.length);
+    config.glass.items.forEach(setting => add(createFloatingGlass(setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length));
+    canvas.dataset.glassProps = String(config.glass.items.length);
     vortexAnimation = createPixelVortex(config.vortex);
     add(vortexAnimation.mesh, config.vortex.size, items.length, true);
     vortexAnimation.mesh.parent!.parent!.visible = false;
@@ -732,18 +829,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     bakedMaterials = createBakedPropMaterials(renderer, scene);
     // Retain the plaques' embossed highlights and all metallic reflections.
     items.slice(models.length).forEach(item => {
-      if (!item.object.name.startsWith("floating-material-study-")) bakedMaterials!.apply(item.object);
+      if (item.object.name === "floating-sculpted-vinyl" || item.object.name.startsWith("floating-glass-")) return;
+      bakedMaterials!.apply(item.object);
     });
     items.forEach((item, index) => {
-      // Image cutouts and the portal gun retain their original materials at every depth.
-      if (item.billboard || item.object.name === "floating-pixel-vortex" || item.object.name === "floating-green-portal-gun" || item.object.name.startsWith("floating-material-study-")) return;
-      const permanent = index < models.length || item.object.name === "emotion-02_meh";
+      // Glass keeps live refraction and colored rims at every depth.
+      if (item.billboard || item.object.name === "floating-pixel-vortex" || item.object.name === "floating-green-portal-gun" || item.object.name === "floating-sculpted-vinyl" || item.object.name.startsWith("floating-glass-")) return;
+      const permanent = index < models.length;
       plasterMaterials.apply(item.object, permanent, !!item.billboard);
     });
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
-  const debug={snapshot:()=>({ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard})=>({name:object.name,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={snapshot:()=>({ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({name:object.name,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
@@ -753,6 +851,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       const wasPhysics = usesPhysics();
       pointerCancel(); easterEgg.cancel(); floatingMode = value;
       const keepPhysics = wasPhysics && usesPhysics();
+      if (!usesPhysics()) {
+        entranceActive = false;
+        items.forEach(item => {
+          item.body.type = CANNON.Body.DYNAMIC;
+          item.body.collisionFilterMask = item.object.name === 'floating-pixel-vortex' ? 0 : -1;
+          item.body.updateMassProperties();
+        });
+      }
       if (!keepPhysics) { orbit = 0; elapsed = 0; beltAngle = 0; beltSpeed = .10; }
       reflectionDirty = true;
       canvas.dataset.motionMode = value;
@@ -771,6 +877,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       bakedMaterials?.dispose();
       plasterMaterials.dispose();
       reflectionProbe.dispose();
+      glassComposite.dispose();
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;
     },
   };
