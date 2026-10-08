@@ -15,35 +15,46 @@ export type FloatingModelConfig = {
 // axisScale：[宽、高、厚] 相对模型倍率；size 最后统一控制最长边。
 // normalStrength：已有法线纹理的颗粒强度，0 为平滑，1 为当前烘焙强度。
 const silver: MeshPhysicalMaterialParameters = {
-  color: "#FFFFFF", metalness: 1, roughness: .16, envMapIntensity: 0.6,
+  color: "#2F2F2F", metalness: 1, roughness: .16, envMapIntensity: 3,
 };
 
 export const home3DConfig = {
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .6, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: 1.1, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
+  floatingBounds: { desktop: 1.5, mobile: 1 },
   logo: {
-    scale: 1, // 正常尺寸上限
-    maxViewportWidth: .87, // 参考图：两侧各留约 6.5%。
-    mobileViewportWidth: .82,
-    maxViewportHeight: .54,
+    scale: 0.9, // 正常尺寸上限
+    maxViewportWidth: .4, // 天空首屏：中央 Logo 占约五分之一屏宽。
+    mobileViewportWidth: .48,
+    maxViewportHeight: .4,
     centerY: .50, // 首屏垂直居中。
     material: { ...silver },
   },
   // 原图手写 Jimmy，作为独立漂浮物参与物理互动。
   wordmark: {
     size: 1.85,
-    material: { color: "#25282d", metalness: .72, roughness: .25, envMapIntensity: 1.15, clearcoat: .8, clearcoatRoughness: .16 },
+    material: { color: "#F1F1F1", metalness: .72, roughness: .25, envMapIntensity: 1.15, clearcoat: .8, clearcoatRoughness: .16 },
   },
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
-    { file: "c-mark", size: .75 },
-    { file: "vinyl", size: 1.1 },
-  ],
-  // 七个彩边模拟玻璃：灰度高度图驱动形变，共用背景采样；保留实体厚度与圆角。
+    { visible: true, file: "c-mark", path: "/assets/models/figma-symbols/c-mark.glb", size: .75 ,
+       material: { color: "#f1f1ef", metalness: 0, roughness: .32, envMapIntensity: .4 } 
+    },
+    { visible: true, file: "vinyl", path: "/assets/models/figma-symbols/vinyl.glb", size: 1.1 },
+    { visible: false, file: "twomuch-vr-shape", path: "/assets/models/twomuch/vr-shape.glb", size: 1.4,
+      material: { color: "#f1f1ef", metalness: 0, roughness: .32, envMapIntensity: .4 } },
+    { visible: false, file: "twomuch-chrome-spool", path: "/assets/models/twomuch/chrome-spool.glb", size: 1.25,
+      material: { color: "#ffffff", metalness: 1, roughness: .2, envMapIntensity: 1 } },
+    { visible: false, file: "twomuch-blocky-teapot", path: "/assets/models/twomuch/blocky-teapot.glb", size: 1.3,
+      material: { color: "#ffffff", metalness: 1, roughness: .2, envMapIntensity: 1 } },
+  ].filter(item => item.visible),
+  referenceSculptures: { goodLuck: { size: 1 }, eat: { size: 1.25, inflation: .12 } },
+  // 仅显示三角玻璃，其余配置保留以便恢复。
   glass: {
-    items: [
+    items: ([
       { name: "lavender-square", shape: "square", color: "#b875ff", size: .86 },
       { name: "lime-square", shape: "square", color: "#dfff58", size: .80 },
       { name: "pink-circle", shape: "circle", color: "#ff79f3", size: .88 },
@@ -51,7 +62,7 @@ export const home3DConfig = {
       { name: "green-rosette", shape: "rosette", color: "#32d46d", size: .85 },
       { name: "lime-triangle", shape: "triangle", color: "#dfff58", size: .95 },
       { name: "coral-double-pill", shape: "double-pill", color: "#ff8987", size: .90 },
-    ] satisfies GlassShapeConfig[],
+    ] satisfies GlassShapeConfig[]).filter(item => item.shape === "triangle"),
     finish: {
       depth: .09, bevel: .17, dome: .009, refraction: .32,
       dispersion: .025, glow: .32,
@@ -59,7 +70,7 @@ export const home3DConfig = {
   },
   // 黑胶：同心沟槽沿径向拉长高光，中心纸标单独保留原图。
   vinyl: {
-    color: "#090a0c", roughness: .27, anisotropy: .9, ior: 1.54,
+    color: "#F0F0F0", roughness: .07, anisotropy: .9, ior: 1.54,
     envMapIntensity: 1, grooveCount: 180, grooveStrength: .12,
     labelRoughness: .78,
   },
@@ -67,19 +78,19 @@ export const home3DConfig = {
     // 每个立牌可用 material 覆盖下方共用参数；letteringMaterial 单独调整文字。
     // 留空保留现有颜色和纹理，例：letteringMaterial: { color: "#101010" }。
     items: [
-      { file: "02_plan", size: 0.8, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
-      { file: "03_do", size: 0.8, color: "#ffffff", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
-      { file: "04_review", size: 0.6, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
-    ],
+      { visible: false, file: "02_plan", size: 0.8, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
+      { visible: false, file: "03_do", size: 0.8, color: "#ffffff", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
+      { visible: false, file: "04_review", size: 0.6, color: "#FFFFFF", material: {} as MeshPhysicalMaterialParameters, letteringMaterial: {} as MeshPhysicalMaterialParameters },
+    ].filter(item => item.visible),
     material: { roughness: .18, metalness: 0.2, envMapIntensity: .95, clearcoat: .8, clearcoatRoughness: .18 },
   },
   // Blender 模型：蓝色 ZZ 与笑脸键帽。
   characters: {
-    items: [
+    items: ([
       {
         file: "06_blue_zz", size: .6, axisScale: [1, 1, 1], // 第三个值调整厚度。
         materials: {
-          "Azure matte micrograin": { color: "#0369C8", metalness: 0, roughness: .66, clearcoat: .06, clearcoatRoughness: .5, envMapIntensity: .65, normalStrength: .55 },
+          "Azure matte micrograin": { color: "#0369C8", metalness: 0, roughness: .32, clearcoat: .0, clearcoatRoughness: .5, envMapIntensity: .4, normalStrength: .55 },
         },
       },
       {
@@ -90,24 +101,27 @@ export const home3DConfig = {
         },
       },
 
-    ] satisfies FloatingModelConfig[],
+    ] satisfies FloatingModelConfig[]).filter(item => item.file !== "07_smiley_keycap" && item.file !== "06_blue_zz"),
   },
   celestial: {
-    planet: { size: .58, material: { color: "#ded9ce", metalness: 1, roughness: .2, envMapIntensity: 1.15 }, ringMaterial: { color: "#a6d3d5", metalness: .95, roughness: .23, envMapIntensity: 1.1 } },
-    cloud: { size: .38, material: { color: "#e2e9f0", metalness: 1, roughness: .14, envMapIntensity: 1.2, clearcoat: .35, clearcoatRoughness: .12 } },
+    planet: { size: .7, material: { color: "#ded9ce", metalness: 1, roughness: .2, envMapIntensity: 1.15 }, ringMaterial: { color: "#a6d3d5", metalness: .95, roughness: .23, envMapIntensity: 1.1 } },
+    cloud: { size: .7, material: { color: "#e2e9f0", metalness: 1, roughness: .14, envMapIntensity: 1.2, clearcoat: .35, clearcoatRoughness: .12 } },
   },
   skater: {
-    image: "/assets/images/skater-cutout.webp", size: 1.72,
+    image: "/assets/images/floating/skater-cutout.png", size: 1.72,
     // 已烘焙光影的图片：color 为染色，白色保留原色；opacity 控制透明度。
     material: { color: "#ffffff", opacity: 1, transparent: true, alphaTest: .04, depthWrite: true, side: DoubleSide, toneMapped: false },
   },
   // 透明抠图始终朝向镜头，与现有物件共享漂浮和碰撞。
-  cutouts: [
-    { file: "weather-cylinder", size: 1.15 },
+  cutouts: ([
     { file: "flat-apple", size: 1.25 },
     { file: "tufted-flower", size: 1.4 },
-    { file: "cape-horse", size: 1.85 },
-  ] satisfies { file: string; size: number }[],
+    { file: "cape-horse", size: 2 },
+    { file: "cupid", size: 0.8 },
+    { file: "flying-pig", size: 1.5 },
+    { file: "goldfish-silver-headphones", size: 0.8 },
+    { file: "jimmyzz-vintage-car", size: 1.2 },
+  ] satisfies { file: string; size: number }[]).filter(item => item.file !== "tufted-flower"),
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
     size: 1, pixels: 80, speed: .65, arms: 5,

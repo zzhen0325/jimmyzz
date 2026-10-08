@@ -29,7 +29,7 @@ export function createGlassComposite(renderer: THREE.WebGLRenderer) {
   const geometry = new THREE.PlaneGeometry(2, 2);
   const material = new THREE.ShaderMaterial({
     uniforms: { glassBackground: uniforms.glassBackground },
-    depthTest: false, depthWrite: false, premultipliedAlpha: true,
+    depthTest: false, depthWrite: false, premultipliedAlpha: true, transparent: true,
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
     fragmentShader: `uniform sampler2D glassBackground;
@@ -52,7 +52,7 @@ export function createGlassComposite(renderer: THREE.WebGLRenderer) {
       uniforms.glassResolution.value.set(target.width, target.height);
       uniforms.glassViewportHeight.value = height;
     },
-    render(scene: THREE.Scene, camera: THREE.Camera) {
+    render(scene: THREE.Scene, camera: THREE.Camera, backdrop?: THREE.Scene) {
       const originalMask = camera.layers.mask;
       const autoClear = renderer.autoClear;
       const destination = renderer.getRenderTarget();
@@ -63,6 +63,12 @@ export function createGlassComposite(renderer: THREE.WebGLRenderer) {
         renderer.autoClear = true;
         renderer.render(scene, camera);
         renderer.setRenderTarget(destination);
+        // Preserve the Shadertoy sky's display-space colours, then composite
+        // the separately tone-mapped metal/physical materials over it.
+        if (backdrop) {
+          renderer.render(backdrop, camera);
+          renderer.autoClear = false;
+        }
         renderer.render(screen, screenCamera);
         camera.layers.set(1);
         renderer.autoClear = false;

@@ -17,12 +17,14 @@ import { createSmoothCubeProbe } from "./incremental-cube-probe";
 import { createFloatingPlasterMaterials } from "./floating-plaster-materials";
 import { applyVinylMaterial } from "./vinyl-material";
 import { createFloatingGlass } from "./floating-glass";
+import { createSkyClouds } from "./sky-clouds";
+import { createGoodLuckCylinder, createEatSculpture } from "./home-reference-sculptures";
 import { createGlassComposite } from "./glass-composite";
 
 export type FloatingMode = "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
 
 export type ChromeWorldOptions = { floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
-type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean };
+type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean; screen: { x: number; y: number; radius: number; fx: number; fy: number } };
 
 // SOURCE: twomuch.studio module 3614 / 3645 / 5743, captured 2026-09-11.
 // The scene is zero-gravity inside a 20-plane cylinder. A choreographed
@@ -34,6 +36,10 @@ export const referencePhysics = {
   orbitDecay: .98, idlePower: .01, orbitRadians: 2 * Math.PI / 10,
 };
 
+// Props use soft silhouette separation; rigid contacts only contain the outer scene.
+// Large props must not form a locked chain of contacts with each other or the logo.
+const collisionGroup = { boundary: 1, prop: 2 };
+
 export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorldOptions = {}) {
   const host = canvas.parentElement!;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -43,6 +49,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   renderer.toneMappingExposure = config.lighting.exposure;
   const glassComposite = createGlassComposite(renderer);
   const scene = new THREE.Scene();
+  const sky = createSkyClouds();
+  const skyScene = new THREE.Scene();
+  skyScene.add(sky.group);
+  const skyReady = sky.ready.catch(error => { if (!disposed) options.onError?.(error); });
   // Physics and the portal effect finish before rendering. All six probe faces
   // and the main camera can share one world-matrix update for that frame.
   scene.matrixWorldAutoUpdate = false;
@@ -103,6 +113,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let height = 1;
   let viewWidth = 6;
   let viewHeight = 3;
+  let boundsScale = 1;
+  let motionWidth = viewWidth;
+  let motionHeight = viewHeight;
   let assetScale = 1;
   let logoScale = 1;
   const logoEntranceDuration = .95;
@@ -173,8 +186,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     geometries.add(geometry);
     logo.add(new THREE.Mesh(geometry, chrome));
   }
-  const logoBody=new CANNON.Body({type:CANNON.Body.STATIC,collisionFilterGroup:2});
-  world.addBody(logoBody);
 
   const track=(object:THREE.Object3D)=>object.traverse(child=>{
     if(!(child instanceof THREE.Mesh))return;
@@ -210,15 +221,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     normalized.traverse(child => { child.updateMatrix(); child.matrixAutoUpdate = false; });
     const group=new THREE.Group();group.name=object.name||`chrome-${index}`;group.add(normalized);scene.add(group);
     const originalSize=dimensions.multiplyScalar(normalization);
-    const body=new CANNON.Body({mass:1,allowSleep:true,angularDamping:.5,linearDamping:.01,collisionFilterGroup:2});
+    const body=new CANNON.Body({mass:1,allowSleep:true,angularDamping:.5,linearDamping:.01,collisionFilterGroup:collisionGroup.prop,collisionFilterMask:collisionGroup.boundary});
     body.addEventListener('collide',(event:{body:CANNON.Body})=>{contacts++;collisions.add([body.id,event.body.id].sort((a,b)=>a-b).join(':'));});
-    world.addBody(body);items.push({object:group,body,originalSize,phase:2*Math.PI/10*index,billboard});
+    world.addBody(body);items.push({object:group,body,originalSize,phase:2*Math.PI/10*index,billboard,screen:{x:0,y:0,radius:0,fx:0,fy:0}});
   };
   const makeWalls=()=>{
     walls.forEach(body=>world.removeBody(body));walls.length=0;
-    const plane=(position:number[],rotation:number[],type:typeof CANNON.Body.STATIC | typeof CANNON.Body.KINEMATIC)=>{const body=new CANNON.Body({type,collisionFilterGroup:2});body.addShape(new CANNON.Plane());body.position.set(position[0],position[1],position[2]);body.quaternion.setFromEuler(rotation[0],rotation[1],rotation[2]);world.addBody(body);walls.push(body);};
-    for(let i=0;i<20;i++){const theta=Math.PI+2*Math.PI/20*i;plane([0,Math.cos(theta)*viewHeight/2,Math.sin(theta)*viewHeight/2],[theta+Math.PI/2,0,0],CANNON.Body.STATIC);}
-    plane([-viewWidth/2,0,0],[0,Math.PI/2,0],CANNON.Body.KINEMATIC);plane([viewWidth/2,0,0],[0,-Math.PI/2,0],CANNON.Body.KINEMATIC);
+    const plane=(position:number[],rotation:number[],type:typeof CANNON.Body.STATIC | typeof CANNON.Body.KINEMATIC)=>{const body=new CANNON.Body({type,collisionFilterGroup:collisionGroup.boundary,collisionFilterMask:collisionGroup.prop});body.addShape(new CANNON.Plane());body.position.set(position[0],position[1],position[2]);body.quaternion.setFromEuler(rotation[0],rotation[1],rotation[2]);world.addBody(body);walls.push(body);};
+    for(let i=0;i<20;i++){const theta=Math.PI+2*Math.PI/20*i;plane([0,Math.cos(theta)*motionHeight/2,Math.sin(theta)*motionHeight/2],[theta+Math.PI/2,0,0],CANNON.Body.STATIC);}
+    plane([-motionWidth/2,0,0],[0,Math.PI/2,0],CANNON.Body.KINEMATIC);plane([motionWidth/2,0,0],[0,-Math.PI/2,0],CANNON.Body.KINEMATIC);
   };
   const shapeBody=(body:CANNON.Body,size:THREE.Vector3,billboard=false)=>{
     while(body.shapes.length)body.removeShape(body.shapes[0]);
@@ -237,7 +248,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       item.entranceReleased = false;
       const portal = item.object.name === 'floating-pixel-vortex';
       item.body.type = entranceActive && !portal ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC;
-      item.body.collisionFilterMask = entranceActive || portal ? 0 : -1;
+      item.body.collisionFilterMask = entranceActive || portal ? 0 : collisionGroup.boundary;
       item.body.linearDamping = referencePhysics.linearDamping;
       item.body.updateMassProperties();
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
@@ -261,13 +272,16 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.zoom=(width+height)/9;camera.updateProjectionMatrix();
     viewWidth=width/camera.zoom;viewHeight=height/camera.zoom;
     const compact = width < config.sizing.mobileBreakpoint;
+    // Expand the simulation, keeping the camera and the visible prop sizes unchanged.
+    boundsScale = Math.max(1, compact ? config.floatingBounds.mobile : config.floatingBounds.desktop);
+    motionWidth = viewWidth * boundsScale;
+    motionHeight = viewHeight * boundsScale;
     // Keep desktop props proportional to screen width, independent of viewport height.
     const referenceViewWidth = 9 * config.sizing.referenceAspect / (1 + config.sizing.referenceAspect);
     const oldScale = assetScale;
     assetScale = compact ? config.sizing.mobile : config.sizing.desktop * viewWidth / referenceViewWidth;
     logoScale = Math.min(config.logo.scale, viewWidth * (compact ? config.logo.mobileViewportWidth : config.logo.maxViewportWidth) / 3.1, viewHeight * config.logo.maxViewportHeight / 1.05);
     logo.scale.setScalar(logoScale);
-    shapeBody(logoBody,new THREE.Vector3(3.1*logo.scale.x,1.05*logo.scale.y,.16));
     items.forEach(item=>{shapeBody(item.body,item.originalSize.clone().multiplyScalar(assetScale),item.billboard);item.object.scale.setScalar(assetScale);if(ready&&oldScale!==assetScale)item.body.position.scale(assetScale/oldScale,item.body.position);});
     // Preserve native display resolution, including Retina and browser zoom.
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -318,7 +332,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   };
   const vortexActivate = (event: Event) => {
     // A dedicated overlay owns this gesture before it can reach canvas physics.
-    if (event instanceof PointerEvent && event.button !== 0) return;
+    // Touch must finish as a tap before activation; a swipe belongs to the page.
+    if (event instanceof PointerEvent && (event.button !== 0 || (event.type === 'pointerdown' && event.pointerType === 'touch'))) return;
     event.preventDefault(); event.stopPropagation();
     canvas.focus({ preventScroll: true });
     startVortex();
@@ -339,7 +354,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     updatePointer(event);
     const recentHover = lastVortexHover && performance.now() - lastVortexHover.time < 250 && Math.hypot(event.clientX - lastVortexHover.x, event.clientY - lastVortexHover.y) < 22;
     if (hitVortex() || recentHover) {
-      startVortex(); return;
+      if (event.pointerType !== 'touch') startVortex();
+      return;
     }
     if (reduced || (!usesPhysics() && floatingMode !== 'planet-belt')) return;
     activePointer=event.pointerId;
@@ -359,6 +375,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if(activePointer!==event.pointerId)return;
     pointerCancel();
   };
+  const touchClick=(event:PointerEvent)=>{
+    if(event.pointerType!=='touch'||workProgress()>0)return;
+    updatePointer(event);
+    if(hitVortex())startVortex();
+  };
   const pointerCancel=()=>{
     beltKeys.clear();
     const pointerId=activePointer;activePointer=null;
@@ -376,7 +397,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
-  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);
+  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);canvas.addEventListener('click',touchClick);
   window.addEventListener('scroll',invalidatePointerRect,{passive:true});
   window.addEventListener('blur',pointerCancel);document.addEventListener('visibilitychange',pageVisibility);
   canvas.addEventListener('lostpointercapture',pointerCancel);canvas.addEventListener('keydown',key);
@@ -386,7 +407,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // Same orbit as source, shifted by PI to show the supplied plaques' front faces.
     angle=usesPhysics() ? 2*Math.PI/10*orbit : 0;
     camera.position.set(0,10*Math.sin(angle),10*Math.cos(angle));camera.rotation.set(-angle,0,0);
-    logo.quaternion.copy(camera.quaternion);logoBody.quaternion.set(camera.quaternion.x,camera.quaternion.y,camera.quaternion.z,camera.quaternion.w);logoBody.aabbNeedsUpdate=true;
+    logo.quaternion.copy(camera.quaternion);
     lights.rotation.set(0,-angle,-angle);
     studio.quaternion.copy(camera.quaternion);
   };
@@ -529,7 +550,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (age >= releaseAt) {
         item.entranceReleased = true;
         item.body.type = CANNON.Body.DYNAMIC;
-        item.body.collisionFilterMask = -1;
+        item.body.collisionFilterMask = collisionGroup.boundary;
         item.body.updateMassProperties();
         const overshoot = age - releaseAt;
         // Advance any fraction of the release frame at the exact orbital
@@ -548,6 +569,67 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.phase = elapsed < entrance.launch ? 'entrance-launch'
       : elapsed < entrance.launch + entrance.orbit ? 'entrance-orbit' : 'entrance-release';
     if (!entranceActive) canvas.dataset.phase = 'orbit';
+  };
+  const spreadFloatingItems = () => {
+    // Depth-separated bodies can still overlap in the camera. A soft screen-space
+    // pressure spreads those silhouettes without snapping bodies to fixed slots.
+    const strength = THREE.MathUtils.smootherstep(elapsed, lastReleaseTime(), lastReleaseTime() + entrance.settle)
+      * (1 - workProgress()) * (activePointer === null ? 1 : .2);
+    if (strength <= 0 || easterEgg.active) return;
+    const upY = Math.cos(angle), upZ = -Math.sin(angle);
+    const count = items.length - 1;
+    const spacing = Math.sqrt(viewWidth * viewHeight / count) * .82;
+    const gap = Math.min(viewWidth, viewHeight) * .035;
+    // Share the walls' expanded bounds; soften the return over the extra travel room.
+    const edgeStrength = 1.8 / boundsScale;
+    for (const item of items) {
+      if (!item.body.collisionResponse) continue;
+      const { body, screen, originalSize } = item;
+      screen.x = body.position.x;
+      screen.y = body.position.y * upY + body.position.z * upZ;
+      screen.radius = Math.max(originalSize.x, originalSize.y, originalSize.z) * assetScale * .46;
+      const limitX = Math.max(motionWidth * .18, motionWidth * .48 - screen.radius);
+      const limitY = Math.max(motionHeight * .18, motionHeight * .46 - screen.radius);
+      const edgeX = screen.x - THREE.MathUtils.clamp(screen.x, -limitX, limitX);
+      const edgeY = screen.y - THREE.MathUtils.clamp(screen.y, -limitY, limitY);
+      screen.fx = -screen.x * .045 - edgeX * edgeStrength - body.velocity.x * .22;
+      screen.fy = -screen.y * .045 - edgeY * edgeStrength - (body.velocity.y * upY + body.velocity.z * upZ) * .22;
+      // Leave a small breathing space around the central logo as silhouettes drift past.
+      const logoY = width < config.sizing.mobileBreakpoint ? 0 : viewHeight * (.5 - config.logo.centerY);
+      const clearX = logoScale * 1.55 + screen.radius * .7;
+      const clearY = logoScale * .525 + screen.radius * .7;
+      const dx = screen.x / clearX, dy = (screen.y - logoY) / clearY;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 1) {
+        const direction = distance > .001 ? Math.atan2(dy, dx) : item.phase;
+        screen.fx += Math.cos(direction) * (1 - distance) * 1.2;
+        screen.fy += Math.sin(direction) * (1 - distance) * 1.2;
+      }
+    }
+    for (let i = 0; i < items.length; i++) {
+      if (!items[i].body.collisionResponse) continue;
+      const a = items[i].screen;
+      for (let j = i + 1; j < items.length; j++) {
+        if (!items[j].body.collisionResponse) continue;
+        const b = items[j].screen;
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let distance = Math.hypot(dx, dy);
+        const separation = Math.max(spacing, a.radius + b.radius + gap);
+        if (distance >= separation) continue;
+        if (distance < .001) {
+          const theta = (i + j * .618) * 2.399963;
+          dx = Math.cos(theta) * .001; dy = Math.sin(theta) * .001; distance = .001;
+        }
+        const pressure = Math.min(.9, (separation - distance) * 1.4) / distance;
+        a.fx += dx * pressure; a.fy += dy * pressure;
+        b.fx -= dx * pressure; b.fy -= dy * pressure;
+      }
+    }
+    for (const { body, screen } of items) {
+      if (!body.collisionResponse) continue;
+      force.set(screen.fx * strength, screen.fy * upY * strength, screen.fy * upZ * strength);
+      body.applyForce(force);
+    }
   };
   const step=(delta:number)=>{
     elapsed+=delta;
@@ -592,6 +674,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         body.applyForce(waveForce);
       }
     }
+    spreadFloatingItems();
     updateReleaseDrag();
     world.step(referencePhysics.step,delta,referencePhysics.maxSubSteps);
     for(const {body,object} of items){object.position.copy(body.position);object.quaternion.copy(body.quaternion);}
@@ -612,8 +695,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const introY = width < config.sizing.mobileBreakpoint ? 0 : height * (.5 - config.logo.centerY) / camera.zoom;
     const logoY = THREE.MathUtils.lerp(introY, (height / 2 - 44) / camera.zoom, travel);
     logo.position.set(0, logoY, 0).applyQuaternion(camera.quaternion);
-    logoBody.position.set(logo.position.x, logo.position.y, logo.position.z);
-    logoBody.aabbNeedsUpdate = true;
     const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
     const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
@@ -666,7 +747,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     vortexAnimation?.update(reduced ? 0 : vortexTime, easterEgg.active ? THREE.MathUtils.clamp((portalScale / assetScale - .16) / 2.34, 0, 1) : 1);
     scene.updateMatrixWorld();
     camera.updateMatrixWorld();
-    plasterMaterials.update(camera, logo, assetScale);
+    sky.update(camera, viewWidth, viewHeight, paused || reduced ? 0 : delta, workProgress());
+    canvas.dataset.clouds = "shadertoy-4tdSWr";
     // Capture one face per display frame and blend completed reflections between
     // captures. Initial/invalidation captures stay atomic, including static views.
     if (ready && (reflectionDirty || (!paused && !reduced && workProgress()<1))) {
@@ -692,7 +774,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
     }
     updateVortexTarget();
-    if (ready) glassComposite.render(scene, camera); else renderer.render(scene, camera);
+    if (ready) glassComposite.render(scene, camera, skyScene); else renderer.render(scene, camera);
     renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
@@ -715,7 +797,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     return texture;
   });
   const cutoutTextures = Promise.all(config.cutouts.map(({ file }) =>
-    new THREE.TextureLoader().loadAsync(`/assets/images/floating/${file}.webp`).then(texture => {
+    new THREE.TextureLoader().loadAsync(`/assets/images/floating/${file}.png`).then(texture => {
       resources.add(texture);
       if (disposed) texture.dispose();
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -730,10 +812,23 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     return model;
   });
-  const sculptedModels = Promise.all(config.sculptedProps.map(({ file }) =>
-    loader.loadAsync(`/assets/models/figma-symbols/${file}.glb`).then(({ scene: model }) => {
+  const sculptedModels = Promise.all(config.sculptedProps.map(({ file, path, ...setting }) =>
+    loader.loadAsync(path).then(({ scene: model }) => {
       model.name = `floating-sculpted-${file}`;
       track(model);
+      const parameters = "material" in setting ? setting.material : undefined;
+      if (parameters) {
+        const overrides = new Map<THREE.Material, THREE.Material>();
+        const convert = (source: THREE.Material) => {
+          if (!(source instanceof THREE.MeshStandardMaterial)) return source;
+          if (!overrides.has(source)) overrides.set(source, applyMaterial(source, parameters));
+          return overrides.get(source)!;
+        };
+        model.traverse(child => {
+          if (!(child instanceof THREE.Mesh)) return;
+          child.material = Array.isArray(child.material) ? child.material.map(convert) : convert(child.material);
+        });
+      }
       if (file === "vinyl") {
         applyVinylMaterial(model, config.vinyl);
         track(model);
@@ -749,7 +844,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, sculptedModels, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader() : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader() : new THREE.TextureLoader()).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/home-optimized/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(([cutout, characters, floatingTextures, portalGun, sculptures, [environment,...models]])=>{
+  ])]).then(async ([cutout, characters, floatingTextures, portalGun, sculptures, [environment,...models]])=>{
+    await skyReady;
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
@@ -813,7 +909,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       add(mesh, setting.size, items.length, true);
     });
     sculptures.forEach((model, index) => add(model, config.sculptedProps[index].size, items.length));
-    canvas.dataset.sculptedProps = String(sculptures.length);
+    add(createGoodLuckCylinder(), config.referenceSculptures.goodLuck.size, items.length);
+    add(createEatSculpture(config.referenceSculptures.eat.inflation), config.referenceSculptures.eat.size, items.length);
+    canvas.dataset.sculptedProps = String(sculptures.length + 2);
     config.glass.items.forEach(setting => add(createFloatingGlass(setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length));
     canvas.dataset.glassProps = String(config.glass.items.length);
     vortexAnimation = createPixelVortex(config.vortex);
@@ -823,7 +921,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const portalBody = items[items.length - 1].body;
     portalBody.collisionFilterMask = 0;
     portalBody.collisionResponse = false;
-    canvas.dataset.billboards = String(2 + floatingTextures.length);
+    canvas.dataset.billboards = String(1 + floatingTextures.length);
     canvas.dataset.cutouts = String(floatingTextures.length);
     canvas.dataset.characters = String(characters.length);
     bakedMaterials = createBakedPropMaterials(renderer, scene);
@@ -833,19 +931,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       bakedMaterials!.apply(item.object);
     });
     items.forEach((item, index) => {
-      // Glass keeps live refraction and colored rims at every depth.
-      if (item.billboard || item.object.name === "floating-pixel-vortex" || item.object.name === "floating-green-portal-gun" || item.object.name === "floating-sculpted-vinyl" || item.object.name.startsWith("floating-glass-")) return;
-      const permanent = index < models.length;
-      plasterMaterials.apply(item.object, permanent, !!item.billboard);
+      // Only plaques use plaster; floating props retain their materials at every depth.
+      if (index >= models.length) return;
+      plasterMaterials.apply(item.object, true);
     });
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
-  const debug={snapshot:()=>({ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({name:object.name,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={snapshot:()=>({sky:sky.snapshot(),ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
-    loaded,
+    loaded: Promise.all([loaded, skyReady]),
     setFloatingMode(value: FloatingMode) {
       if (value === floatingMode) return;
       const wasPhysics = usesPhysics();
@@ -855,7 +952,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         entranceActive = false;
         items.forEach(item => {
           item.body.type = CANNON.Body.DYNAMIC;
-          item.body.collisionFilterMask = item.object.name === 'floating-pixel-vortex' ? 0 : -1;
+          item.body.collisionFilterMask = item.object.name === 'floating-pixel-vortex' ? 0 : collisionGroup.boundary;
           item.body.updateMassProperties();
         });
       }
@@ -873,11 +970,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       options.vortexTarget?.removeEventListener('pointerdown', vortexActivate);
       options.vortexTarget?.removeEventListener('click', vortexActivate);
       if (options.vortexTarget) options.vortexTarget.style.display = 'none';observer.disconnect();visibility.disconnect();
-      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
+      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('click',touchClick);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       bakedMaterials?.dispose();
       plasterMaterials.dispose();
       reflectionProbe.dispose();
       glassComposite.dispose();
+      sky.dispose();
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;
     },
   };

@@ -1,5 +1,5 @@
 .page { background: transparent; color: var(--home-foreground, #f1f1ef); }
-.hero { height: 100svh; min-height: 540px; position: relative; background: linear-gradient(to bottom, #31beff, var(--home-background, #f7f7f7)) top / 100% 150px no-repeat; }
+.hero { height: 100svh; min-height: 540px; position: relative; background: color-mix(in srgb, #c5e2f2 calc((1 - var(--work-progress, 0)) * 100%), var(--home-background, #f7f7f7)); }
 .stage { position: sticky; top: 0; height: 100svh; min-height: 540px; overflow: hidden; isolation: isolate; background: #05050500; }
 .headerNote { position: absolute; left: 50%; transform: translateX(-50%); text-align: center; font-size: 9px; line-height: 1.45; letter-spacing: .1em; color: #aaa; }
 .contact { display: flex; gap: 20px; font-size: 10px; letter-spacing: .08em; padding-top: 5px; }
@@ -115,3 +115,12 @@
 .page .motionControl button:focus-visible { outline: 2px solid #4779db; outline-offset: 2px; }
 @media (hover: none) { .motionTrigger { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .motionTrigger { transition: none; } }
+
+.skyTagline, .skyYear { position: absolute; z-index: 3; left: 50%; transform: translateX(-50%); margin: 0; color: #171d20; font-size: clamp(9px, .65vw, 14px); white-space: nowrap; pointer-events: none; opacity: max(0, calc(1 - var(--work-progress) * 5)); }
+.skyTagline { top: calc(50% + 5.2vw); }
+.skyYear { top: calc(50% + 5.2vw + 1.8em); }
+@media (max-width: 700px) {
+  .skyTagline, .skyYear { font-size: 9px; }
+  .skyTagline { top: calc(50% + 11vw); }
+  .skyYear { top: calc(50% + 11vw + 1.8em); }
+}

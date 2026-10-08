@@ -2,11 +2,10 @@
 export type Sound = "hover" | "click" | "menu-open" | "transition" | "scramble" | "step";
 const names = ["click", "menu-open", "transition", "scramble", ...Array.from({ length: 4 }, (_, i) => `hover-${i + 1}`), ...Array.from({ length: 6 }, (_, i) => `step-${i + 1}`)];
 const buffers = new Map<string, { buffer: AudioBuffer; offset: number }>();
-const listeners = new Set<() => void>();
 const playing = new Set<AudioBufferSourceNode>();
 let context: AudioContext | undefined;
 let gain: GainNode | undefined;
-let enabled = false;
+let enabled = true;
 let unlocked = false;
 let initialized = false;
 let previousHover = 0;
@@ -14,14 +13,6 @@ let lastHover = -Infinity;
 let lastStep = -Infinity;
 let idle: ReturnType<typeof setTimeout> | undefined;
 let generation = 0;
-const preferenceKey = "jimmy-sound";
-
-export const soundEnabled = () => enabled;
-export const soundDisabledOnServer = () => false;
-export function subscribeSound(listener: () => void) {
-  listeners.add(listener);
-  return () => { listeners.delete(listener); };
-}
 function stop() {
   generation++;
   clearTimeout(idle);
@@ -31,14 +22,6 @@ function stop() {
 function armIdle() {
   clearTimeout(idle);
   idle = setTimeout(() => { void context?.suspend().catch(() => {}); }, 30000);
-}
-export function setSoundEnabled(value: boolean) {
-  enabled = value;
-  try { localStorage.setItem(preferenceKey, value ? "on" : "off"); } catch {}
-  if (gain && context) gain.gain.setValueAtTime(value ? .6 : 0, context.currentTime);
-  if (!value) { stop(); void context?.suspend().catch(() => {}); }
-  else if (unlocked) { void context?.resume().catch(() => {}); armIdle(); }
-  listeners.forEach((listener) => listener());
 }
 export function unlockSound() {
   unlocked = true;
@@ -51,14 +34,9 @@ export function initSound() {
   try {
     context = new AudioContext({ latencyHint: "interactive" });
     gain = context.createGain();
-    gain.gain.value = 0;
+    gain.gain.value = .6;
     gain.connect(context.destination);
-    // Default on after the first gesture; an explicit mute survives reloads.
-    let saved: string | null = null;
-    try { saved = localStorage.getItem(preferenceKey); } catch {}
-    enabled = saved !== "off";
-    gain.gain.value = enabled ? .6 : 0;
-    listeners.forEach((listener) => listener());
+    // Sound stays enabled and starts after the first browser-authorized gesture.
     const audioContext = context;
     for (const name of names) {
       void fetch(`/assets/sounds/${name}.mp3`).then(async (response) => {

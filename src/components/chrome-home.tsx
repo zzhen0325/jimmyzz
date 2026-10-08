@@ -55,6 +55,8 @@ export function ChromeHero() {
             <button type="button" onClick={() => setMotionMenu(false)}>收起 ×</button>
           </div>}
         </div>}
+        <p className={styles.skyTagline}>THE WORLD INSIDE MY HEAD</p>
+        <p className={styles.skyYear}>@2026</p>
         <button className={styles.homeLogo} onClick={showIntro} aria-label="返回首页" tabIndex={view === "work" ? 0 : -1} />
         <div className={styles.center}>
           <h1 className={styles.srOnly}>Jimmy ZZ — Visual design & creative technology</h1>

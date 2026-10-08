@@ -67,7 +67,10 @@ export function createInertialScroll() {
     const delta = event.deltaY * (event.deltaMode === 1 ? 22 : event.deltaMode === 2 ? window.innerHeight : 1);
     if (nestedScroll(event, delta)) { halt(); return; }
     event.preventDefault();
-    if (!running || Math.abs(window.scrollY - written) > 1) halt();
+    if (Math.abs(window.scrollY - written) > 1) halt();
+    // Keep fractional trackpad input between idle events instead of resetting
+    // the pending target before it can accumulate into a visible movement.
+    if (!running) position = written = window.scrollY;
     // Cancel forward momentum immediately when the visitor reverses direction.
     if (velocity * delta < 0) { target = position; velocity = 0; }
     target = clamp(target + delta);
