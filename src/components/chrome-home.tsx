@@ -1,5 +1,7 @@
 "use client";
 
+import { CloudRain, Sun } from "lucide-react";
+import type { HomeWeather } from "@/lib/home-rain";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { ScrollTrigger, useGSAP } from "@/lib/gsap";
@@ -11,7 +13,8 @@ import { shouldShowHomeLoader } from "@/lib/home-loading";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
-  const [floatingMode, setFloatingMode] = useState<FloatingMode>("physics");
+  const [weather, setWeather] = useState<HomeWeather>("sunny");
+  const [floatingMode, setFloatingMode] = useState<FloatingMode>("flow-rings");
   const [motionMenu, setMotionMenu] = useState(false);
   const hero = useRef<HTMLElement>(null);
   const [loading, setLoading] = useState(shouldShowHomeLoader);
@@ -44,16 +47,20 @@ export function ChromeHero() {
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
       {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
       <div className={styles.stage} inert={loading}>
-        <ChromeScene floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} paused={loading} />
+        <ChromeScene weather={weather} floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} paused={loading} />
         {view === "intro" && <div className={styles.motionControl} onKeyDown={event => { if (event.key === "Escape") { setMotionMenu(false); event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus(); } }}>
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>
           {motionMenu && <div id="floating-motion-options" className={styles.motionMenu} role="group" aria-label="漂浮效果">
             <span>漂浮方式</span>
-            {([["planet-belt", "⑤ 行星带 · 按住加速"], ["physics-wave", "原版 + 波浪接力"], ["orbit", "② 椭圆环绕"], ["wave", "③ 波浪接力"], ["parallax", "④ 分层视差"], ["physics", "原版 · 自由漂浮"]] as const).map(([mode, label]) =>
+            {([["flow-rings", "① 并列环流"], ["flow-wave", "② 横向波带"], ["flow-twist", "③ 扭转环流"], ["flow-helix", "④ 螺旋流"], ["diagonal-drift", "⑤ 斜向漫游"], ["physics", "原版 · 自由漂浮"]] as const).map(([mode, label]) =>
               <button key={mode} type="button" aria-pressed={floatingMode === mode} onClick={() => setFloatingMode(mode)}>{label}</button>
             )}
             <button type="button" onClick={() => setMotionMenu(false)}>收起 ×</button>
           </div>}
+        </div>}
+        {view === "intro" && <div className={styles.weatherControl} role="group" aria-label="首页天气">
+          <button type="button" aria-pressed={weather === "sunny"} onClick={() => setWeather("sunny")}><Sun size={15} aria-hidden="true" />晴天</button>
+          <button type="button" aria-pressed={weather === "rainy"} onClick={() => setWeather("rainy")}><CloudRain size={15} aria-hidden="true" />雨天</button>
         </div>}
         <p className={styles.skyTagline}>THE WORLD INSIDE MY HEAD</p>
         <p className={styles.skyYear}>@2026</p>

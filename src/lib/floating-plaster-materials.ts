@@ -18,6 +18,7 @@ export function createFloatingPlasterMaterials(settings: FloatingPlasterSettings
   const cameraPosition = new THREE.Vector3();
   const towardCamera = new THREE.Vector3();
   const color = new THREE.Color(settings.color);
+  const weather = { value: 0 };
 
   return {
     apply(root: THREE.Object3D, permanent = false, billboard = false) {
@@ -29,6 +30,7 @@ export function createFloatingPlasterMaterials(settings: FloatingPlasterSettings
         const material = source.clone();
         material.onBeforeCompile = shader => {
           shader.uniforms.uPlasterAmount = amount;
+          shader.uniforms.uPlasterWeather = weather;
           shader.uniforms.uPlasterColor = { value: color };
           shader.uniforms.uPlasterGrain = { value: settings.grain };
           shader.vertexShader = `varying vec3 vPlasterNormal;
@@ -38,7 +40,8 @@ export function createFloatingPlasterMaterials(settings: FloatingPlasterSettings
             vPlasterNormal = normalize(normalMatrix * normal);
             vPlasterPosition = position;`,
           );
-          shader.fragmentShader = `uniform float uPlasterAmount;
+          shader.fragmentShader = `uniform float uPlasterWeather;
+            uniform float uPlasterAmount;
             uniform vec3 uPlasterColor;
             uniform float uPlasterGrain;
             varying vec3 vPlasterNormal;
@@ -52,6 +55,7 @@ export function createFloatingPlasterMaterials(settings: FloatingPlasterSettings
             ${billboard ? `// Preserve photographic relief instead of turning cutouts into white silhouettes.
             float relief = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
             plasterLight *= 0.66 + 0.34 * sqrt(max(relief, 0.0));` : ""}
+            plasterLight *= mix(vec3(1.0), vec3(.51, .59, .70), uPlasterWeather);
             outgoingLight = mix(outgoingLight, plasterLight, uPlasterAmount);
             #include <opaque_fragment>`,
           );
@@ -67,6 +71,7 @@ export function createFloatingPlasterMaterials(settings: FloatingPlasterSettings
       });
       entries.push({ root, amount, permanent });
     },
+    setWeather(amount: number) { weather.value = amount; },
     update(camera: THREE.Camera, center: THREE.Object3D, depthScale: number) {
       camera.getWorldPosition(cameraPosition);
       center.getWorldPosition(position);

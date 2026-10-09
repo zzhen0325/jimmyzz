@@ -7,6 +7,7 @@ const fragmentShader = /* glsl */ `
 uniform vec3 iResolution;
 uniform float iTime;
 uniform float skyOpacity;
+uniform float rainAmount;
 
 // Title:  2D Clouds
 // Author: drift
@@ -127,11 +128,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     c += c1;
     
     vec3 skycolour = mix(skycolour2, skycolour1, p.y);
+    skycolour = mix(skycolour, mix(vec3(.57, .63, .69), vec3(.32, .39, .47), p.y), rainAmount);
     // Keep the animated fine shading, with pale blue shadows and neutral whites.
     // Explicit endpoints avoid the original additive sky tint's grey-green cast.
     vec3 cloudcolour = mix(cloudshadow, cloudhighlight, smoothstep(-0.12, 0.55, c));
    
-    f = cloudcover + cloudalpha*f*r;
+    cloudcolour = mix(cloudcolour, mix(vec3(.39, .45, .52), vec3(.72, .76, .79), smoothstep(-.12, .65, c)), rainAmount);
+    f = cloudcover + rainAmount * .48 + cloudalpha*f*r;
     
     vec3 result = mix(skycolour, cloudcolour, clamp(f + c, 0.0, 1.0));
     
@@ -152,6 +155,7 @@ export function createSkyClouds() {
     iResolution: { value: new THREE.Vector3(1, 1, 1) },
     iTime: { value: 0 },
     skyOpacity: { value: 1 },
+    rainAmount: { value: 0 },
   };
   const material = new THREE.ShaderMaterial({
     name: "shadertoy-4tdSWr-drift-2d-clouds",
@@ -186,9 +190,10 @@ export function createSkyClouds() {
   return {
     group,
     ready: Promise.resolve(),
-    update(_camera: THREE.Camera, _width: number, _height: number, delta: number, progress: number) {
+    update(_camera: THREE.Camera, _width: number, _height: number, delta: number, progress: number, rainAmount = 0) {
       group.visible = !disposed && progress < 1;
       if (!group.visible) return;
+      uniforms.rainAmount.value = rainAmount;
       clock += Math.max(0, delta);
       uniforms.iTime.value = clock;
       uniforms.skyOpacity.value = 1 - THREE.MathUtils.clamp(progress, 0, 1);
@@ -196,6 +201,7 @@ export function createSkyClouds() {
     snapshot() {
       return {
         time: clock,
+        rainAmount: uniforms.rainAmount.value,
         mode: "shadertoy-4tdSWr",
         resolution: uniforms.iResolution.value.toArray(),
         opacity: uniforms.skyOpacity.value,

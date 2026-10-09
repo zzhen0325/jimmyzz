@@ -23,6 +23,10 @@ export const home3DConfig = {
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
   sizing: { desktop: .6, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  // 正交镜头的远景缩放：后方物件平滑缩到 72%，前景保持原尺寸。
+  depthSizing: { farScale: .72, range: .35 },
+  entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.15, endSpeed: .18 },
+  magnet: { hoverRadius: .45, attractRadius: .85, repelStrength: 2.8, attractStrength: 27, burstSpeed: 3.4, burstRecovery: .9 },
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
   floatingBounds: { desktop: 1.5, mobile: 1 },
   logo: {
@@ -40,6 +44,10 @@ export const home3DConfig = {
   },
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
+    { visible: true, file: "geometric-plant", path: "/assets/models/geometric-plant/geometric-plant.glb", size: 1.45,
+      material: { color: "#66a745", metalness: 0, roughness: .82, clearcoat: 0, envMapIntensity: .65 } },
+    { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: 1.15 },
+    { visible: true, file: "arrow", path: "/assets/models/arrow/arrow.glb", size: 1.25 },
     { visible: true, file: "c-mark", path: "/assets/models/figma-symbols/c-mark.glb", size: .75 ,
        material: { color: "#f1f1ef", metalness: 0, roughness: .32, envMapIntensity: .4 } 
     },

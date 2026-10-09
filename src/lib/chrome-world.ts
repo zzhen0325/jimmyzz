@@ -1,3 +1,4 @@
+import { createHomeRain, type HomeWeather } from "./home-rain";
 import { createVortexEasterEgg } from "./vortex-easter-egg";
 import { createPixelVortex } from "./pixel-vortex";
 import * as THREE from "three";
@@ -21,9 +22,12 @@ import { createSkyClouds } from "./sky-clouds";
 import { createGoodLuckCylinder, createEatSculpture } from "./home-reference-sculptures";
 import { createGlassComposite } from "./glass-composite";
 
-export type FloatingMode = "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
+import { createFloatingFlow, isFlowMode, sampleFlow, type FlowMode } from "./floating-flow";
+import { driftRotation, sampleFloatingDrift } from "./floating-drift";
 
-export type ChromeWorldOptions = { floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
+export type FloatingMode = FlowMode | "diagonal-drift" | "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
+
+export type ChromeWorldOptions = { weather?: HomeWeather; floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean; screen: { x: number; y: number; radius: number; fx: number; fy: number } };
 
 // SOURCE: twomuch.studio module 3614 / 3645 / 5743, captured 2026-09-11.
@@ -36,8 +40,8 @@ export const referencePhysics = {
   orbitDecay: .98, idlePower: .01, orbitRadians: 2 * Math.PI / 10,
 };
 
-// Props use soft silhouette separation; rigid contacts only contain the outer scene.
-// Large props must not form a locked chain of contacts with each other or the logo.
+// Original free drift uses silhouette separation. Guided currents additionally
+// enable real prop contacts; the logo stays outside the physics world.
 const collisionGroup = { boundary: 1, prop: 2 };
 
 export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorldOptions = {}) {
@@ -50,6 +54,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const glassComposite = createGlassComposite(renderer);
   const scene = new THREE.Scene();
   const sky = createSkyClouds();
+  const rain = createHomeRain();
+  let weather: HomeWeather = options.weather ?? "sunny";
+  let rainAmount = weather === "rainy" ? 1 : 0;
   const skyScene = new THREE.Scene();
   skyScene.add(sky.group);
   const skyReady = sky.ready.catch(error => { if (!disposed) options.onError?.(error); });
@@ -83,14 +90,21 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let previous = 0;
   let elapsed = 0;
   let entranceActive = false;
-  const entrance = { stagger: .025, launch: .16, orbit: 1.2, releaseDrag: 1.4, coast: .12, dragRamp: .45, settle: 3.2 };
+  const entrance = { stagger: config.entrance.stagger, launch: config.entrance.launch, orbit: config.entrance.duration, releaseDrag: .45, coast: .18, dragRamp: .65, settle: 2.4 };
   const lastReleaseTime = () => entrance.launch + entrance.orbit + Math.max(0, items.length - 2) * entrance.stagger;
   const entrancePosition = new THREE.Vector3();
   const entranceVelocity = new THREE.Vector3();
+  const entranceFlowPosition = new THREE.Vector3();
+  const entrancePreviousPosition = new THREE.Vector3();
   let vortexTime = 0;
   let vortexAnimation: ReturnType<typeof createPixelVortex> | undefined;
   let floatingMode: FloatingMode = options.floatingMode ?? "physics";
-  const usesPhysics = () => floatingMode === "physics" || floatingMode === "physics-wave";
+  const usesPhysics = () => isFlowMode(floatingMode) || floatingMode === "physics" || floatingMode === "physics-wave";
+  const flow = createFloatingFlow();
+  const flowAcceleration = new THREE.Vector3();
+  let flowBlend = 0;
+  let flowSpeed = 1;
+  const propMask = () => collisionGroup.boundary | (isFlowMode(floatingMode) ? collisionGroup.prop : 0);
   let beltAngle = 0;
   let beltSpeed = .10;
   const beltKeys = new Set<string>();
@@ -125,9 +139,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const spinAxis = new THREE.Vector3(0, 1, 0);
   const spin = new THREE.Quaternion();
   let contacts = 0;
-  const bursts = 0;
+  let bursts = 0;
   let activePointer: number | null = null;
   let pointerYaw = 0;
+  let pointerInside = false;
+  let pointerIsTouch = false;
+  let lastBurstTime = -Infinity;
+  let magnetBlend = 0;
+  const magneticPointer = new THREE.Vector2();
   let snapshotTime = 0;
   const pointer = new THREE.Vector2();
   const force = new CANNON.Vec3();
@@ -152,7 +171,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let reflectionFrames = 0;
   let reflectionDirty = true;
   let renderedWorkProgress = -1;
-  scene.add(new THREE.AmbientLight(config.lighting.ambient.color, config.lighting.ambient.intensity));
+  const ambient = new THREE.AmbientLight(config.lighting.ambient.color, config.lighting.ambient.intensity);
+  scene.add(ambient);
   const lights = new THREE.Group();
   for (const position of [[15,-15,6],[-15,15,-6],[15,-6,15],[-15,6,-15]]) {
     // Zero-intensity lights still add BRDF work to every physical-material pixel.
@@ -169,6 +189,34 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     light.position.fromArray(position); light.lookAt(0, 0, 0); studio.add(light);
   }
   scene.add(studio);
+  const weatherLights = [ambient, ...lights.children, ...studio.children].map(object => {
+    const light = object as THREE.Light;
+    return { light, color: light.color.clone(), intensity: light.intensity,
+      width: light instanceof THREE.RectAreaLight ? light.width : 0,
+      height: light instanceof THREE.RectAreaLight ? light.height : 0 };
+  });
+  const overcastLight = new THREE.Color("#b9cce3");
+  const sunnyChromeColor = chrome.color.clone();
+  const overcastChromeColor = sunnyChromeColor.clone().multiply(new THREE.Color("#d0ddeb"));
+  let lightingAmount = 0;
+  const updateWeatherLighting = (amount: number) => {
+    lightingAmount = amount;
+    for (const entry of weatherLights) {
+      const { light, color, intensity } = entry;
+      light.color.copy(color).lerp(overcastLight, amount * .65);
+      // Overcast light is broad and diffuse, with much less directional contrast.
+      light.intensity = intensity * THREE.MathUtils.lerp(1, light === ambient ? 1.5 : .38, amount);
+      if (light instanceof THREE.RectAreaLight) {
+        light.width = entry.width * THREE.MathUtils.lerp(1, 1.6, amount);
+        light.height = entry.height * THREE.MathUtils.lerp(1, 1.6, amount);
+      }
+    }
+    scene.environmentIntensity = config.lighting.environmentIntensity * THREE.MathUtils.lerp(1, .48, amount);
+    renderer.toneMappingExposure = config.lighting.exposure * THREE.MathUtils.lerp(1, .82, amount);
+    chrome.color.copy(sunnyChromeColor).lerp(overcastChromeColor, amount);
+    bakedMaterials?.setWeather(amount);
+    plasterMaterials.setWeather(amount);
+  };
   const logo = new THREE.Group(); logo.name = "fixed-silver-ZZ"; scene.add(logo);
   // User-directed silver adaptation. A real curved surface reflects the panorama;
   // this replaces the old sinusoidal fragment-normal trick and fabricated softboxes.
@@ -240,6 +288,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     easterEgg.cancel();
     lastVortexHover = null;
     reflectionDirty=true;
+    flowBlend=isFlowMode(floatingMode)?1:0;flowSpeed=1;lastBurstTime=-Infinity;magnetBlend=0;
     beltAngle=0;beltSpeed=.10;orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
     entranceActive = !reduced && usesPhysics();
     world.defaultContactMaterial.restitution = entranceActive ? .8 : 0;
@@ -248,8 +297,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       item.entranceReleased = false;
       const portal = item.object.name === 'floating-pixel-vortex';
       item.body.type = entranceActive && !portal ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC;
-      item.body.collisionFilterMask = entranceActive || portal ? 0 : collisionGroup.boundary;
+      item.body.collisionFilterMask = entranceActive || portal ? 0 : propMask();
       item.body.linearDamping = referencePhysics.linearDamping;
+      item.body.angularDamping = isFlowMode(floatingMode) ? .16 : referencePhysics.angularDamping;
       item.body.updateMassProperties();
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
       item.body.quaternion.set(0,0,0,1);item.body.velocity.setZero();item.body.angularVelocity.setZero();item.body.force.setZero();item.body.torque.setZero();item.body.wakeUp();
@@ -291,7 +341,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // teleporting individual bodies into arrangement slots or leaving bodies outside walls.
     if(ready)reset();
   };
-  const updatePointer=(event:PointerEvent)=>{if(pointerRectDirty){pointerRect=host.getBoundingClientRect();pointerRectDirty=false;}const r=pointerRect;pointer.set((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));};
+  const updatePointer=(event:PointerEvent)=>{pointerInside=true;pointerIsTouch=event.pointerType==='touch';if(pointerRectDirty){pointerRect=host.getBoundingClientRect();pointerRectDirty=false;}const r=pointerRect;pointer.set((event.clientX-r.left)/r.width*2-1,-((event.clientY-r.top)/r.height*2-1));};
   const vortexBox = new THREE.Box3();
   const localOrigin = new THREE.Vector3();
   const vortexMin = new THREE.Vector2(), vortexMax = new THREE.Vector2();
@@ -360,19 +410,48 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (reduced || (!usesPhysics() && floatingMode !== 'planet-belt')) return;
     activePointer=event.pointerId;
     canvas.setPointerCapture(event.pointerId);
-    canvas.dataset.phase='spin';
+    canvas.dataset.phase='attract';
+    if (usesPhysics()) canvas.dataset.hoverLabel='attract';
   };
   const pointerMove=(event:PointerEvent)=>{
     updatePointer(event);
     if (!easterEgg.active) {
       const overVortex = ready && workProgress() === 0 && hitVortex();
-      const label = overVortex ? 'click to shoot' : usesPhysics() ? 'hold to spin' : floatingMode === 'planet-belt' ? 'hold to accelerate' : 'move to explore';
+      const label = overVortex ? 'click to shoot' : usesPhysics() ? (activePointer !== null ? 'attract' : 'hold to attract · release to burst') : floatingMode === 'planet-belt' ? 'hold to accelerate' : 'move to explore';
       if (canvas.dataset.hoverLabel !== label) canvas.dataset.hoverLabel = label;
       if (overVortex) lastVortexHover = { x: event.clientX, y: event.clientY, time: performance.now() };
     }
   };
   const pointerUp=(event:PointerEvent)=>{
     if(activePointer!==event.pointerId)return;
+    // Release is an impulse, not a position tween: collisions and spin remain live.
+    if (usesPhysics() && !reduced && !paused && !easterEgg.active && workProgress() === 0) {
+      const upY = Math.cos(angle), upZ = -Math.sin(angle);
+      const centerX = magneticPointer.x * viewWidth / 2;
+      const centerY = magneticPointer.y * viewHeight / 2;
+      const radius = Math.min(viewWidth, viewHeight) * config.magnet.attractRadius;
+      for (const { body, phase } of items) {
+        if (!body.collisionResponse || body.type !== CANNON.Body.DYNAMIC) continue;
+        const dx = body.position.x - centerX;
+        const dy = body.position.y * upY + body.position.z * upZ - centerY;
+        const distance = Math.hypot(dx, dy);
+        if (distance >= radius) continue;
+        const nx = distance > .02 ? dx / distance : Math.cos(phase);
+        const ny = distance > .02 ? dy / distance : Math.sin(phase);
+        const outwardSpeed = body.velocity.x * nx + (body.velocity.y * upY + body.velocity.z * upZ) * ny;
+        const falloff = 1 - THREE.MathUtils.smoothstep(distance, 0, radius);
+        // Cancel incoming radial momentum before adding the outward kick.
+        const kick = Math.max(0, config.magnet.burstSpeed * falloff - outwardSpeed);
+        force.set(nx * kick * body.mass, ny * upY * kick * body.mass, ny * upZ * kick * body.mass);
+        point.set(Math.sin(phase) * .015, Math.cos(phase) * .015, .01);
+        body.applyImpulse(force, point);
+        body.wakeUp();
+      }
+      bursts++;
+      lastBurstTime = elapsed;
+      magnetBlend = 0;
+    }
+    if (pointerIsTouch) pointerInside = false;
     pointerCancel();
   };
   const touchClick=(event:PointerEvent)=>{
@@ -385,11 +464,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const pointerId=activePointer;activePointer=null;
     if(pointerId!==null&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);
     canvas.dataset.phase=reduced?'static':floatingMode;
+    if (usesPhysics()) canvas.dataset.hoverLabel='hold to attract · release to burst';
   };
-  const pointerLeave=()=>{pointer.set(0,0);};
+  const pointerLeave=()=>{pointerInside=false;if(activePointer===null)pointer.set(0,0);};
+  const cancelMagnet=()=>{pointerInside=false;lastBurstTime=-Infinity;magnetBlend=0;pointerCancel();};
   canvas.addEventListener("pointerleave",pointerLeave);
-  const pageVisibility=()=>{if(document.hidden)pointerCancel();};
-  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if(floatingMode === 'planet-belt' && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
+  const pageVisibility=()=>{if(document.hidden)cancelMagnet();};
+  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if((floatingMode === 'planet-belt' || isFlowMode(floatingMode)) && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
   const keyUp = (event: KeyboardEvent) => { beltKeys.delete(event.code); };
   window.addEventListener('keyup', keyUp);
   const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
@@ -397,9 +478,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
-  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);canvas.addEventListener('click',touchClick);
+  canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancelMagnet);canvas.addEventListener('click',touchClick);
   window.addEventListener('scroll',invalidatePointerRect,{passive:true});
-  window.addEventListener('blur',pointerCancel);document.addEventListener('visibilitychange',pageVisibility);
+  window.addEventListener('blur',cancelMagnet);document.addEventListener('visibilitychange',pageVisibility);
   canvas.addEventListener('lostpointercapture',pointerCancel);canvas.addEventListener('keydown',key);
   media.addEventListener('change',preference);
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
@@ -424,8 +505,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     items.forEach((item, index) => {
       if (item.object.name === 'floating-pixel-vortex') return;
       const layer = index % 3;
+      let recycled = false;
       let x: number, y: number, z: number;
-      if (floatingMode === 'planet-belt') {
+      if (floatingMode === 'diagonal-drift') {
+        const previousCycle = sampleFloatingDrift(index, Math.max(0, t - delta), viewWidth, viewHeight, targetPosition);
+        recycled = sampleFloatingDrift(index, t, viewWidth, viewHeight, targetPosition) !== previousCycle;
+        x = targetPosition.x; y = targetPosition.y; z = targetPosition.z;
+      } else if (floatingMode === 'planet-belt') {
         // Stable per-object seeds make a broad, irregular band without per-frame
         // randomness or teleporting. Local drift stays bounded around each orbit.
         const seed = beltSeed(index, 1);
@@ -469,10 +555,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         }
       }
       targetPosition.set(x, y, z);
-      item.object.position.lerp(targetPosition, blend);
+      item.object.position.lerp(targetPosition, recycled ? 1 : blend);
       item.body.position.set(item.object.position.x, item.object.position.y, item.object.position.z);
       const sway = floatingMode === 'parallax' ? smoothPointer.x * .06 : Math.sin(t * .72 - x) * .06;
-      if (floatingMode === 'planet-belt') {
+      if (floatingMode === 'diagonal-drift') {
+        const rotation = driftRotation(index, t);
+        targetEuler.set(rotation * .65, rotation, rotation * .45);
+      } else if (floatingMode === 'planet-belt') {
         const phase = beltSeed(index, 6) * Math.PI * 2;
         targetEuler.set(Math.sin(t * .23 + phase) * .25, Math.cos(t * .19 + phase) * .35,
           (beltSeed(index, 7) - .5) * .65 + Math.sin(t * .28 + phase) * .15);
@@ -486,18 +575,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.phase = reduced ? 'static' : floatingMode;
     canvas.dataset.motionMode = floatingMode;
   };
-  // Release the constraint after two turns. Velocity is the analytic derivative
-  // of the ellipse (v = omega × radius), never a tween toward a destination.
-  const sampleEntrance = (index: number, age: number, out: THREE.Vector3, velocity: THREE.Vector3) => {
+  // Join the destination current during the existing orbital entrance. There is
+  // no free-flight/recapture segment after release.
+  const sampleEntrancePosition = (index: number, age: number, out: THREE.Vector3) => {
     const count = items.length - 1;
     const start = -index / count * Math.PI * 2 + .35;
     const launch = THREE.MathUtils.smootherstep(age, 0, entrance.launch);
     const progress = THREE.MathUtils.clamp((age - entrance.launch) / entrance.orbit, 0, 1);
-    // No braking phase: the same angular speed drives both laps and the
-    // tangent velocity at release. Only the trajectory changes at that instant.
-    const angularSpeed = Math.PI * 4 / entrance.orbit;
-    const launchAngle = Math.min(0, age - entrance.launch) * angularSpeed;
-    const theta = start + progress * Math.PI * 4 + launchAngle;
+    const tail = config.entrance.endSpeed;
+    const integral = tail + (1 - tail) / 3;
+    const eased = (tail * progress + (1 - tail) * (1 - (1 - progress) ** 3) / 3) / integral;
+    const turns = Math.PI * 2 * config.entrance.turns;
+    const launchAngle = Math.min(0, age - entrance.launch) * turns / entrance.orbit / integral;
+    const theta = start + eased * turns + launchAngle;
     const radius = .88 + beltSeed(index, 4) * .20;
     const along = Math.cos(theta) * radius;
     const across = Math.sin(theta) * radius;
@@ -506,16 +596,32 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       (along * .19 + across * .24) * viewHeight,
       -across * viewHeight * .20,
     ).multiplyScalar(launch);
-    velocity.set(
-      (-across * .35 - along * .08) * viewWidth,
-      (-across * .19 + along * .24) * viewHeight,
-      -along * viewHeight * .20,
-    ).multiplyScalar(angularSpeed);
+    if (isFlowMode(floatingMode)) {
+      sampleFlow(floatingMode, theta, index % 3, age + index * entrance.stagger,
+        viewWidth, viewHeight, entranceFlowPosition);
+      out.lerp(entranceFlowPosition, THREE.MathUtils.smootherstep(progress, .35, 1));
+    }
+  };
+  const sampleEntrance = (index: number, age: number, out: THREE.Vector3, velocity: THREE.Vector3) => {
+    sampleEntrancePosition(index, age, out);
+    // Differentiate the complete moving path, including its in-orbit morph.
+    // A backward derivative also handles the release endpoint without clamping
+    // away the tangent speed.
+    sampleEntrancePosition(index, age - .001, entrancePreviousPosition);
+    velocity.subVectors(out, entrancePreviousPosition).multiplyScalar(1000);
   };
   const updateReleaseDrag = () => {
+    if (isFlowMode(floatingMode)) {
+      world.defaultContactMaterial.restitution = .42;
+      for (const { body, entranceReleased } of items) {
+        if (entranceReleased) body.linearDamping = referencePhysics.linearDamping;
+      }
+      return;
+    }
     // A zero-restitution boundary absorbs the entire normal velocity on impact.
     // Keep the toss elastic, then ease back to the original idle contacts.
-    world.defaultContactMaterial.restitution = .8
+    const idleRestitution = isFlowMode(floatingMode) ? .42 : 0;
+    world.defaultContactMaterial.restitution = idleRestitution + (.8 - idleRestitution)
       * (1 - THREE.MathUtils.smootherstep(elapsed, lastReleaseTime() + .5, lastReleaseTime() + entrance.settle));
     items.forEach((item, index) => {
       if (!item.entranceReleased) return;
@@ -526,10 +632,65 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       item.body.linearDamping = 1 - (1 - referencePhysics.linearDamping * onset) * Math.exp(-drag);
     });
   };
+  const applyMagnet = (delta: number) => {
+    const attracting = activePointer !== null;
+    const enabled = !reduced && !paused && !easterEgg.active && workProgress() === 0
+      && (pointerInside || activePointer !== null || (pointerIsTouch && attracting));
+    const target = enabled ? attracting ? 1 : pointerIsTouch ? 0 : -1 : 0;
+    magnetBlend = THREE.MathUtils.damp(magnetBlend, target, 10, delta);
+    magneticPointer.lerp(pointer, 1 - Math.exp(-delta * 18));
+    canvas.dataset.magnet = !enabled ? 'off' : attracting ? 'attract' : 'repel';
+    if (!enabled || Math.abs(magnetBlend) < .01) return;
+    const upY = Math.cos(angle), upZ = -Math.sin(angle);
+    const targetX = magneticPointer.x * viewWidth / 2;
+    const targetY = magneticPointer.y * viewHeight / 2;
+    const radius = Math.min(viewWidth, viewHeight)
+      * (magnetBlend > 0 ? config.magnet.attractRadius : config.magnet.hoverRadius);
+    for (const { body, phase } of items) {
+      if (!body.collisionResponse || body.type !== CANNON.Body.DYNAMIC) continue;
+      let dx = targetX - body.position.x;
+      let dy = targetY - (body.position.y * upY + body.position.z * upZ);
+      const distance = Math.hypot(dx, dy);
+      if (distance >= radius) continue;
+      if (distance < .001) { dx = Math.cos(phase) * .001; dy = Math.sin(phase) * .001; }
+      const falloff = 1 - THREE.MathUtils.smoothstep(distance, 0, radius);
+      const strength = magnetBlend > 0 ? config.magnet.attractStrength : config.magnet.repelStrength;
+      // Screen-plane force preserves each body's depth. Attraction weakens at
+      // the cursor so bodies can collide and tumble instead of snapping together.
+      const magnitude = strength * magnetBlend * falloff * (magnetBlend > 0 ? Math.min(1, distance / .28) : 1);
+      const inverseDistance = 1 / Math.max(.001, distance);
+      force.set(dx * inverseDistance * magnitude, dy * inverseDistance * upY * magnitude, dy * inverseDistance * upZ * magnitude);
+      body.applyForce(force);
+      body.wakeUp();
+    }
+  };
+  const applyFlowForces = () => {
+    if (!isFlowMode(floatingMode)) return;
+    flow.update(floatingMode, elapsed, viewWidth, viewHeight);
+    const recovery = THREE.MathUtils.smoothstep(elapsed - lastBurstTime, 0, config.magnet.burstRecovery);
+    const strength = flowBlend * (1 - workProgress()) * (.18 + .82 * recovery);
+    items.forEach(({ body }, index) => {
+      if (!body.collisionResponse || body.type !== CANNON.Body.DYNAMIC) return;
+      body.collisionFilterMask = propMask();
+      body.angularDamping = .16;
+      flow.acceleration(body.position, body.velocity, index % 3,
+        Math.min(viewWidth, viewHeight) * .20 * flowSpeed * (.9 + beltSeed(index, 9) * .2), flowAcceleration);
+      force.set(flowAcceleration.x * strength, flowAcceleration.y * strength, flowAcceleration.z * strength);
+      body.applyForce(force);
+      // Tiny off-centre force sustains tumbling; contact impulses remain free
+      // to change its axis. Never overwrite a live body's quaternion.
+      force.set(.012 * Math.sin(elapsed * .4 + index), .008, .012 * Math.cos(elapsed * .31 + index));
+      point.set(.17, -.13, .11);
+      body.applyLocalForce(force, point);
+      body.wakeUp();
+    });
+  };
   const stepEntrance = (delta: number) => {
     cameraFrame();
     updateReleaseDrag();
-    // Released props already collide and coast while later props finish orbiting.
+    applyMagnet(delta);
+    applyFlowForces();
+    // Each released body immediately joins the live current while the rest enter.
     world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
     items.forEach((item, index) => {
       if (item.object.name === 'floating-pixel-vortex') return;
@@ -550,14 +711,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (age >= releaseAt) {
         item.entranceReleased = true;
         item.body.type = CANNON.Body.DYNAMIC;
-        item.body.collisionFilterMask = collisionGroup.boundary;
+        item.body.collisionFilterMask = propMask();
         item.body.updateMassProperties();
         const overshoot = age - releaseAt;
         // Advance any fraction of the release frame at the exact orbital
         // tangent speed. Drag starts later; it must not scale the handoff.
         entrancePosition.addScaledVector(entranceVelocity, overshoot);
         item.body.velocity.set(entranceVelocity.x, entranceVelocity.y, entranceVelocity.z);
-        item.body.linearDamping = 0;
+        item.body.linearDamping = isFlowMode(floatingMode) ? referencePhysics.linearDamping : 0;
         item.body.wakeUp();
       }
       item.body.position.set(entrancePosition.x, entrancePosition.y, entrancePosition.z);
@@ -568,14 +729,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     entranceActive = lastAge < entrance.launch + entrance.orbit;
     canvas.dataset.phase = elapsed < entrance.launch ? 'entrance-launch'
       : elapsed < entrance.launch + entrance.orbit ? 'entrance-orbit' : 'entrance-release';
-    if (!entranceActive) canvas.dataset.phase = 'orbit';
+    if (!entranceActive) canvas.dataset.phase = isFlowMode(floatingMode) ? floatingMode : 'orbit';
   };
   const spreadFloatingItems = () => {
     // Depth-separated bodies can still overlap in the camera. A soft screen-space
     // pressure spreads those silhouettes without snapping bodies to fixed slots.
     const strength = THREE.MathUtils.smootherstep(elapsed, lastReleaseTime(), lastReleaseTime() + entrance.settle)
       * (1 - workProgress()) * (activePointer === null ? 1 : .2);
-    if (strength <= 0 || easterEgg.active) return;
+    if (strength <= 0 || easterEgg.active || isFlowMode(floatingMode)) return;
     const upY = Math.cos(angle), upZ = -Math.sin(angle);
     const count = items.length - 1;
     const spacing = Math.sqrt(viewWidth * viewHeight / count) * .82;
@@ -646,15 +807,30 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
       cameraFrame(); arrange(delta); return;
     }
+    if (isFlowMode(floatingMode)) {
+      const holding = beltKeys.size > 0 && !easterEgg.active && workProgress() === 0;
+      flowBlend = Math.min(1, flowBlend + delta / 2.4);
+      flowSpeed = THREE.MathUtils.damp(flowSpeed, holding ? 2.4 : 1, holding ? 3 : .85, delta);
+      // Stop the old global camera roll gradually: front/back motion now comes
+      // from actual three-dimensional currents. Scrolling still turns the scene.
+      orbit = THREE.MathUtils.damp(orbit, Math.round(orbit / 10) * 10, 1.8, delta);
+      if (workProgress() > 0) orbit += (.01 + workProgress() ** 2 * .65) * delta * 60;
+      cameraFrame();
+      updateReleaseDrag();
+      applyFlowForces();
+      applyMagnet(delta);
+      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
+      canvas.dataset.phase = floatingMode;
+      return;
+    }
     // Reference orbit is per-frame; normalize to 60Hz so high-refresh displays match it.
     const frameRatio=delta*60;
     if(workProgress()>0&&activePointer!==null)pointerCancel();
-    const holding=activePointer!==null&&!easterEgg.active&&!reduced;
-    if(holding)power=.29;
     const idleEntrance = THREE.MathUtils.smootherstep(elapsed, lastReleaseTime(), lastReleaseTime() + .65);
-    orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : holding ? power : power * idleEntrance)*frameRatio;
-    // Retain the held speed on release, then ease back to the idle orbit.
-    if(!holding)power=referencePhysics.idlePower+(power-referencePhysics.idlePower)*Math.pow(referencePhysics.orbitDecay,frameRatio);
+    orbit+=(workProgress()>0 ? .01 + Math.pow(workProgress(), 2)*.65 : power * idleEntrance)*frameRatio;
+    // Keyboard acceleration eases back to idle; mouse presses apply magnetic force.
+    power=referencePhysics.idlePower+(power-referencePhysics.idlePower)*Math.pow(referencePhysics.orbitDecay,frameRatio);
     cameraFrame();
     force.set(.02*Math.sin(elapsed/10),0,.02*Math.cos(elapsed/10));point.set(Math.cos(elapsed/15+50),Math.sin(elapsed/10+100),Math.cos(elapsed/20+150));
     for(const {body} of items){
@@ -675,6 +851,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
     }
     spreadFloatingItems();
+    applyMagnet(delta);
     updateReleaseDrag();
     world.step(referencePhysics.step,delta,referencePhysics.maxSubSteps);
     for(const {body,object} of items){object.position.copy(body.position);object.quaternion.copy(body.quaternion);}
@@ -699,10 +876,17 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
+    const depthRange = Math.min(viewWidth, viewHeight) * config.depthSizing.range;
+    const cameraDistance = camera.position.length();
     for (const { object, body, phase, billboard, entranceScale = 1 } of items) {
       const itemEntranceScale = entranceActive ? entranceScale : 1;
+      // Signed depth relative to the logo plane, along the current camera axis.
+      // This also follows the rotating camera in the original free-drift mode.
+      const cameraDepth = object.position.dot(camera.position) / cameraDistance;
+      const depthScale = THREE.MathUtils.lerp(1, config.depthSizing.farScale,
+        THREE.MathUtils.smoothstep(-cameraDepth, 0, depthRange));
       object.visible = p < .7 && itemEntranceScale > 0 && object.name !== "floating-pixel-vortex";
-      object.scale.setScalar(assetScale * itemEntranceScale * (usesPhysics() ? 1 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
+      object.scale.setScalar(assetScale * depthScale * itemEntranceScale * (usesPhysics() ? 1 : floatingMode === "diagonal-drift" ? width < 700 ? .65 : .85 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
       object.quaternion.copy(billboard ? camera.quaternion : body.quaternion);
       if (p > 0 && !reduced && !billboard) {
         object.rotateY(p * p * (22 + phase));
@@ -747,7 +931,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     vortexAnimation?.update(reduced ? 0 : vortexTime, easterEgg.active ? THREE.MathUtils.clamp((portalScale / assetScale - .16) / 2.34, 0, 1) : 1);
     scene.updateMatrixWorld();
     camera.updateMatrixWorld();
-    sky.update(camera, viewWidth, viewHeight, paused || reduced ? 0 : delta, workProgress());
+    rainAmount = reduced ? (weather === "rainy" ? 1 : 0) : THREE.MathUtils.damp(rainAmount, weather === "rainy" ? 1 : 0, 3, delta);
+    if (ready) updateWeatherLighting(rainAmount * (1 - workProgress()));
+    sky.update(camera, viewWidth, viewHeight, paused || reduced ? 0 : delta, workProgress(), rainAmount);
+    rain.update(paused || reduced ? 0 : delta, rainAmount * (1 - workProgress()) * (ready && !paused ? 1 : 0), host.clientWidth, host.clientHeight);
+    canvas.dataset.weather = weather;
     canvas.dataset.clouds = "shadertoy-4tdSWr";
     // Capture one face per display frame and blend completed reflections between
     // captures. Initial/invalidation captures stay atomic, including static views.
@@ -757,7 +945,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       const logoVisible = logo.visible;
       logo.visible = false;
       scene.background = scene.environment;
-      scene.backgroundIntensity = config.lighting.reflectionBackgroundIntensity;
+      scene.backgroundIntensity = config.lighting.reflectionBackgroundIntensity * THREE.MathUtils.lerp(1, .48, lightingAmount);
       reflectionCamera.position.set(0, 0, .28).applyQuaternion(logo.quaternion).add(logo.position);
       let complete = false;
       try {
@@ -775,6 +963,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     updateVortexTarget();
     if (ready) glassComposite.render(scene, camera, skyScene); else renderer.render(scene, camera);
+    if (ready) rain.render(renderer);
     renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
@@ -938,7 +1127,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
-  const debug={snapshot:()=>({sky:sky.snapshot(),ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={snapshot:()=>({sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
@@ -946,13 +1135,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     setFloatingMode(value: FloatingMode) {
       if (value === floatingMode) return;
       const wasPhysics = usesPhysics();
-      pointerCancel(); easterEgg.cancel(); floatingMode = value;
+      cancelMagnet(); easterEgg.cancel(); floatingMode = value;
+      flowBlend = entranceActive && isFlowMode(value) ? 1 : 0;
+      items.forEach(({ body }) => {
+        if (body.collisionResponse && body.type === CANNON.Body.DYNAMIC) body.collisionFilterMask = propMask();
+        body.angularDamping = isFlowMode(value) ? .16 : referencePhysics.angularDamping;
+        body.wakeUp();
+      });
       const keepPhysics = wasPhysics && usesPhysics();
       if (!usesPhysics()) {
         entranceActive = false;
         items.forEach(item => {
           item.body.type = CANNON.Body.DYNAMIC;
-          item.body.collisionFilterMask = item.object.name === 'floating-pixel-vortex' ? 0 : collisionGroup.boundary;
+          item.body.collisionFilterMask = item.object.name === 'floating-pixel-vortex' ? 0 : propMask();
           item.body.updateMassProperties();
         });
       }
@@ -961,21 +1156,23 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       canvas.dataset.motionMode = value;
       if (ready && ((!keepPhysics && usesPhysics()) || reduced)) reset();
     },
-    setPaused(value:boolean){paused=value;if(value)activePointer=null;},
+    setWeather(value: HomeWeather) { weather = value; reflectionDirty = true; },
+    setPaused(value:boolean){paused=value;if(value)cancelMagnet();},
     replay(){if(ready)reset();},
     dispose(){
       disposed=true;window.removeEventListener('keyup',keyUp);canvas.removeEventListener("pointerleave",pointerLeave);pointerCancel();easterEgg.cancel();cancelAnimationFrame(frame);
       window.removeEventListener('scroll',invalidatePointerRect);
-      window.removeEventListener('blur',pointerCancel);document.removeEventListener('visibilitychange',pageVisibility);
+      window.removeEventListener('blur',cancelMagnet);document.removeEventListener('visibilitychange',pageVisibility);
       options.vortexTarget?.removeEventListener('pointerdown', vortexActivate);
       options.vortexTarget?.removeEventListener('click', vortexActivate);
       if (options.vortexTarget) options.vortexTarget.style.display = 'none';observer.disconnect();visibility.disconnect();
-      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);canvas.removeEventListener('click',touchClick);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
+      canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',cancelMagnet);canvas.removeEventListener('click',touchClick);canvas.removeEventListener('lostpointercapture',pointerCancel);canvas.removeEventListener('keydown',key);media.removeEventListener('change',preference);canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored);
       bakedMaterials?.dispose();
       plasterMaterials.dispose();
       reflectionProbe.dispose();
       glassComposite.dispose();
       sky.dispose();
+      rain.dispose();
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;
     },
   };

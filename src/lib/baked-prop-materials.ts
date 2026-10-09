@@ -22,6 +22,7 @@ export function createBakedPropMaterials(renderer: THREE.WebGLRenderer, sourceSc
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 10);
   camera.position.z = 4;
   const cache = new Map<THREE.Material, THREE.Material>();
+  const overcastTint = new THREE.Color("#afc0d6").multiplyScalar(.78);
   const captures: { source: THREE.MeshStandardMaterial; target: THREE.WebGLRenderTarget }[] = [];
 
   const capture = (source: THREE.MeshStandardMaterial, target: THREE.WebGLRenderTarget) => {
@@ -82,6 +83,12 @@ export function createBakedPropMaterials(renderer: THREE.WebGLRenderer, sourceSc
       root.traverse(object => {
         if (!(object instanceof THREE.Mesh)) return;
         object.material = Array.isArray(object.material) ? object.material.map(convert) : convert(object.material);
+      });
+    },
+    setWeather(amount: number) {
+      // Matcaps cache sunny radiance; adjust that radiance without rebaking per frame.
+      cache.forEach(material => {
+        if (material instanceof THREE.MeshMatcapMaterial) material.color.setRGB(1, 1, 1).lerp(overcastTint, amount);
       });
     },
     refresh() {
