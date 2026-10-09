@@ -15,14 +15,14 @@ export type FloatingModelConfig = {
 // axisScale：[宽、高、厚] 相对模型倍率；size 最后统一控制最长边。
 // normalStrength：已有法线纹理的颗粒强度，0 为平滑，1 为当前烘焙强度。
 const silver: MeshPhysicalMaterialParameters = {
-  color: "#2F2F2F", metalness: 1, roughness: .16, envMapIntensity: 3,
+  color: "#ECECEC", metalness: 1, roughness: .16, envMapIntensity: 1,
 };
 
 export const home3DConfig = {
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: 1.1, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .6, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
   floatingBounds: { desktop: 1.5, mobile: 1 },
   logo: {
