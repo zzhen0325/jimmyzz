@@ -2,7 +2,7 @@
   position: absolute;
   z-index: 60;
   pointer-events: none;
-  --nav-edge: calc(var(--home-primary-font-size, 3vw) * .2);
+  --nav-edge: var(--home-edge);
   top: var(--nav-edge);
   left: var(--nav-edge);
   width: calc(100% - 2 * var(--nav-edge));

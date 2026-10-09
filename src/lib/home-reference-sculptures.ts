@@ -3,6 +3,11 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import contours from "./eat-sculpture-contours.json";
 import labelContours from "./good-luck-label-contours.json";
 
+type GoodLuckCylinderConfig = {
+  materials: Record<"body" | "valve" | "recess" | "label", THREE.MeshPhysicalMaterialParameters>;
+  labelColors: { background: string; ink: string };
+};
+
 function roundedRectangle<T extends THREE.Path>(path: T, left: number, bottom: number, width: number, height: number, radius: number): T {
   const right = left + width, top = bottom + height;
   path.moveTo(left + radius, bottom);
@@ -51,16 +56,12 @@ function collarPanel(start: number, tallOpening: boolean) {
 }
 
 /** Soft satin-blue cylinder, open protective collar and separate brass valve. */
-export function createGoodLuckCylinder() {
+export function createGoodLuckCylinder(config: GoodLuckCylinderConfig) {
   const group = new THREE.Group();
   group.name = "floating-sculpted-good-luck";
-  const blue = new THREE.MeshPhysicalMaterial({
-    color: "#329cd0", metalness: 0, roughness: .48,
-    envMapIntensity: .35, ior: 1.42,
-    clearcoat: .14, clearcoatRoughness: .42,
-  });
-  const brass = new THREE.MeshPhysicalMaterial({ color: "#ba8945", metalness: .85, roughness: .24 });
-  const dark = new THREE.MeshStandardMaterial({ color: "#302117", roughness: .5 });
+  const blue = new THREE.MeshPhysicalMaterial(config.materials.body);
+  const brass = new THREE.MeshPhysicalMaterial(config.materials.valve);
+  const dark = new THREE.MeshPhysicalMaterial(config.materials.recess);
   const mesh = (geometry: THREE.BufferGeometry, material: THREE.Material, x = 0, y = 0, z = 0) => {
     const object = new THREE.Mesh(geometry, material);
     object.position.set(x, y, z);
@@ -94,8 +95,8 @@ export function createGoodLuckCylinder() {
   const label = document.createElement("canvas");
   label.width = 1024; label.height = 768;
   const context = label.getContext("2d")!;
-  context.fillStyle = "#eeeae3"; context.fillRect(0, 0, label.width, label.height);
-  context.fillStyle = "#c82b33";
+  context.fillStyle = config.labelColors.background; context.fillRect(0, 0, label.width, label.height);
+  context.fillStyle = config.labelColors.ink;
   // Use the actual reference letterforms, counters and sun; no font substitution.
   for (const { outline, holes } of labelContours) {
     context.beginPath();
@@ -112,7 +113,7 @@ export function createGoodLuckCylinder() {
   }
   const texture = new THREE.CanvasTexture(label);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const paper = new THREE.MeshStandardMaterial({ map: texture, roughness: .64, metalness: 0 });
+  const paper = new THREE.MeshPhysicalMaterial({ ...config.materials.label, map: texture });
   // A cylindrical patch follows the tank instead of floating on a flat plane.
   const labelMesh = mesh(new THREE.CylinderGeometry(.653, .653, .90, 64, 1, true, -1.06, 2.12), paper, 0, -.18);
   labelMesh.name = "curved-good-luck-label";

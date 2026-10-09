@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { homeAssetUrl } from "@/lib/home-asset-url";
 import styles from "./home-loader.module.css";
 
-const frames = Array.from({ length: 11 }, (_, i) => `/assets/loading/frame-${String(i + 1).padStart(2, "0")}.png`);
+const frames = Array.from({ length: 11 }, (_, i) => homeAssetUrl(`/assets/loading/frame-${String(i + 1).padStart(2, "0")}.png`));
 const frameDuration = 100;
 
 export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement | null>; onComplete: () => void }) {
@@ -16,44 +17,40 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
     let interval: ReturnType<typeof setInterval> | undefined;
     let exitTimer: ReturnType<typeof setTimeout> | undefined;
     let removeTimer: ReturnType<typeof setTimeout> | undefined;
-    let playbackStarted = 0;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const finish = (immediate = false) => {
+    const finish = () => {
       if (finishing || cancelled) return;
       finishing = true;
       observer.disconnect();
-      // Finish the current loop before revealing an already rendered scene.
-      const elapsed = playbackStarted ? performance.now() - playbackStarted : 0;
-      const cycle = frames.length * frameDuration;
-      const wait = immediate || reduced || !playbackStarted ? 0 : cycle - (elapsed % cycle);
+      // Cached scenes can be ready before the animation has even decoded.
       exitTimer = setTimeout(() => {
         clearInterval(interval);
         setLeaving(true);
         removeTimer = setTimeout(onComplete, reduced ? 0 : 240);
-      }, wait);
+      }, 0);
     };
     const checkScene = () => {
       const canvas = scope.current?.querySelector("canvas");
-      if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("canvas ~ [role='status']")) finish(true);
-      else if (canvas?.dataset.ready === "true" && playbackStarted) finish();
+      if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("canvas ~ [role='status']")) finish();
+      else if (canvas?.dataset.ready === "true") finish();
     };
     const observer = new MutationObserver(checkScene);
     if (scope.current) observer.observe(scope.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-ready", "data-asset-error"] });
-    const deadline = setTimeout(() => finish(true), 12000);
+    checkScene();
+    const deadline = setTimeout(() => finish(), 12000);
     Promise.all(frames.map(async (src) => {
       const img = new Image();
       img.src = src;
       await img.decode();
     })).then(() => {
       if (cancelled || finishing) return;
-      playbackStarted = performance.now();
       let index = 0;
       if (!reduced) interval = setInterval(() => {
         index = (index + 1) % frames.length;
         sequence.current?.style.setProperty("--frame", String(index));
       }, frameDuration);
       checkScene();
-    }).catch(() => finish(true));
+    }).catch(() => finish());
     return () => {
       cancelled = true;
       observer.disconnect();

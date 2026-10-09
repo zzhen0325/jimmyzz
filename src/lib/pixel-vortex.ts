@@ -6,16 +6,16 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
     uniforms: {
       formation: { value: 1 }, time: { value: 0 }, pixels: { value: settings.pixels },
       speed: { value: settings.speed }, arms: { value: settings.arms },
-      green: { value: new THREE.Color("#74C93B") },
-      lime: { value: new THREE.Color("#B8EE52") },
-      yellow: { value: new THREE.Color("#FFF476") },
-      white: { value: new THREE.Color("#fff0ac") },
+      green: { value: new THREE.Color("#45B900") },
+      lime: { value: new THREE.Color("#86E21A") },
+      yellow: { value: new THREE.Color("#FFF140") },
+      highlight: { value: new THREE.Color("#FFF500") },
     },
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
     fragmentShader: `varying vec2 vUv;
       uniform float time, pixels, speed, arms, formation;
-      uniform vec3 green, lime, yellow, white;
+      uniform vec3 green, lime, yellow, highlight;
       const float TAU = 6.2831853;
       float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
       float noise(vec2 p) {
@@ -59,8 +59,8 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
             + (patches - .5) * .72;
           if (pigment < .74) color = lime;
           if (pigment < .36 + (broad - .5) * .22) color = yellow;
-          // Broad green islands and short cream accents follow the same flow.
-          if (pigment < .22 && broad > .62 && patches > .60 && r > .58) color = white;
+          // Broad green islands and yellow accents follow the same flow.
+          if (pigment < .22 && broad > .62 && patches > .60 && r > .58) color = highlight;
           if (patches < .42 && pigment > .20) color = green;
 
         }

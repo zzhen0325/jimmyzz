@@ -1,7 +1,5 @@
 "use client";
 
-import { CloudRain, Sun } from "lucide-react";
-import type { HomeWeather } from "@/lib/home-rain";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { ScrollTrigger, useGSAP } from "@/lib/gsap";
@@ -13,7 +11,6 @@ import { shouldShowHomeLoader } from "@/lib/home-loading";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
-  const [weather, setWeather] = useState<HomeWeather>("sunny");
   const [floatingMode, setFloatingMode] = useState<FloatingMode>("flow-rings");
   const [motionMenu, setMotionMenu] = useState(false);
   const hero = useRef<HTMLElement>(null);
@@ -47,7 +44,7 @@ export function ChromeHero() {
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
       {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
       <div className={styles.stage} inert={loading}>
-        <ChromeScene weather={weather} floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} paused={loading} />
+        <ChromeScene weather="sunny" floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} paused={loading} />
         {view === "intro" && <div className={styles.motionControl} onKeyDown={event => { if (event.key === "Escape") { setMotionMenu(false); event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus(); } }}>
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>
           {motionMenu && <div id="floating-motion-options" className={styles.motionMenu} role="group" aria-label="漂浮效果">
@@ -58,11 +55,7 @@ export function ChromeHero() {
             <button type="button" onClick={() => setMotionMenu(false)}>收起 ×</button>
           </div>}
         </div>}
-        {view === "intro" && <div className={styles.weatherControl} role="group" aria-label="首页天气">
-          <button type="button" aria-pressed={weather === "sunny"} onClick={() => setWeather("sunny")}><Sun size={15} aria-hidden="true" />晴天</button>
-          <button type="button" aria-pressed={weather === "rainy"} onClick={() => setWeather("rainy")}><CloudRain size={15} aria-hidden="true" />雨天</button>
-        </div>}
-        <p className={styles.skyTagline}>THE WORLD INSIDE MY HEAD</p>
+        <p className={styles.skyTagline}>THE WORLD<br />INSIDE<br />MY HEAD</p>
         <p className={styles.skyYear}>@2026</p>
         <button className={styles.homeLogo} onClick={showIntro} aria-label="返回首页" tabIndex={view === "work" ? 0 : -1} />
         <div className={styles.center}>

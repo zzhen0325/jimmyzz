@@ -2,6 +2,7 @@
    The primary size also drives proportional navigation and profile spacing. */
 :root {
   --home-primary-font-size: 7.5vw;
+  --home-edge: calc(var(--home-primary-font-size) * .2);
   --grid-gap: clamp(12px, 1.25vw, 24px);
   --portfolio-grid: repeat(12, minmax(0, 1fr));
 }

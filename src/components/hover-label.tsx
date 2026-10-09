@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+const SMILEYS = ["(＾▽＾)", "(◕‿◕)", "(^‿^)", "(≧◡≦)"];
+
 /** One viewport-space owner keeps the sticker independent of scrolling transforms. */
 export function HoverLabel() {
   const label = useRef<HTMLDivElement>(null);
@@ -19,13 +21,8 @@ export function HoverLabel() {
     let targetDirty = false, needsHitTest = false;
     let pendingHit: Element | null = null;
     let activeText = "";
-    let labelWidth = 0, labelHeight = 0;
-    let viewportWidth = innerWidth, viewportHeight = innerHeight;
-    const sizeObserver = new ResizeObserver(([entry]) => {
-      labelWidth = entry.borderBoxSize[0]?.inlineSize ?? element.offsetWidth;
-      labelHeight = entry.borderBoxSize[0]?.blockSize ?? element.offsetHeight;
-    });
-    sizeObserver.observe(element);
+    let smileyIndex = 0;
+    let usesDefaultLabel = false;
     let x = 0, y = 0, targetX = 0, targetY = 0;
     let angle = 0, angularVelocity = 0;
 
@@ -41,6 +38,7 @@ export function HoverLabel() {
       active?.removeAttribute("data-hover-label-active");
       active = null;
       activeText = "";
+      usesDefaultLabel = false;
       element.dataset.visible = "false";
       cancelAnimationFrame(frame);
       frame = 0;
@@ -48,14 +46,18 @@ export function HoverLabel() {
     const updateTarget = (hit: Element | null) => {
       const labeledSurface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
       const control = hit?.closest("a, button, input, textarea, select, [role='button']");
-      if (!finePointer.matches) {
+      const hiddenControl = hit?.closest("button, [role='button'], input, textarea, select");
+      const allowsLabel = hiddenControl === labeledSurface && labeledSurface?.hasAttribute("data-hover-label-on-control");
+      if (!finePointer.matches || (hiddenControl && !allowsLabel)) {
         hide();
         return;
       }
       const surface = labeledSurface && (!control || control === labeledSurface)
         ? labeledSurface
         : document.documentElement;
-      const text = surface.dataset.hoverLabel?.trim() || "scroll";
+      const customText = surface.dataset.hoverLabel?.trim();
+      usesDefaultLabel = !customText;
+      const text = customText || SMILEYS[smileyIndex];
       if (active !== surface || activeText !== text) {
         if (active !== surface) {
           active?.removeAttribute("data-hover-label-active");
@@ -113,9 +115,8 @@ export function HoverLabel() {
       const targetAngle = Math.max(-24, Math.min(24, dx * 0.3 - dy * 0.08));
       angularVelocity += ((targetAngle - angle) * 0.075 - angularVelocity * 0.23) * dt;
       angle = reducedMotion.matches ? 0 : angle + angularVelocity * dt;
-      const left = Math.max(12, Math.min(viewportWidth - labelWidth - 12, x + 20));
-      const top = Math.max(12, Math.min(viewportHeight - labelHeight - 12, y + 16));
-      element.style.transform = `translate3d(${left}px, ${top}px, 0) rotate(${angle}deg)`;
+      // Ease the center toward the pointer without adding a permanent offset.
+      element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}deg)`;
       if (visible && (Math.abs(dx) + Math.abs(dy) + Math.abs(angle) + Math.abs(angularVelocity) > 0.05)) {
         frame = requestAnimationFrame(animate);
       }
@@ -134,20 +135,24 @@ export function HoverLabel() {
       targetDirty = needsHitTest = true;
       schedule();
     };
-    const resize = () => { viewportWidth = innerWidth; viewportHeight = innerHeight; scroll(); };
     const leave = () => { pointerKnown = false; hide(); };
     const key = (event: KeyboardEvent) => { if (event.key === "Tab") leave(); };
+    const smileyTimer = window.setInterval(() => {
+      if (!visible || !usesDefaultLabel || document.hidden) return;
+      smileyIndex = (smileyIndex + 1) % SMILEYS.length;
+      scroll();
+    }, 1600);
     window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("scroll", scroll, { passive: true, capture: true });
-    window.addEventListener("resize", resize, { passive: true });
+    window.addEventListener("resize", scroll, { passive: true });
     window.addEventListener("blur", leave);
     window.addEventListener("keydown", key);
     document.documentElement.addEventListener("pointerleave", leave);
     finePointer.addEventListener("change", hide);
     return () => {
+      window.clearInterval(smileyTimer);
       hide();
-      sizeObserver.disconnect();
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", scroll);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("blur", leave);

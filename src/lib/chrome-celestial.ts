@@ -18,13 +18,16 @@ export function createChromePlanet() {
     positions.setXYZ(i, vertex.x * radius, vertex.y * radius * 1.04, vertex.z * radius * .91);
   }
   geometry.computeVertexNormals();
-  group.add(new THREE.Mesh(geometry, new THREE.MeshPhysicalMaterial(config.material)));
+  const planet = new THREE.Mesh(geometry, new THREE.MeshPhysicalMaterial(config.material));
+  planet.name = "planet-body";
+  group.add(planet);
   const points = Array.from({ length: 96 }, (_, i) => {
     const angle = i / 96 * Math.PI * 2;
     const radius = 1.12 + .024 * Math.sin(angle * 7) + .014 * Math.cos(angle * 11);
     return new THREE.Vector3(radius * Math.cos(angle), .28 * Math.sin(angle) + .015 * Math.sin(angle * 5), .75 * Math.sin(angle));
   });
   const ring = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, true), 192, .085, 12, true), new THREE.MeshPhysicalMaterial(config.ringMaterial));
+  ring.name = "planet-ring";
   group.add(ring);
   group.rotation.z = -.16;
   return group;
