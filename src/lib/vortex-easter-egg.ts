@@ -24,12 +24,12 @@ const swirl = Math.PI * 1.65;
 const emitSwirl = swirl + Math.PI;
 const emitCoastDuration = .3;
 const smoother = (n: number) => { const p = clamp(n); return p ** 3 * (10 - 15 * p + 6 * p * p); };
-type Momentum = { speed: number; absorbed: boolean; exit?: { pitch: number; length: number; coast: number; duration: number } };
+type Momentum = { speed: number; absorbed: boolean; exit?: { pitch: number; length: number; coast: number; duration: number; endSpeed: number } };
 const momentum = (): Momentum => ({ speed: 0, absorbed: false });
 const mouthImpulseDuration = .066;
 const exitCloseDuration = .16;
 const settleDuration = .16;
-type FlightObject = { object: THREE.Object3D; billboard?: boolean };
+type FlightObject = { object: THREE.Object3D; billboard?: boolean; onRelease?: (position: THREE.Vector3, velocity: THREE.Vector3) => void };
 
 /** Spiral through both mouths, then blend into the live scene poses. */
 export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.OrthographicCamera) {
@@ -65,7 +65,7 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       const rect = node.getBoundingClientRect();
       return { node, center: new THREE.Vector2(rect.left + rect.width / 2, rect.top + rect.height / 2), style: node.getAttribute("style"), inert: node.inert, momentum: momentum() };
     });
-    const meshes = objects.map(({ object, billboard }) => ({ object, billboard, position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone(), visible: object.visible, momentum: momentum() }));
+    const meshes = objects.map(({ object, billboard, onRelease }) => ({ object, billboard, onRelease, released: false, velocity: new THREE.Vector3(), position: object.position.clone(), quaternion: object.quaternion.clone(), scale: object.scale.clone(), visible: object.visible, momentum: momentum() }));
     dom.forEach(({ node }) => { node.inert = true; node.style.willChange = "translate, rotate, scale, opacity"; });
     // One queue for both scene objects and page elements, nearest to the mouth first.
     const queue = [
@@ -97,7 +97,8 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     if (!running) return;
     const state = running;
     running = undefined;
-    for (const { object, position, quaternion, scale, visible } of state.meshes) {
+    for (const { object, position, quaternion, scale, visible, released } of state.meshes) {
+      if (released) continue;
       object.position.copy(position); object.quaternion.copy(quaternion); object.scale.copy(scale); object.visible = visible;
     }
     for (const { node, style, inert } of state.dom) {
@@ -127,7 +128,7 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
     const pressure = impulse > 0 && impulse < 1 ? Math.sin(impulse * Math.PI) ** 2 : 0;
     return { incoming, elapsed, travel, scale, pressure, angle: (incoming ? travel : travel - 1) * swirl, visible: incoming ? p < 1 : p > 0 };
   }
-  function move(relative: THREE.Vector3, f: ReturnType<typeof flight>, motion: Momentum) {
+  function move(relative: THREE.Vector3, f: ReturnType<typeof flight>, motion: Momentum, retainMomentum = false) {
     if (f.incoming) {
       // At the throat the rotating radius is zero: terminal speed is exactly
       // distance * d(p^4)/dt. Freeze it when this item's intake completes.
@@ -150,14 +151,17 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       // An extra half-turn gives the impulse room to persist without sending
       // objects farther out. Reserve 45% of the path for full-speed winding.
       const coast = Math.min(emitCoastDuration, travelTime * .45);
-      motion.exit = { pitch, length, coast, duration: Math.max(.001, coast + 2 * (travelTime - coast)) };
+      // Dynamic props keep a quarter of their launch speed at the handoff.
+      // Static page elements still settle into their layout with zero speed.
+      const endSpeed = retainMomentum ? .25 : 0;
+      motion.exit = { pitch, length, coast, endSpeed, duration: Math.max(.001, coast + 2 * (travelTime - coast) / (1 + endSpeed)) };
     }
-    const { pitch, length, coast, duration } = motion.exit;
+    const { pitch, length, coast, duration, endSpeed } = motion.exit;
     const tail = duration - coast;
     const p = clamp((f.elapsed - coast) / tail);
     // Hold the inherited speed first; only then ease the speed down. Integrating
     // that speed reaches the end of the spiral exactly, without an overshoot.
-    const distance = motion.speed * (Math.min(f.elapsed, coast) + tail * (p - p ** 3 + .5 * p ** 4));
+    const distance = motion.speed * (Math.min(f.elapsed, coast) + tail * (p - (1 - endSpeed) * (p ** 3 - .5 * p ** 4)));
     const progress = clamp(distance / Math.max(1e-6, length));
     const target = progress * arc(1, pitch);
     let radius = progress;
@@ -189,6 +193,7 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
         s.origin.copy(s.originLocal).applyQuaternion(camera.quaternion);
         s.destination.copy(s.destinationLocal).applyQuaternion(camera.quaternion);
         for (const mesh of s.meshes) {
+          mesh.velocity.subVectors(mesh.object.position, mesh.position).divideScalar(Math.max(delta, 1e-6));
           mesh.position.copy(mesh.object.position);
           mesh.quaternion.copy(mesh.object.quaternion);
           mesh.scale.copy(mesh.object.scale);
@@ -289,11 +294,12 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
       s.vortex.rotateZ(.07 * (compression - expansion) + tremorTurn);
       const screenShake = screen(s.vortex.position).sub(screen(s.origin.clone().lerp(s.destination, transfer)));
       s.meshes.forEach(mesh => {
+        if (mesh.released) return;
         const { object, position, quaternion, scale, visible } = mesh;
         const f = flight(t, s.order.get(mesh)!, s.emitStart, s.emitDelays);
         const mouth = f.incoming ? s.origin : s.destination;
         const relative = position.clone().sub(mouth).applyQuaternion(inverseCamera);
-        move(relative, f, mesh.momentum);
+        move(relative, f, mesh.momentum, !!mesh.onRelease);
         if (mesh.momentum.exit) s.duration = Math.max(s.duration,
           s.emitStart + s.emitDelays[s.order.get(mesh)!] + mesh.momentum.exit.duration + settleDuration);
         const radial = f.incoming ? 1 - f.travel : f.travel;
@@ -301,6 +307,20 @@ export function createVortexEasterEgg(canvas: HTMLCanvasElement, camera: THREE.O
         object.scale.copy(scale).multiplyScalar(Math.max(.001, f.scale));
         object.quaternion.copy(quaternion); object.rotateZ(f.angle); object.rotateY(f.angle * .6);
         object.visible = visible && f.visible;
+        const exit = mesh.momentum.exit;
+        if (!f.incoming && exit && f.elapsed >= exit.duration && mesh.onRelease) {
+          // The spiral derivative at radius 1 includes both radial and angular
+          // motion. Add the moving destination's velocity, then hand both pose
+          // and momentum to physics once; later frames use its live simulation.
+          const endpoint = position.clone().sub(mouth).applyQuaternion(inverseCamera);
+          const tangent = new THREE.Vector3(endpoint.x - emitSwirl * endpoint.y,
+            endpoint.y + emitSwirl * endpoint.x, endpoint.z).normalize();
+          const velocity = tangent.applyQuaternion(camera.quaternion)
+            .multiplyScalar(mesh.momentum.speed * exit.endSpeed).add(mesh.velocity);
+          object.position.copy(position).addScaledVector(velocity, f.elapsed - exit.duration);
+          mesh.onRelease(object.position, velocity);
+          mesh.released = true;
+        }
       });
       s.dom.forEach(item => {
         const { node, center } = item;

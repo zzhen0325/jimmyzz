@@ -171,15 +171,20 @@ function createGlassMaterial(color: string, finish: GlassFinishConfig, heightMap
     fragmentShader: `
       uniform sampler2D glassBackground, glassDepth, glassHeight;
       uniform vec2 glassResolution;
+      uniform vec4 glassCapture;
       uniform vec3 glassEdgeColor;
       uniform float glassViewportHeight, glassRefraction, glassDispersion, glassGlow;
       varying vec2 vUv, vScreenScale;
       varying vec3 vNormal, vTangent, vBitangent;
       varying float vGlassEdge;
+      vec2 captureUv(vec2 screenUv) {
+        vec2 halfPixel = vec2(0.5) / glassCapture.zw;
+        return clamp((screenUv * glassResolution - glassCapture.xy) / glassCapture.zw, halfPixel, vec2(1.0) - halfPixel);
+      }
       void main() {
         vec2 screenUv = gl_FragCoord.xy / glassResolution;
         // The shared depth keeps lenses behind the logo and the other props.
-        if (gl_FragCoord.z > texture2D(glassDepth, screenUv).r + 0.000002) discard;
+        if (gl_FragCoord.z > texture2D(glassDepth, captureUv(screenUv)).r + 0.000002) discard;
         float stepSize = 1.0 / 256.0;
         float h = texture2D(glassHeight, vUv).r;
         vec2 slope = vec2(
@@ -189,9 +194,9 @@ function createGlassMaterial(color: string, finish: GlassFinishConfig, heightMap
         vec3 normal = normalize(vNormal - (vTangent * slope.x + vBitangent * slope.y));
         vec2 offset = normal.xy * vScreenScale * glassRefraction;
         vec2 refractedUv = clamp(screenUv - offset, vec2(0.001), vec2(0.999));
-        vec4 background = texture2D(glassBackground, refractedUv);
-        background.r = texture2D(glassBackground, clamp(refractedUv - offset * glassDispersion, vec2(0.001), vec2(0.999))).r;
-        background.b = texture2D(glassBackground, clamp(refractedUv + offset * glassDispersion, vec2(0.001), vec2(0.999))).b;
+        vec4 background = texture2D(glassBackground, captureUv(refractedUv));
+        background.r = texture2D(glassBackground, captureUv(clamp(refractedUv - offset * glassDispersion, vec2(0.001), vec2(0.999)))).r;
+        background.b = texture2D(glassBackground, captureUv(clamp(refractedUv + offset * glassDispersion, vec2(0.001), vec2(0.999)))).b;
         gl_FragColor = vec4(background.rgb / max(background.a, 0.0001), 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

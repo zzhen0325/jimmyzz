@@ -208,7 +208,7 @@ for name,o in models.items():
 # Contact sheet in a neutral studio with environment reflections.
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=24;scene.cycles.use_denoising=True
 world=bpy.data.worlds.new('Material studio');world.use_nodes=True;scene.world=world
-nodes=world.node_tree.nodes;bg=next(n for n in nodes if n.type=='BACKGROUND');env=nodes.new('ShaderNodeTexEnvironment');env.image=bpy.data.images.load(str(ROOT/'public/assets/environments/twomuch-bg-medium.jpg'));world.node_tree.links.new(env.outputs['Color'],bg.inputs['Color']);bg.inputs['Strength'].default_value=.65
+nodes=world.node_tree.nodes;bg=next(n for n in nodes if n.type=='BACKGROUND');env=nodes.new('ShaderNodeTexEnvironment');env.image=bpy.data.images.load(str(ROOT/'public/assets/environments/bg.jpg'));world.node_tree.links.new(env.outputs['Color'],bg.inputs['Color']);bg.inputs['Strength'].default_value=.65
 bpy.ops.object.camera_add(location=(0,0,18));cam=bpy.context.object;cam.rotation_euler=(0,0,0);cam.data.type='ORTHO';cam.data.ortho_scale=9;scene.camera=cam
 # Camera local -Z faces the scene, +Y is up.
 for pos,power,size in [((-4,6,7),650,5),((5,2,5),450,4),((-2,-4,3),220,3)]:

@@ -21,6 +21,7 @@ import { createFloatingGlass } from "./floating-glass";
 import { createSkyClouds } from "./sky-clouds";
 import { createGoodLuckCylinder, createEatSculpture } from "./home-reference-sculptures";
 import { createGlassComposite } from "./glass-composite";
+import { createAdaptiveResolution, homeAntialiasSamples } from "./adaptive-resolution";
 
 import { createFloatingFlow, isFlowMode, sampleFlow, type FlowMode } from "./floating-flow";
 import { driftRotation, sampleFloatingDrift } from "./floating-drift";
@@ -46,7 +47,13 @@ const collisionGroup = { boundary: 1, prop: 2, pointer: 4, portalGun: 8 };
 
 export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorldOptions = {}) {
   const host = canvas.parentElement!;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const initialViewport = host.getBoundingClientRect();
+  // Default-framebuffer MSAA is immutable; avoid the extra multisampled buffer
+  // on large displays at startup. The scene target's MSAA adapts on every resize.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: homeAntialiasSamples(initialViewport.width, initialViewport.height, window.devicePixelRatio) === 4, alpha: true });
+  const resolution = createAdaptiveResolution(config.resolution);
+  let nativeDpr = window.devicePixelRatio;
+  resolution.setDevicePixelRatio(nativeDpr);
   // Keep lighting linear internally, then compress highlights before display encoding.
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -120,6 +127,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let frame = 0;
   let previous = 0;
   let elapsed = 0;
+  let environmentTime = 0;
   let portalGunAnimation: Awaited<ReturnType<typeof createChromePortalGun>> | undefined;
   let entranceActive = false;
   const entrance = { stagger: config.entrance.stagger, launch: config.entrance.launch, orbit: config.entrance.duration, releaseDrag: .45, coast: .18, dragRamp: .65, settle: 2.4 };
@@ -318,6 +326,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   };
   const reset=()=>{
     easterEgg.cancel();
+    environmentTime = 0;
+    scene.environmentRotation.set(0, 0, 0);
+    scene.backgroundRotation.set(0, 0, 0);
     pointerBody.collisionFilterMask = 0;
     pointerBody.velocity.setZero();
     lastVortexHover = null;
@@ -349,6 +360,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.motionMode = floatingMode;
     canvas.dataset.phase=reduced?'static':floatingMode;
   };
+  const resizeRenderBuffers = () => {
+    const samples = homeAntialiasSamples(width, height, nativeDpr);
+    renderer.setDrawingBufferSize(width, height, resolution.pixelRatio);
+    glassComposite.resize(width, height, resolution.pixelRatio, samples);
+    canvas.dataset.pixelRatio = String(resolution.pixelRatio);
+    canvas.dataset.msaaSamples = String(Math.min(samples, renderer.capabilities.maxSamples));
+    renderedWorkProgress = -1;
+  };
   const resize=()=>{
     renderedWorkProgress = -1;
     easterEgg.cancel();
@@ -372,10 +391,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     logoScale = Math.min(config.logo.scale, viewWidth * (compact ? config.logo.mobileViewportWidth : config.logo.maxViewportWidth) / 3.1, viewHeight * config.logo.maxViewportHeight / 1.05);
     logo.scale.setScalar(logoScale);
     items.forEach(item=>{shapeBody(item.body,item.originalSize.clone().multiplyScalar(assetScale),item.billboard);item.object.scale.setScalar(assetScale);if(ready&&oldScale!==assetScale)item.body.position.scale(assetScale/oldScale,item.body.position);});
-    // Preserve native display resolution, including Retina and browser zoom.
-    renderer.setPixelRatio(window.devicePixelRatio);
-    makeWalls();renderer.setSize(width,height,false);
-    glassComposite.resize(width, height, renderer.getPixelRatio());
+    nativeDpr = window.devicePixelRatio;
+    resolution.setDevicePixelRatio(nativeDpr);
+    makeWalls();resizeRenderBuffers();
     // Viewport changes invalidate wall containment; restart the same entrance instead of
     // teleporting individual bodies into arrangement slots or leaving bodies outside walls.
     if(ready)reset();
@@ -414,7 +432,15 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const gun = items.find(item => item.object.name === "floating-green-portal-gun");
     if (!vortex || !gun || easterEgg.active || entranceActive || !ready || paused || workProgress() > 0) return;
     activePointer = null;
-    easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard }) => ({ object, billboard }))], reduced, position => {
+    easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard, body }) => ({
+      object, billboard,
+      onRelease: usesPhysics() ? (position: THREE.Vector3, velocity: THREE.Vector3) => {
+        body.position.set(position.x, position.y, position.z);
+        body.previousPosition.copy(body.position); body.interpolatedPosition.copy(body.position);
+        body.velocity.set(velocity.x, velocity.y, velocity.z);
+        body.aabbNeedsUpdate = true; body.wakeUp();
+      } : undefined,
+    }))], reduced, position => {
       vortex.body.position.set(position.x, position.y, position.z); vortex.body.velocity.setZero(); vortex.body.angularVelocity.setZero();
       vortex.body.aabbNeedsUpdate = true; vortex.body.wakeUp(); reflectionDirty = true;
     });
@@ -508,13 +534,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const pointerLeave=()=>{pointerInside=false;if(activePointer===null)pointer.set(0,0);};
   const cancelMagnet=()=>{pointerInside=false;lastBurstTime=-Infinity;magnetBlend=0;pointerCancel();};
   canvas.addEventListener("pointerleave",pointerLeave);
-  const pageVisibility=()=>{if(document.hidden)cancelMagnet();};
+  const pageVisibility=()=>{resolution.reset();if(document.hidden)cancelMagnet();};
   const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if((floatingMode === 'planet-belt' || isFlowMode(floatingMode)) && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
   const keyUp = (event: KeyboardEvent) => { beltKeys.delete(event.code); };
   window.addEventListener('keyup', keyUp);
   const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
-  const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;};
+  const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;resolution.reset();resizeRenderBuffers();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancelMagnet);canvas.addEventListener('click',touchClick);
@@ -955,7 +981,16 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // One wall-time clock spans launch, orbit, release and drift. Fixed physics
     // substeps preserve collision stability without slowing down at the handoff.
     const delta=Math.min(frameMs/1000,referencePhysics.step * referencePhysics.maxSubSteps);previous=time;
-    if(disposed||!visible||document.hidden||contextLost)return;
+    if(disposed||!visible||document.hidden||contextLost){resolution.reset();return;}
+    // A monitor/DPR change need not resize the CSS viewport. Update buffers only,
+    // never restart physics, the entrance, or pointer coordinates for resolution.
+    if (nativeDpr !== window.devicePixelRatio) {
+      nativeDpr = window.devicePixelRatio;
+      resolution.setDevicePixelRatio(nativeDpr);
+      resizeRenderBuffers();
+    }
+    const ratio = resolution.sample(time, ready && !paused && !reduced && workProgress() === 0);
+    if (ratio !== renderer.getPixelRatio()) resizeRenderBuffers();
     // Once the hero becomes the stationary header logo, skip scene updates as
     // well as drawing. Scroll, resize and context restoration invalidate this.
     if (ready && workProgress() === 1 && renderedWorkProgress === 1 && !reflectionDirty) return;
@@ -965,6 +1000,16 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       logoEntranceTime = reduced || workProgress() > 0
         ? logoEntranceDuration
         : Math.min(logoEntranceDuration, logoEntranceTime + delta);
+    }
+    if (ready && !paused && !reduced && workProgress() < 1) {
+      environmentTime += delta;
+      // Rotate the reflection environment around its vertical axis. Integrating
+      // the decaying entrance speed makes the handoff to slow drift continuous.
+      const rotation = .018 * environmentTime + Math.PI / 2 * (1 - Math.exp(-1.6 * environmentTime));
+      scene.environmentRotation.y = rotation;
+      // The logo probe captures this same texture as its background, so it must
+      // share the orientation used by the other objects' environment lighting.
+      scene.backgroundRotation.y = rotation;
     }
     if (easterEgg.active && workProgress() > 0) easterEgg.cancel();
     if (!easterEgg.active) {
@@ -1014,6 +1059,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
     }
     updateVortexTarget();
+    sky.prepare(renderer);
     if (ready) glassComposite.render(scene, camera, skyScene); else renderer.render(scene, camera);
     if (ready) rain.render(renderer);
     renderedWorkProgress = ready ? workProgress() : -1;
@@ -1176,7 +1222,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     add(createGoodLuckCylinder(config.referenceSculptures.goodLuck), config.referenceSculptures.goodLuck.size, items.length);
     add(createEatSculpture(config.referenceSculptures.eat.inflation), config.referenceSculptures.eat.size, items.length);
     canvas.dataset.sculptedProps = String(sculptures.length + 2);
-    config.glass.items.forEach(setting => add(createFloatingGlass(setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length));
+    config.glass.items.forEach(setting => {
+      add(createFloatingGlass(setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length);
+      glassComposite.register(items[items.length - 1].object);
+    });
     canvas.dataset.glassProps = String(config.glass.items.length);
     vortexAnimation = createPixelVortex(config.vortex);
     add(vortexAnimation.mesh, config.vortex.size, items.length, true);
@@ -1220,13 +1269,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     items.forEach((item,index)=>{
       const point=positions[item.object.name];if(!point)return;
       item.object.position.set((point[0]/1420-.5)*viewWidth,(.5-point[1]/992)*viewHeight,.2);
-      item.body.position.copy(item.object.position);
+      item.body.position.set(item.object.position.x, item.object.position.y, item.object.position.z);
       const a=2*Math.PI*index/items.length+.35;
       if(!item.billboard)item.body.quaternion.setFromEuler(Math.sin(a)*.35*1.3,Math.cos(a)*.35*1.3,(index%2?1:-1)*.2*1.3);
     });
     composeWork();
     scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
     sky.update(camera, viewWidth, viewHeight, 0, 0, 0);
+    sky.prepare(renderer);
     const nodes = [...items.map(item => item.object), ...logo.children];
     const saved = nodes.map(node => node.visible);
     const results: {name:string;x:number;y:number;width:number;height:number;data:string}[] = [];
@@ -1252,7 +1302,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     glassComposite.render(scene,camera,skyScene);
     return results;
   };
-  const debug={exportFigmaLayers,snapshot:()=>({sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={exportFigmaLayers,snapshot:()=>({glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {

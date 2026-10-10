@@ -15,14 +15,17 @@ export type FloatingModelConfig = {
 // axisScale：[宽、高、厚] 相对模型倍率；size 最后统一控制最长边。
 // normalStrength：已有法线纹理的颗粒强度，0 为平滑，1 为当前烘焙强度。
 const silver: MeshPhysicalMaterialParameters = {
-  color: "#CECECE", metalness: 1, roughness: .1, envMapIntensity: .8,
+  color: "#FFFFFF", metalness: 1, roughness: .1, envMapIntensity: 1,
 };
 
 export const home3DConfig = {
+  // 相对原生分辨率：从 70% 起步，最低 70%，最高 100%；DPR 2 对应 1.4～2。
+  // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
+  resolution: { min: .7, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .35, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .4, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
   depthSizing: { farScale: .82, range: .35 },
   entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.15, endSpeed: .18 },
@@ -145,7 +148,7 @@ export const home3DConfig = {
     { file: "yellow-smiley-loop", size: .8 },
     { file: "flat-apple", size: 1.3 },
     { file: "tufted-flower", size: 1.4 },
-    { file: "cape-horse", size: 1.9 },
+    { file: "cape-horse", size: 2.5 },
     { file: "cupid", size: 1.25 },
     { file: "flying-pig", size: 1.25 },
     { file: "goldfish-silver-headphones", size: 1.25 },
@@ -153,14 +156,14 @@ export const home3DConfig = {
   ] satisfies { file: string; size: number }[]).filter(item => item.file !== "tufted-flower"),
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
-    size: 1, pixels: 80, speed: .65, arms: 5,
+    size: 1.5, pixels: 80, speed: .65, arms: 5,
   },
   portalGun: {
     size: 1.8,
     materials: {
       shell: { color: "#35B221", metalness: .08, roughness: .4, clearcoat: 0.8, clearcoatRoughness: .16, envMapIntensity: 1.1 },
       trim: { color: "#FAFF66", metalness: .02, roughness: .25, clearcoat: .65 },
-      buttons: { color: "#e5e8eb", metalness: 1, roughness: .22, clearcoat: .35 },
+      buttons: { color: "#EDEDED", metalness: 1, roughness: .22, clearcoat: .35 },
     },
   },
   gamepad: {
@@ -177,7 +180,7 @@ export const home3DConfig = {
   // 金属外观也受环境与灯光影响。
   lighting: {
    
-    exposure: 1, environment: "/assets/environments/twomuch-bg-medium.jpg", environmentIntensity: .9,
+    exposure: 1, environment: "/assets/environments/bg.jpg", environmentIntensity: .9,
     // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。
     reflectionBackgroundIntensity: 1.1,
     ambient: { color: "#FFFFFF", intensity: .08 },

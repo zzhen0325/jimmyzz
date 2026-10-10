@@ -148,7 +148,7 @@ void main() {
 `;
 
 /** drift's Shadertoy 4tdSWr with the supplied reference's sky/cloud colours. */
-export function createSkyClouds() {
+export function createSkyClouds(renderScale = .5) {
   const group = new THREE.Group();
   group.name = "sky-clouds";
   const uniforms = {
@@ -160,7 +160,8 @@ export function createSkyClouds() {
   const material = new THREE.ShaderMaterial({
     name: "shadertoy-4tdSWr-drift-2d-clouds",
     uniforms,
-    transparent: true,
+    // Store straight display-space RGBA; the presentation pass blends it once.
+    transparent: false,
     depthTest: false,
     depthWrite: false,
     toneMapped: false,
@@ -174,15 +175,27 @@ export function createSkyClouds() {
     fragmentShader,
   });
   const geometry = new THREE.PlaneGeometry(2, 2);
-  const mesh = new THREE.Mesh(geometry, material);
+  const source = new THREE.Scene();
+  const sourceCamera = new THREE.Camera();
+  const sourceMesh = new THREE.Mesh(geometry, material);
+  sourceMesh.frustumCulled = false;
+  source.add(sourceMesh);
+  const target = new THREE.WebGLRenderTarget(1, 1, {
+    depthBuffer: false, stencilBuffer: false,
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter,
+  });
+  const presentation = new THREE.ShaderMaterial({
+    uniforms: { skyTexture: { value: target.texture } },
+    transparent: true, depthTest: false, depthWrite: false, toneMapped: false,
+    vertexShader: `varying vec2 vUv;
+      void main() { vUv = uv; gl_Position = vec4(position.xy, 1.0, 1.0); }`,
+    fragmentShader: `uniform sampler2D skyTexture; varying vec2 vUv;
+      void main() { gl_FragColor = texture2D(skyTexture, vUv); }`,
+  });
+  const mesh = new THREE.Mesh(geometry, presentation);
   mesh.frustumCulled = false;
   mesh.renderOrder = -10;
   const drawingBuffer = new THREE.Vector2();
-  mesh.onBeforeRender = renderer => {
-    // gl_FragCoord uses physical pixels, including Retina/devicePixelRatio.
-    renderer.getDrawingBufferSize(drawingBuffer);
-    uniforms.iResolution.value.set(drawingBuffer.x, drawingBuffer.y, 1);
-  };
   group.add(mesh);
   let disposed = false;
   let clock = 0;
@@ -190,6 +203,26 @@ export function createSkyClouds() {
   return {
     group,
     ready: Promise.resolve(),
+    prepare(renderer: THREE.WebGLRenderer) {
+      if (disposed || !group.visible) return;
+      renderer.getDrawingBufferSize(drawingBuffer);
+      // Clouds are low-frequency shading: quarter the noise evaluations while
+      // retaining the original shader, animation rate, and full-size geometry.
+      const width = Math.max(1, Math.floor(drawingBuffer.x * renderScale));
+      const height = Math.max(1, Math.floor(drawingBuffer.y * renderScale));
+      target.setSize(width, height);
+      uniforms.iResolution.value.set(width, height, 1);
+      const destination = renderer.getRenderTarget();
+      const autoClear = renderer.autoClear;
+      try {
+        renderer.setRenderTarget(target);
+        renderer.autoClear = true;
+        renderer.render(source, sourceCamera);
+      } finally {
+        renderer.setRenderTarget(destination);
+        renderer.autoClear = autoClear;
+      }
+    },
     update(_camera: THREE.Camera, _width: number, _height: number, delta: number, progress: number, rainAmount = 0) {
       group.visible = !disposed && progress < 1;
       if (!group.visible) return;
@@ -211,6 +244,9 @@ export function createSkyClouds() {
     dispose() {
       disposed = true;
       material.dispose();
+      presentation.dispose();
+      target.dispose();
+      source.clear();
       geometry.dispose();
       group.clear();
     },
