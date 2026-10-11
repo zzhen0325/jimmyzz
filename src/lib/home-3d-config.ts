@@ -15,7 +15,7 @@ export type FloatingModelConfig = {
 // axisScale：[宽、高、厚] 相对模型倍率；size 最后统一控制最长边。
 // normalStrength：已有法线纹理的颗粒强度，0 为平滑，1 为当前烘焙强度。
 const silver: MeshPhysicalMaterialParameters = {
-  color: "#FFFFFF", metalness: 1, roughness: .1, envMapIntensity: 1,
+  color: "#EDEDED", metalness: 1, roughness: .12, envMapIntensity: .9,
 };
 
 export const home3DConfig = {
@@ -25,7 +25,7 @@ export const home3DConfig = {
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .4, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .5, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
   depthSizing: { farScale: .82, range: .35 },
   entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.15, endSpeed: .18 },
@@ -33,10 +33,10 @@ export const home3DConfig = {
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
   floatingBounds: { desktop: 1.5, mobile: 1 },
   logo: {
-    scale: 0.9, // 正常尺寸上限
-    maxViewportWidth: .3, // 天空首屏：中央 Logo 占约五分之一屏宽。
+    scale: 1.5, // 正常尺寸上限
+    maxViewportWidth: .6, // 天空首屏：中央 Logo 占约五分之一屏宽。
     mobileViewportWidth: .48,
-    maxViewportHeight: .3,
+    maxViewportHeight: .6,
     centerY: .50, // 首屏垂直居中。
     material: { ...silver },
   },
@@ -47,11 +47,16 @@ export const home3DConfig = {
   },
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
-    { visible: true, file: "sculpted-branches", path: "/assets/models/sculpted-branches/sculpted-branches.glb", size: 1.2,
+    // Blender 原始材质：03 粉黄程序纹理已烘焙进 GLB，06 保留蓝色清漆。
+    { visible: true, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb", size: 1.35 },
+    { visible: true, file: "knotted-veil", path: "/assets/models/soft-accretion/knotted-veil.glb", size: 1.4,
+        material: { color: "#4de6ff", metalness: 0.2, roughness: .6, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
+     },
+    { visible: true, file: "sculpted-branches", path: "/assets/models/sculpted-branches/sculpted-branches.glb", size: 1.9,
       // 绿色植物：保留 Blender 原始绿色与哑光质感。
       material: { color: "#f1f1ef", metalness: 0.7, roughness: .2, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 } },
     { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: 1.1,
-        material: { color: "#E38490", metalness: 1, roughness: .22, clearcoat: 0, envMapIntensity: .65 } 
+        material: { color: "#FFC1FC", metalness: 1, roughness: .22, clearcoat: 0, envMapIntensity: .65 } 
      },
     { visible: true, file: "arrow", path: "/assets/models/arrow/arrow.glb", size: 1 },
     { visible: true, file: "c-mark", path: "/assets/models/figma-symbols/c-mark.glb", size: 1.2 ,
@@ -70,7 +75,7 @@ export const home3DConfig = {
       size: 1.15,
       // 煤气罐：罐身与护圈、黄铜阀门、阀孔、纸标分别调整。
       materials: {
-        body: { color: "#329cd0", metalness: 0, roughness: .08, envMapIntensity: .35, ior: 1.42, clearcoat: .14, clearcoatRoughness: .42 },
+        body: { color: "#C8EDFF", metalness: 1, roughness: .28, envMapIntensity: .35, ior: 1.42, clearcoat: .14, clearcoatRoughness: .42 },
         valve: { color: "#ba8945", metalness: .85, roughness: .24 },
         recess: { color: "#302117", roughness: .5 },
         label: { color: "#ffffff", roughness: .64, metalness: 0 },
@@ -181,6 +186,8 @@ export const home3DConfig = {
   lighting: {
    
     exposure: 1, environment: "/assets/environments/bg.jpg", environmentIntensity: .9,
+    // 环境沿水平方向匀速旋转，单位为弧度/秒。
+    environmentRotationSpeed: .06,
     // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。
     reflectionBackgroundIntensity: 1.1,
     ambient: { color: "#FFFFFF", intensity: .08 },

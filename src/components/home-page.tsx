@@ -16,16 +16,14 @@ function Introduction() {
   return (
     <section id="introduction" tabIndex={-1} className="profile-introduction" aria-labelledby="introduction-title">
       <div className="profile-identity">
-        <h2 id="introduction-title"><ScrambleText>Hey, I’m ZZ.</ScrambleText></h2>
-      </div>
-      <div className="profile-statement">
-        <h3><ScrambleText>Creative Designer &amp; Engineer</ScrambleText></h3>
-        <p><ScrambleText>I am a designer with 9+ years of experience, working as a 2D and 3D generalist in the advertising space. I help brands bring bold, high-impact visuals to life from concept through final render.</ScrambleText></p>
-        <p><ScrambleText>My tool kit mainly consists of Adobe After Effects, Cinema 4D, and Redshift, which I use for everything from motion graphics to photoreal 3D renders.</ScrambleText><br /><ScrambleText>At the core of my work is a drive to bridge the gap between artistic values and practical application — because the best ideas mean nothing without solid execution.</ScrambleText></p>
-        <p className="profile-year"><ScrambleText>©2026</ScrambleText></p>
-        <div className="profile-clients" aria-label="合作品牌"><span><ScrambleText>字节跳动</ScrambleText></span><span><ScrambleText>网易云音乐</ScrambleText></span><span><ScrambleText>Lemon8</ScrambleText></span><span><ScrambleText>马蜂窝</ScrambleText></span></div>
+        <h2 id="introduction-title"><ScrambleText>HEY, I’M ZZ</ScrambleText></h2>
+        <h3><ScrambleText>CREATIVE DESIGNER</ScrambleText><br /><ScrambleText>ENGINEERING</ScrambleText></h3>
       </div>
       <PortraitWarp />
+      <div className="profile-statement">
+        <p><ScrambleText>I am a designer with 9+ years of experience, working as a 2D and 3D generalist in the advertising space. I help brands bring bold, high-impact visuals to life from concept through final render.</ScrambleText></p>
+        <p><ScrambleText>My tool kit mainly consists of Adobe After Effects, Cinema 4D, and Redshift, which I use for everything from motion graphics to photoreal 3D renders.</ScrambleText><br /><ScrambleText>At the core of my work is a drive to bridge the gap between artistic values and practical application — because the best ideas mean nothing without solid execution.</ScrambleText></p>
+      </div>
     </section>
   );
 }

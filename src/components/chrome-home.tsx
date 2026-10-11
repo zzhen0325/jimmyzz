@@ -23,10 +23,13 @@ export function ChromeHero() {
     const element = hero.current;
     const distance = () => element.offsetHeight - 88;
     const update = (progress: number) => {
-      workProgress.current = progress;
-      element.style.setProperty("--work-progress", String(progress));
+      // Finish the logo before the introduction reaches the top of the viewport.
+      // Keep the stage tied to actual scroll so the header never jumps ahead.
+      const sceneProgress = Math.min(1, progress / .75);
+      workProgress.current = sceneProgress;
+      element.style.setProperty("--work-progress", String(sceneProgress));
       element.style.setProperty("--hero-scroll", `${progress * distance()}px`);
-      setView(progress === 0 ? "intro" : progress === 1 ? "work" : "transition");
+      setView(sceneProgress === 0 ? "intro" : sceneProgress === 1 ? "work" : "transition");
     };
     ScrollTrigger.create({
       start: 0,
@@ -49,7 +52,7 @@ export function ChromeHero() {
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>
           {motionMenu && <div id="floating-motion-options" className={styles.motionMenu} role="group" aria-label="漂浮效果">
             <span>漂浮方式</span>
-            {([["flow-rings", "① 并列环流"], ["flow-wave", "② 横向波带"], ["flow-twist", "③ 扭转环流"], ["flow-helix", "④ 螺旋流"], ["diagonal-drift", "⑤ 斜向漫游"], ["physics", "原版 · 自由漂浮"]] as const).map(([mode, label]) =>
+            {([["flow-rings", "① 并列环流"], ["flow-wave", "② 横向波带"], ["flow-twist", "③ 扭转环流"], ["flow-helix", "④ 螺旋流"], ["diagonal-drift", "⑤ 斜向漫游"], ["gravity", "⑥ 重力"], ["physics", "原版 · 自由漂浮"]] as const).map(([mode, label]) =>
               <button key={mode} type="button" aria-pressed={floatingMode === mode} onClick={() => setFloatingMode(mode)}>{label}</button>
             )}
             <button type="button" onClick={() => setMotionMenu(false)}>收起 ×</button>

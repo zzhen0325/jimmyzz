@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import localFont from "next/font/local";
+
+const geistMono = localFont({
+  src: "../../public/assets/fonts/geist-mono-latin.woff2",
+  display: "swap",
+  weight: "100 900",
+});
 
 const SMILEYS = ["(＾▽＾)", "(◕‿◕)", "(^‿^)", "(≧◡≦)"];
 
@@ -48,7 +55,7 @@ export function HoverLabel() {
       const control = hit?.closest("a, button, input, textarea, select, [role='button']");
       const hiddenControl = hit?.closest("button, [role='button'], input, textarea, select");
       const allowsLabel = hiddenControl === labeledSurface && labeledSurface?.hasAttribute("data-hover-label-on-control");
-      if (!finePointer.matches || (hiddenControl && !allowsLabel)) {
+      if (!finePointer.matches || hit?.closest("[data-native-cursor]") || (hiddenControl && !allowsLabel)) {
         hide();
         return;
       }
@@ -57,6 +64,7 @@ export function HoverLabel() {
         : document.documentElement;
       const customText = surface.dataset.hoverLabel?.trim();
       usesDefaultLabel = !customText;
+      element.style.fontFamily = usesDefaultLabel ? geistMono.style.fontFamily : "";
       const text = customText || SMILEYS[smileyIndex];
       if (active !== surface || activeText !== text) {
         if (active !== surface) {
@@ -137,6 +145,12 @@ export function HoverLabel() {
     };
     const leave = () => { pointerKnown = false; hide(); };
     const key = (event: KeyboardEvent) => { if (event.key === "Tab") leave(); };
+    // Animated targets can move under a stationary pointer, even after the
+    // follow animation has settled. Recheck independently of the label text.
+    const hitTestTimer = window.setInterval(() => {
+      if (!pointerKnown || !finePointer.matches || document.hidden) return;
+      scroll();
+    }, 100);
     const smileyTimer = window.setInterval(() => {
       if (!visible || !usesDefaultLabel || document.hidden) return;
       smileyIndex = (smileyIndex + 1) % SMILEYS.length;
@@ -150,6 +164,7 @@ export function HoverLabel() {
     document.documentElement.addEventListener("pointerleave", leave);
     finePointer.addEventListener("change", hide);
     return () => {
+      window.clearInterval(hitTestTimer);
       window.clearInterval(smileyTimer);
       hide();
       window.removeEventListener("resize", scroll);

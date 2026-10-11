@@ -26,7 +26,9 @@ import { createAdaptiveResolution, homeAntialiasSamples } from "./adaptive-resol
 import { createFloatingFlow, isFlowMode, sampleFlow, type FlowMode } from "./floating-flow";
 import { driftRotation, sampleFloatingDrift } from "./floating-drift";
 
-export type FloatingMode = FlowMode | "diagonal-drift" | "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
+export type FloatingMode = FlowMode | "gravity" | "diagonal-drift" | "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
+export type ExportLayout = { rotation: number; tilt: number; spacing: number; size: number; logoSize: number; depth: number; motion: "tilted-orbit" | FloatingMode; playing: boolean };
+export const defaultExportLayout: ExportLayout = { rotation: 0, tilt: 25, spacing: 1, size: .8, logoSize: 1, depth: 1, motion: "tilted-orbit", playing: false };
 
 export type ChromeWorldOptions = { weather?: HomeWeather; floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean; screen: { x: number; y: number; radius: number; fx: number; fy: number } };
@@ -127,7 +129,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let frame = 0;
   let previous = 0;
   let elapsed = 0;
-  let environmentTime = 0;
   let portalGunAnimation: Awaited<ReturnType<typeof createChromePortalGun>> | undefined;
   let entranceActive = false;
   const entrance = { stagger: config.entrance.stagger, launch: config.entrance.launch, orbit: config.entrance.duration, releaseDrag: .45, coast: .18, dragRamp: .65, settle: 2.4 };
@@ -139,12 +140,16 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let vortexTime = 0;
   let vortexAnimation: ReturnType<typeof createPixelVortex> | undefined;
   let floatingMode: FloatingMode = options.floatingMode ?? "physics";
-  const usesPhysics = () => isFlowMode(floatingMode) || floatingMode === "physics" || floatingMode === "physics-wave";
+  const usesPhysics = () => floatingMode === "gravity" || isFlowMode(floatingMode) || floatingMode === "physics" || floatingMode === "physics-wave";
+  // A release temporarily changes the forces, never the selected animation.
+  let burstGravityAge: number | null = null;
+  let burstFloor: CANNON.Body | null = null;
+  const burstMotion = { ramp: .35, fall: 1.8, recover: 4.5 };
   const flow = createFloatingFlow();
   const flowAcceleration = new THREE.Vector3();
   let flowBlend = 0;
   let flowSpeed = 1;
-  const propMask = () => collisionGroup.boundary | collisionGroup.pointer | (isFlowMode(floatingMode) ? collisionGroup.prop | collisionGroup.portalGun : 0);
+  const propMask = () => collisionGroup.boundary | collisionGroup.pointer | ((isFlowMode(floatingMode) || floatingMode === "gravity") ? collisionGroup.prop | collisionGroup.portalGun : 0);
   let beltAngle = 0;
   let beltSpeed = .10;
   const beltKeys = new Set<string>();
@@ -172,6 +177,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let motionHeight = viewHeight;
   let assetScale = 1;
   let logoScale = 1;
+  let exportLayout: ExportLayout | null = null;
+  let exportTime = 0;
   const logoEntranceDuration = .95;
   // Independent from physics resets: resizing or returning home must not replay it.
   let logoEntranceTime = 0;
@@ -199,9 +206,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   materials.add(chrome);
   // Local reflection probe: only the logo receives this map. The other objects
   // retain the panorama, avoiding recursive render-target feedback.
-  // The logo's rough surface filters this probe; a 128px face retains reflected
-  // silhouettes without shading a 256px face six times per capture.
-  const reflectionTarget = new THREE.WebGLCubeRenderTarget(host.clientWidth < 700 ? 64 : 128, {
+  // Give the polished logo enough reflection detail before PMREM filtering.
+  // Capture still advances one face per frame to spread the increased work.
+  const reflectionTarget = new THREE.WebGLCubeRenderTarget(host.clientWidth < 700 ? 128 : 256, {
     type: THREE.HalfFloatType,
     generateMipmaps: true,
     minFilter: THREE.LinearMipmapLinearFilter,
@@ -316,17 +323,60 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const makeWalls=()=>{
     walls.forEach(body=>world.removeBody(body));walls.length=0;
     const plane=(position:number[],rotation:number[],type:typeof CANNON.Body.STATIC | typeof CANNON.Body.KINEMATIC)=>{const body=new CANNON.Body({type,collisionFilterGroup:collisionGroup.boundary,collisionFilterMask:collisionGroup.prop | collisionGroup.portalGun});body.addShape(new CANNON.Plane());body.position.set(position[0],position[1],position[2]);body.quaternion.setFromEuler(rotation[0],rotation[1],rotation[2]);world.addBody(body);walls.push(body);};
+    if (floatingMode === "gravity") {
+      // The stage can exceed a short viewport; use its visible bottom edge.
+      const visibleHeight = Math.min(height, window.visualViewport?.height ?? window.innerHeight);
+      const floorY = (height / 2 - visibleHeight) / camera.zoom;
+      plane([0, floorY, 0], [-Math.PI / 2, 0, 0], CANNON.Body.STATIC);
+      plane([0, viewHeight / 2, 0], [Math.PI / 2, 0, 0], CANNON.Body.STATIC);
+      plane([-viewWidth / 2, 0, 0], [0, Math.PI / 2, 0], CANNON.Body.STATIC);
+      plane([viewWidth / 2, 0, 0], [0, -Math.PI / 2, 0], CANNON.Body.STATIC);
+      plane([0, 0, -motionHeight / 2], [0, 0, 0], CANNON.Body.STATIC);
+      plane([0, 0, motionHeight / 2], [0, Math.PI, 0], CANNON.Body.STATIC);
+      return;
+    }
     for(let i=0;i<20;i++){const theta=Math.PI+2*Math.PI/20*i;plane([0,Math.cos(theta)*motionHeight/2,Math.sin(theta)*motionHeight/2],[theta+Math.PI/2,0,0],CANNON.Body.STATIC);}
     plane([-motionWidth/2,0,0],[0,Math.PI/2,0],CANNON.Body.KINEMATIC);plane([motionWidth/2,0,0],[0,-Math.PI/2,0],CANNON.Body.KINEMATIC);
   };
   const shapeBody=(body:CANNON.Body,size:THREE.Vector3,billboard=false)=>{
     while(body.shapes.length)body.removeShape(body.shapes[0]);
     // A sphere keeps the billboard collision footprint independent of camera orientation.
-    body.addShape(billboard ? new CANNON.Sphere(Math.max(size.x,size.y)*.43) : new CANNON.Box(new CANNON.Vec3(size.x/2,size.y/2,Math.max(.025,size.z/2))));body.updateMassProperties();body.updateBoundingRadius();body.aabbNeedsUpdate=true;
+    body.fixedRotation = billboard && floatingMode === "gravity";
+    body.addShape(billboard && floatingMode !== "gravity" ? new CANNON.Sphere(Math.max(size.x,size.y)*.43) : new CANNON.Box(new CANNON.Vec3(size.x/2,size.y/2,Math.max(.025,size.z/2))));body.updateMassProperties();body.updateBoundingRadius();body.aabbNeedsUpdate=true;
+  };
+  const finishBurstGravity = () => {
+    if (burstGravityAge === null) return;
+    burstGravityAge = null;
+    if (burstFloor) world.removeBody(burstFloor);
+    burstFloor = null;
+    world.gravity.set(0, floatingMode === "gravity" ? -9.8 : 0, 0);
+    world.defaultContactMaterial.friction = floatingMode === "gravity" ? .55 : referencePhysics.friction;
+    world.defaultContactMaterial.restitution = isFlowMode(floatingMode) ? .42 : 0;
+    for (const { body } of items) {
+      body.linearDamping = floatingMode === "gravity" ? .18 : referencePhysics.linearDamping;
+    }
+    delete canvas.dataset.burstGravity;
+  };
+  const startBurstGravity = () => {
+    if (floatingMode === "gravity" || entranceActive) return;
+    burstGravityAge = 0;
+    if (!burstFloor) {
+      burstFloor = new CANNON.Body({ type: CANNON.Body.STATIC,
+        collisionFilterGroup: collisionGroup.boundary,
+        collisionFilterMask: collisionGroup.prop | collisionGroup.portalGun });
+      burstFloor.addShape(new CANNON.Plane());
+      world.addBody(burstFloor);
+    }
+    const visibleHeight = Math.min(height, window.visualViewport?.height ?? window.innerHeight);
+    targetPosition.set(0, (height / 2 - visibleHeight) / camera.zoom, 0).applyQuaternion(camera.quaternion);
+    burstFloor.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+    targetRotation.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)).premultiply(camera.quaternion);
+    burstFloor.quaternion.set(targetRotation.x, targetRotation.y, targetRotation.z, targetRotation.w);
+    burstFloor.aabbNeedsUpdate = true;
   };
   const reset=()=>{
+    finishBurstGravity();
     easterEgg.cancel();
-    environmentTime = 0;
     scene.environmentRotation.set(0, 0, 0);
     scene.backgroundRotation.set(0, 0, 0);
     pointerBody.collisionFilterMask = 0;
@@ -335,25 +385,28 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     reflectionDirty=true;
     flowBlend=isFlowMode(floatingMode)?1:0;flowSpeed=1;lastBurstTime=-Infinity;magnetBlend=0;
     beltAngle=0;beltSpeed=.10;orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
-    entranceActive = !reduced && usesPhysics();
+    entranceActive = !reduced && usesPhysics() && floatingMode !== "gravity";
+    world.gravity.set(0, floatingMode === "gravity" ? -9.8 : 0, 0);
+    world.defaultContactMaterial.friction = floatingMode === "gravity" ? .55 : referencePhysics.friction;
     world.defaultContactMaterial.restitution = entranceActive ? .8 : 0;
+    (world.solver as CANNON.GSSolver).iterations = floatingMode === "gravity" ? 12 : referencePhysics.iterations;
     items.forEach((item,index)=>{
       item.entranceScale = entranceActive ? 0 : 1;
       item.entranceReleased = false;
       const portal = item.object.name === 'floating-pixel-vortex';
       item.body.type = entranceActive && !portal ? CANNON.Body.KINEMATIC : CANNON.Body.DYNAMIC;
       item.body.collisionFilterMask = entranceActive || portal ? 0 : propMask();
-      item.body.linearDamping = referencePhysics.linearDamping;
+      item.body.linearDamping = floatingMode === "gravity" ? .18 : referencePhysics.linearDamping;
       item.body.angularDamping = isFlowMode(floatingMode) ? .16 : referencePhysics.angularDamping;
       item.body.updateMassProperties();
       item.body.position.set(0,0,Math.sin(index)*Math.PI/6);
       item.body.quaternion.set(0,0,0,1);item.body.velocity.setZero();item.body.angularVelocity.setZero();item.body.force.setZero();item.body.torque.setZero();item.body.wakeUp();
-      if(!reduced && usesPhysics()){
+      if(!reduced && usesPhysics() && !(floatingMode === "gravity" && item.billboard)){
         // Tumble continues unchanged when the orbital entrance releases the bodies.
         const a=2*Math.PI*index/items.length + .35;
         item.body.angularVelocity.set(Math.sin(a)*.35,Math.cos(a)*.35,(index % 2 ? 1 : -1)*.2);
       }
-      if(reduced){const a=2*Math.PI*index/items.length;item.body.position.set(Math.cos(a)*viewWidth*.35,Math.sin(a)*viewHeight*.35,.2);}
+      if(reduced || floatingMode === "gravity"){const a=2*Math.PI*index/items.length;item.body.position.set(Math.cos(a)*viewWidth*.35,Math.sin(a)*viewHeight*.35,.2);}
       item.object.position.copy(item.body.position);item.object.quaternion.copy(item.body.quaternion);
     });
     if (!usesPhysics()) arrange(0, true);
@@ -420,8 +473,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const padding = coarsePointer.matches ? 12 : 6;
     return { center: min.clone().add(max).multiplyScalar(.5), major: new THREE.Vector2(1, 0), minor: new THREE.Vector2(0, 1), majorLength: 1, minorLength: 1, rx: Math.max(22, (max.x - min.x) / 2 + padding), ry: Math.max(22, (max.y - min.y) / 2 + padding), rect };
   };
-  const hitVortex = () => {
-    const bounds = vortexBounds();
+  const hitVortex = (bounds = vortexBounds()) => {
     if (!bounds) return false;
     const { center, major, minor, majorLength, minorLength, rx, ry, rect } = bounds;
     const offset = new THREE.Vector2((pointer.x + 1) * rect.width / 2, (1 - pointer.y) * rect.height / 2).sub(center);
@@ -431,6 +483,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const vortex = items.find(item => item.object.name === "floating-pixel-vortex");
     const gun = items.find(item => item.object.name === "floating-green-portal-gun");
     if (!vortex || !gun || easterEgg.active || entranceActive || !ready || paused || workProgress() > 0) return;
+    finishBurstGravity();
     activePointer = null;
     easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard, body }) => ({
       object, billboard,
@@ -457,8 +510,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   options.vortexTarget?.addEventListener('click', vortexActivate);
   const updateVortexTarget = () => {
     const target = options.vortexTarget;
-    if (!target) return;
     const bounds = !easterEgg.active && !paused ? vortexBounds() : null;
+    // The gun moves even when the pointer does not. Keep the canvas fallback
+    // label in sync with the same bounds used by the moving overlay.
+    const label = pointerInside && !pointerIsTouch && hitVortex(bounds) ? 'Open The Portal' : '';
+    if (canvas.dataset.hoverLabel !== label) canvas.dataset.hoverLabel = label;
+    if (!target) return;
     target.style.display = bounds ? 'block' : 'none';
     if (!bounds) return;
     const { center, rx, ry, major } = bounds;
@@ -515,6 +572,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       bursts++;
       lastBurstTime = elapsed;
       magnetBlend = 0;
+      startBurstGravity();
     }
     if (pointerIsTouch) pointerInside = false;
     pointerCancel();
@@ -532,16 +590,18 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (usesPhysics()) canvas.dataset.hoverLabel='';
   };
   const pointerLeave=()=>{pointerInside=false;if(activePointer===null)pointer.set(0,0);};
-  const cancelMagnet=()=>{pointerInside=false;lastBurstTime=-Infinity;magnetBlend=0;pointerCancel();};
+  const cancelMagnet=()=>{finishBurstGravity();pointerInside=false;lastBurstTime=-Infinity;magnetBlend=0;pointerCancel();};
   canvas.addEventListener("pointerleave",pointerLeave);
   const pageVisibility=()=>{resolution.reset();if(document.hidden)cancelMagnet();};
-  const key=(event:KeyboardEvent)=>{if(workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if((floatingMode === 'planet-belt' || isFlowMode(floatingMode)) && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
+  const key=(event:KeyboardEvent)=>{if(exportLayout || workProgress()>0)return;if(event.code==='Escape'){easterEgg.cancel();return;}if(easterEgg.active)return;if(event.code==='KeyV'){event.preventDefault();startVortex();return;}if((floatingMode === 'planet-belt' || isFlowMode(floatingMode)) && (event.code === 'Space' || event.code === 'Enter')){event.preventDefault();if(!reduced && ready && !paused)beltKeys.add(event.code);return;}if(!usesPhysics())return;if(event.code==='Space'||event.code==='Enter'){event.preventDefault();if(!reduced)power=Math.min(power+.28,.5);}if(event.code==='ArrowUp'||event.code==='ArrowDown'){event.preventDefault();power=event.code==='ArrowUp'?.15:-.15;}};
   const keyUp = (event: KeyboardEvent) => { beltKeys.delete(event.code); };
   window.addEventListener('keyup', keyUp);
   const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
   const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;resolution.reset();resizeRenderBuffers();};
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
+  const updateViewportFloor = () => { if (floatingMode === "gravity") makeWalls(); };
+  window.visualViewport?.addEventListener("resize", updateViewportFloor);
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancelMagnet);canvas.addEventListener('click',touchClick);
   window.addEventListener('scroll',invalidatePointerRect,{passive:true});
@@ -551,7 +611,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored);
   const cameraFrame=()=>{
     // Same orbit as source, shifted by PI to show the supplied plaques' front faces.
-    angle=usesPhysics() ? 2*Math.PI/10*orbit : 0;
+    angle=usesPhysics() && floatingMode !== "gravity" ? 2*Math.PI/10*orbit : 0;
     camera.position.set(0,10*Math.sin(angle),10*Math.cos(angle));camera.rotation.set(-angle,0,0);
     logo.quaternion.copy(camera.quaternion);
     lights.rotation.set(0,-angle,-angle);
@@ -872,6 +932,37 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const step=(delta:number)=>{
     elapsed+=delta;
     if (entranceActive) { stepEntrance(delta); return; }
+    if (burstGravityAge !== null && workProgress() > 0) finishBurstGravity();
+    if (burstGravityAge !== null) {
+      // Keep the camera, positions, spin and explosion velocity continuous.
+      // Only gravity and the original guiding force crossfade over time.
+      if (activePointer === null) burstGravityAge += delta;
+      const recovery = THREE.MathUtils.smootherstep(burstGravityAge, burstMotion.fall, burstMotion.fall + burstMotion.recover);
+      const gravity = THREE.MathUtils.smootherstep(burstGravityAge, 0, burstMotion.ramp) * (1 - recovery);
+      world.gravity.set(0, -9.8 * Math.cos(angle) * gravity, 9.8 * Math.sin(angle) * gravity);
+      world.defaultContactMaterial.friction = .55 * (1 - recovery);
+      world.defaultContactMaterial.restitution = .12 + (isFlowMode(floatingMode) ? .30 : -.12) * recovery;
+      for (const { body } of items) body.linearDamping = THREE.MathUtils.lerp(.18, referencePhysics.linearDamping, recovery);
+      if (isFlowMode(floatingMode)) {
+        flowBlend = recovery;
+        applyFlowForces();
+      } else {
+        // Free drift has no path to pull it off the floor: restore buoyancy gently.
+        const lift = Math.sin(Math.PI * recovery) * 2.2;
+        for (const { body } of items) {
+          if (!body.collisionResponse) continue;
+          force.set(.02 * Math.sin(elapsed / 10) * recovery, lift * Math.cos(angle), -lift * Math.sin(angle));
+          body.applyForce(force);
+        }
+      }
+      applyMagnet(delta);
+      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
+      canvas.dataset.burstGravity = gravity.toFixed(3);
+      canvas.dataset.phase = recovery > 0 ? "burst-recover" : "burst-gravity";
+      if (recovery === 1) finishBurstGravity();
+      return;
+    }
     if (!usesPhysics()) {
       if (floatingMode === 'planet-belt') {
         const holding = (activePointer !== null || beltKeys.size > 0) && !easterEgg.active && workProgress() === 0;
@@ -883,6 +974,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         canvas.dataset.beltSpeed = beltSpeed.toFixed(3);
       }
       cameraFrame(); arrange(delta); return;
+    }
+    if (floatingMode === "gravity") {
+      cameraFrame();
+      applyMagnet(delta);
+      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
+      canvas.dataset.phase = "gravity";
+      return;
     }
     if (isFlowMode(floatingMode)) {
       const holding = beltKeys.size > 0 && !easterEgg.active && workProgress() === 0;
@@ -960,7 +1059,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       // Signed depth relative to the logo plane, along the current camera axis.
       // This also follows the rotating camera in the original free-drift mode.
       const cameraDepth = object.position.dot(camera.position) / cameraDistance;
-      const depthScale = THREE.MathUtils.lerp(1, config.depthSizing.farScale,
+      const depthScale = floatingMode === "gravity" ? 1 : THREE.MathUtils.lerp(1, config.depthSizing.farScale,
         THREE.MathUtils.smoothstep(-cameraDepth, 0, depthRange));
       object.visible = p < .7 && itemEntranceScale > 0 && object.name !== "floating-pixel-vortex";
       object.scale.setScalar(assetScale * depthScale * itemEntranceScale * (usesPhysics() ? 1 : floatingMode === "diagonal-drift" ? width < 700 ? .65 : .85 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
@@ -974,6 +1073,85 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.logoTurn = String(turn);
     canvas.dataset.logoTop = String(height / 2 - logoY * camera.zoom);
     canvas.dataset.visibleItems = String(p < .7 ? items.length : 0);
+  };
+  const updateReflection = () => {
+      const background = scene.background;
+      const backgroundIntensity = scene.backgroundIntensity;
+      const logoVisible = logo.visible;
+      logo.visible = false;
+      scene.background = scene.environment;
+      scene.backgroundIntensity = config.lighting.reflectionBackgroundIntensity * THREE.MathUtils.lerp(1, .48, lightingAmount);
+      reflectionCamera.position.set(0, 0, .28).applyQuaternion(logo.quaternion).add(logo.position);
+      let complete = false;
+      try {
+        complete = reflectionProbe.update(renderer, scene, reflectionDirty);
+      } finally {
+        logo.visible = logoVisible;
+        scene.background = background;
+        scene.backgroundIntensity = backgroundIntensity;
+      }
+      reflectionDirty = false;
+      if (complete) {
+        reflectionFrames++;
+        canvas.dataset.reflections = String(reflectionFrames);
+      }
+  };
+  const composeExport = () => {
+    if (!exportLayout) return;
+    const { rotation, tilt, spacing, size, motion, logoSize, depth } = exportLayout;
+    const visibleItems = items.filter(item => item.object.name !== "floating-pixel-vortex");
+    const slant = THREE.MathUtils.degToRad(tilt);
+    logo.quaternion.copy(camera.quaternion);
+    logo.scale.setScalar(logoScale * logoSize);
+    const inverseCamera = camera.quaternion.clone().invert();
+    visibleItems.forEach(({ object, billboard, body }, index) => {
+      const phase = index / visibleItems.length * Math.PI * 2;
+      const theta = phase + exportTime * .18 + THREE.MathUtils.degToRad(rotation) - .7;
+      if (isFlowMode(motion)) {
+        sampleFlow(motion, theta, index % 3, exportTime, viewWidth, viewHeight, object.position);
+      } else if (motion === "diagonal-drift") {
+        sampleFloatingDrift(index, exportTime + rotation / 6, viewWidth, viewHeight, object.position);
+      } else if (motion === "physics") {
+        object.position.copy(body.position).applyQuaternion(inverseCamera);
+        object.position.applyAxisAngle(spinAxis, THREE.MathUtils.degToRad(rotation));
+      } else {
+        const ring = motion === "orbit" ? (index % 2 ? .8 : 1) : 1;
+        const wave = motion === "wave" ? Math.sin(theta * 3 + exportTime) * .05 : 0;
+        object.position.set(Math.cos(theta) * viewWidth * .36 * ring,
+          (Math.sin(theta) * .32 * ring + wave) * viewHeight,
+          Math.sin(theta) * Math.min(viewWidth, viewHeight) * .48);
+      }
+      object.position.x *= spacing;
+      object.position.y *= spacing;
+      const x = object.position.x, y = object.position.y;
+      object.position.x = x * Math.cos(slant) - y * Math.sin(slant);
+      object.position.y = x * Math.sin(slant) + y * Math.cos(slant);
+      object.visible = true;
+      object.scale.setScalar(assetScale * size);
+      object.quaternion.copy(camera.quaternion);
+      if (!billboard) { object.rotateX(.15); object.rotateY(Math.sin(index + exportTime * .3) * .25); object.rotateZ(index % 2 ? .12 : -.12); }
+    });
+    // All motion types share the same depth range, independently of XY spacing.
+    // Shallow source paths (especially drift) must still respond visibly to this control.
+    let minDepth = Infinity, maxDepth = -Infinity;
+    for (const { object } of visibleItems) {
+      minDepth = Math.min(minDepth, object.position.z);
+      maxDepth = Math.max(maxDepth, object.position.z);
+    }
+    const centerDepth = (minDepth + maxDepth) / 2;
+    const halfDepth = (maxDepth - minDepth) / 2;
+    const extent = Math.min(viewWidth, viewHeight) * .48 * depth;
+    visibleItems.forEach(({ object }, index) => {
+      const normalizedDepth = halfDepth > .0001
+        ? (object.position.z - centerDepth) / halfDepth
+        : Math.sin(index / visibleItems.length * Math.PI * 2);
+      object.position.z = normalizedDepth * extent;
+      object.position.applyQuaternion(camera.quaternion);
+    });
+    scene.updateMatrixWorld(true);
+    camera.updateMatrixWorld(true);
+    if (options.vortexTarget) options.vortexTarget.style.display = "none";
+    canvas.dataset.phase = "export";
   };
   const render=(time:number)=>{
     frame=requestAnimationFrame(render);
@@ -991,6 +1169,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     const ratio = resolution.sample(time, ready && !paused && !reduced && workProgress() === 0);
     if (ratio !== renderer.getPixelRatio()) resizeRenderBuffers();
+    if (ready && exportLayout && workProgress() === 0) {
+      if (exportLayout.playing) {
+        exportTime += delta;
+        if (exportLayout.motion === "physics") {
+          const savedMode = floatingMode; floatingMode = "physics"; step(delta); floatingMode = savedMode;
+        }
+      }
+      cameraFrame(); composeWork(); composeExport();
+      if (reflectionDirty || exportLayout.playing) updateReflection();
+      sky.update(camera, viewWidth, viewHeight, 0, 0, rainAmount);
+      sky.prepare(renderer); glassComposite.render(scene, camera, skyScene); rain.render(renderer);
+      return;
+    }
     // Once the hero becomes the stationary header logo, skip scene updates as
     // well as drawing. Scroll, resize and context restoration invalidate this.
     if (ready && workProgress() === 1 && renderedWorkProgress === 1 && !reflectionDirty) return;
@@ -1002,13 +1193,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         : Math.min(logoEntranceDuration, logoEntranceTime + delta);
     }
     if (ready && !paused && !reduced && workProgress() < 1) {
-      environmentTime += delta;
-      // Rotate the reflection environment around its vertical axis. Integrating
-      // the decaying entrance speed makes the handoff to slow drift continuous.
-      const rotation = .018 * environmentTime + Math.PI / 2 * (1 - Math.exp(-1.6 * environmentTime));
+      const rotation = (scene.environmentRotation.y + config.lighting.environmentRotationSpeed * delta) % (Math.PI * 2);
       scene.environmentRotation.y = rotation;
-      // The logo probe captures this same texture as its background, so it must
-      // share the orientation used by the other objects' environment lighting.
+      // The logo probe and other materials must see the same environment direction.
       scene.backgroundRotation.y = rotation;
     }
     if (easterEgg.active && workProgress() > 0) easterEgg.cancel();
@@ -1037,26 +1224,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // Capture one face per display frame and blend completed reflections between
     // captures. Initial/invalidation captures stay atomic, including static views.
     if (ready && (reflectionDirty || (!paused && !reduced && workProgress()<1))) {
-      const background = scene.background;
-      const backgroundIntensity = scene.backgroundIntensity;
-      const logoVisible = logo.visible;
-      logo.visible = false;
-      scene.background = scene.environment;
-      scene.backgroundIntensity = config.lighting.reflectionBackgroundIntensity * THREE.MathUtils.lerp(1, .48, lightingAmount);
-      reflectionCamera.position.set(0, 0, .28).applyQuaternion(logo.quaternion).add(logo.position);
-      let complete = false;
-      try {
-        complete = reflectionProbe.update(renderer, scene, reflectionDirty);
-      } finally {
-        logo.visible = logoVisible;
-        scene.background = background;
-        scene.backgroundIntensity = backgroundIntensity;
-      }
-      reflectionDirty = false;
-      if (complete) {
-        reflectionFrames++;
-        canvas.dataset.reflections = String(reflectionFrames);
-      }
+      updateReflection();
     }
     updateVortexTarget();
     sky.prepare(renderer);
@@ -1302,13 +1470,14 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     glassComposite.render(scene,camera,skyScene);
     return results;
   };
-  const debug={exportFigmaLayers,snapshot:()=>({glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={exportFigmaLayers,snapshot:()=>({exportMode:exportLayout ? {...exportLayout,time:exportTime} : null,glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),visualPosition:object.position.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
     loaded: Promise.all([loaded, skyReady]),
     setFloatingMode(value: FloatingMode) {
       if (value === floatingMode) return;
+      const wasGravity = floatingMode === "gravity";
       const wasPhysics = usesPhysics();
       cancelMagnet(); easterEgg.cancel(); floatingMode = value;
       flowBlend = entranceActive && isFlowMode(value) ? 1 : 0;
@@ -1317,7 +1486,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         body.angularDamping = isFlowMode(value) ? .16 : referencePhysics.angularDamping;
         body.wakeUp();
       });
-      const keepPhysics = wasPhysics && usesPhysics();
+      const gravityChanged = wasGravity || value === "gravity";
+      if (gravityChanged) {
+        makeWalls();
+        items.forEach(item => shapeBody(item.body, item.originalSize.clone().multiplyScalar(assetScale), item.billboard));
+      }
+      const keepPhysics = wasPhysics && usesPhysics() && !gravityChanged;
       if (!usesPhysics()) {
         entranceActive = false;
         items.forEach(item => {
@@ -1329,12 +1503,53 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (!keepPhysics) { orbit = 0; elapsed = 0; beltAngle = 0; beltSpeed = .10; }
       reflectionDirty = true;
       canvas.dataset.motionMode = value;
-      if (ready && ((!keepPhysics && usesPhysics()) || reduced)) reset();
+      if (ready && (gravityChanged || (!keepPhysics && usesPhysics()) || reduced)) reset();
     },
     setWeather(value: HomeWeather) { weather = value; reflectionDirty = true; },
     setPaused(value:boolean){paused=value;if(value)cancelMagnet();},
+    setExportLayout(value: ExportLayout | null) {
+      if (value && !exportLayout) { finishBurstGravity(); pointerCancel(); easterEgg.cancel(); exportTime = 0; }
+      exportLayout = value ? {
+        motion: value.motion, playing: value.playing,
+        depth: THREE.MathUtils.clamp(value.depth, 0, 2.5),
+        logoSize: THREE.MathUtils.clamp(value.logoSize, .3, 1.2),
+        rotation: Number.isFinite(value.rotation) ? value.rotation : 0,
+        tilt: THREE.MathUtils.clamp(value.tilt, -70, 70),
+        spacing: THREE.MathUtils.clamp(value.spacing, .6, 1.4),
+        size: THREE.MathUtils.clamp(value.size, .3, 1.8),
+      } : null;
+      if (!exportLayout) {
+        items.forEach(({ object, body }) => { object.position.copy(body.position); object.quaternion.copy(body.quaternion); });
+      }
+      if (ready) { cameraFrame(); composeWork(); composeExport(); }
+      reflectionDirty = true;
+    },
+    exportFrame(): Promise<Blob> {
+      if (!ready || disposed || contextLost) return Promise.reject(new Error("场景尚未准备好，请稍后重试。"));
+      const context = renderer.getContext();
+      const maxSize = Math.min(renderer.capabilities.maxTextureSize, context.getParameter(context.MAX_RENDERBUFFER_SIZE));
+      const ratio = Math.min(4, maxSize / width, maxSize / height, Math.sqrt(32_000_000 / (width * height)));
+      const target = renderer.getRenderTarget();
+      try {
+        // Re-render the current pose without advancing time or resetting the orbit.
+        renderer.setRenderTarget(null);
+        renderer.setDrawingBufferSize(width, height, ratio);
+        glassComposite.resize(width, height, ratio, 4);
+        sky.prepare(renderer);
+        glassComposite.render(scene, camera, skyScene);
+        rain.render(renderer);
+        // Snapshot before restoring the live buffers; PNG encoding is asynchronous.
+        return new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("高清图片生成失败，请重试。")), "image/png");
+        });
+      } finally {
+        resizeRenderBuffers();
+        renderer.setRenderTarget(target);
+      }
+    },
     replay(){if(ready)reset();},
     dispose(){
+      window.visualViewport?.removeEventListener("resize", updateViewportFloor);
       disposed=true;window.removeEventListener('keyup',keyUp);canvas.removeEventListener("pointerleave",pointerLeave);pointerCancel();easterEgg.cancel();cancelAnimationFrame(frame);
       window.removeEventListener('scroll',invalidatePointerRect);
       window.removeEventListener('blur',cancelMagnet);document.removeEventListener('visibilitychange',pageVisibility);

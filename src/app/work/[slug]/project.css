@@ -11,11 +11,32 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
   background: var(--home-background);
   color: var(--home-foreground);
 }
-.case-copy { grid-column: 1 / 5; position: sticky; top: var(--case-copy-top, 112px); min-width: 0; margin-top: 50svh; --case-label-width: clamp(64px, 5.5vw, 104px); }
+.case-header {
+  display: grid;
+  grid-template-columns: var(--portfolio-grid);
+  column-gap: var(--grid-gap);
+  align-items: center;
+  margin-inline: var(--page-pad);
+  padding-block: 8px;
+  font-size: clamp(18px, 1.35vw, 28px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -.04em;
+}
+.case-logo { grid-column: 1 / 5; justify-self: start; }
+.case-navigation { grid-column: 5 / -1; display: flex; align-items: center; justify-content: space-between; font-size: clamp(14px, .9vw, 16px); }
+.case-header a { display: inline-flex; align-items: center; min-height: 48px; }
+.case-header a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.case-copy { grid-column: 1 / 5; position: sticky; top: var(--case-copy-top, 64px); min-width: 0; margin-top: 32px; --case-label-width: clamp(112px, 9vw, 184px); }
+@media (min-width: 810px) {
+  .case-logo, .case-copy { grid-column: 1 / 6; }
+  .case-copy { padding-right: clamp(24px, 3vw, 72px); }
+  .case-navigation, .case-page .case-visuals { grid-column: 6 / -1; }
+}
 .case-page .case-intro { padding: 0 0 0 calc(var(--case-label-width) + var(--grid-gap)); }
 .case-page .case-intro h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(36px, 3.5vw, 64px);
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -.045em;
@@ -60,11 +81,29 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-facts dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .case-facts dd span { display: block; }
 .case-impact dd { font-size: clamp(10px, 1.15vw, 20px); }
-.case-page .case-gallery { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 32px); padding: 36px 0 0; margin: 0; }
+.case-page .case-gallery { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 32px); padding: 0; margin: 0; }
 .case-visuals .case-chapter { margin: 0; }
-.case-visuals .chapter-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; }
+.case-visuals .chapter-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: default; }
 .case-visuals .chapter-image img { display: block; width: 100%; height: auto; max-width: none; max-height: none; }
 .case-copy .case-editorial-section:last-child p:last-child { margin-bottom: 0; }
+.case-page .case-project-list { margin-top: 0; padding-bottom: 64px; }
+.case-project-list .timeline-list { border-top: 1px solid var(--line); }
+.case-project-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 48px;
+  margin: 20px auto 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: clamp(14px, .9vw, 16px);
+  cursor: pointer;
+}
+.case-project-more:hover { text-decoration: underline; text-underline-offset: 4px; }
 .case-page .next-project { margin: 0 var(--page-pad); padding: 32px 0 64px; }
 .case-page .next-project > a { grid-template-columns: var(--portfolio-grid); column-gap: var(--grid-gap); }
 .case-page .next-project > a > div:first-child { grid-column: 1 / 6; }
@@ -90,7 +129,10 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
   .case-page .footer-bottom > a { grid-column: 5 / -1; justify-self: start; }
 }
 @media (max-width: 599px) {
-  .case-copy { grid-column: 1 / -1; position: static; }
+  .case-header { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); font-size: clamp(14px, 3.6vw, 20px); padding-block: 4px; }
+  .case-logo { grid-column: 1; }
+  .case-navigation { grid-column: 2; gap: 16px; }
+  .case-copy { grid-column: 1 / -1; position: static; --case-label-width: 88px; }
   .case-page .case-overview { margin-top: 32px; }
   .case-facts > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .case-page .next-project > a > div:first-child { grid-column: 1 / -1; }

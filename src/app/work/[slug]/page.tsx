@@ -1,12 +1,9 @@
 import "./project.css";
 import { V1Experience } from "@/components/v1-experience";
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
-import { Footer } from "@/components/site-chrome";
 import { ProjectHeader, ProjectCopy } from "@/components/project-detail-chrome";
+import { RelatedProjectList } from "@/components/experience-timeline";
 import { CaseGallery } from "@/components/case-gallery";
 import { readContent } from "@/lib/content-store";
 export const dynamic = "force-dynamic";
@@ -34,7 +31,14 @@ export default async function ProjectPage({
   if (slug === "portfolio-v1") return <V1Experience />;
   const assets = project.assets;
   const index = projects.indexOf(project);
-  const next = projects[(index + 1) % projects.length];
+  const relatedProjects = [...projects.slice(index + 1), ...projects.slice(0, index)].map((item) => ({
+    company: item.client,
+    title: item.title,
+    category: item.kind,
+    slug: item.slug,
+    date: null,
+    cover: item.thumbnail,
+  }));
   return (
     <main id="top" className="case-page">
       <ProjectHeader />
@@ -80,29 +84,7 @@ export default async function ProjectPage({
           <CaseGallery assets={assets} projectTitle={project.title} />
         </div>
       </article>
-      <section className="next-project">
-        <p className="eyebrow">NEXT PROJECT / 继续探索</p>
-        <Link href={`/work/${next.slug}`}>
-          <div>
-            <h2>{next.title}</h2>
-            <p>
-              {next.kind} / {next.client}
-            </p>
-          </div>
-          <div className="next-art">
-            <Image
-              src={next.thumbnail}
-              width={next.coverWidth ?? 960}
-              height={next.coverHeight ?? 540}
-              unoptimized
-              alt={next.title}
-              className="object-contain"
-            />
-          </div>
-          <ArrowUpRight size={36} />
-        </Link>
-      </section>
-      <Footer variant="project" />
+      <RelatedProjectList key={slug} entries={relatedProjects} />
     </main>
   );
 }

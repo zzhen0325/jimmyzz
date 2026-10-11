@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 // drift — "2D Clouds", https://www.shadertoy.com/view/4tdSWr
 // Source mirror: https://github.com/Zygo/xscreensaver/blob/master/hacks/glx/glsl/driftclouds.glsl
-// Preserve the original noise, density and motion; match the supplied sky palette.
+// Preserve the original noise and motion; match the supplied sky palette.
 const fragmentShader = /* glsl */ `
 uniform vec3 iResolution;
 uniform float iTime;
@@ -28,11 +28,11 @@ uniform float rainAmount;
 
 const float cloudscale = 1.1;
 const float speed = 0.03;
-const float cloudcover = 0.2;
+const float cloudcover = 0.1;
 const float cloudalpha = 8.0;
 // Display-space colours sampled from the user's photographic reference.
-const vec3 skycolour1 = vec3(196.0, 225.0, 242.0) / 255.0;
-const vec3 skycolour2 = vec3(199.0, 227.0, 242.0) / 255.0;
+const vec3 skycolour1 = vec3(214.0, 234.0, 245.0) / 255.0; // #D6EAF5
+const vec3 skycolour2 = vec3(214.0, 234.0, 245.0) / 255.0; // #D6EAF5
 const vec3 cloudshadow = vec3(239.0, 245.0, 250.0) / 255.0;
 const vec3 cloudhighlight = vec3(251.0, 251.0, 252.0) / 255.0;
 

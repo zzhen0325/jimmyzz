@@ -56,10 +56,22 @@ export function createSmoothCubeProbe(camera: THREE.CubeCamera, material: THREE.
       #ifdef ENVMAP_TYPE_CUBE_UV
       uniform sampler2D previousReflectionMap;
       uniform float reflectionBlend;
+      // Integrate the reflection across the pixel footprint. Geometry MSAA
+      // cannot smooth high-contrast lines inside a mirrored surface.
+      vec4 filteredReflection(sampler2D reflectionMap, vec3 direction, float roughness, vec3 dx, vec3 dy) {
+        return 0.25 * (
+          textureCubeUV(reflectionMap, normalize(direction - dx - dy), roughness) +
+          textureCubeUV(reflectionMap, normalize(direction + dx - dy), roughness) +
+          textureCubeUV(reflectionMap, normalize(direction - dx + dy), roughness) +
+          textureCubeUV(reflectionMap, normalize(direction + dx + dy), roughness)
+        );
+      }
       vec4 smoothReflection(vec3 direction, float roughness) {
+        vec3 dx = dFdx(direction) * 0.25;
+        vec3 dy = dFdy(direction) * 0.25;
         return mix(
-          textureCubeUV(previousReflectionMap, direction, roughness),
-          textureCubeUV(envMap, direction, roughness),
+          filteredReflection(previousReflectionMap, direction, roughness, dx, dy),
+          filteredReflection(envMap, direction, roughness, dx, dy),
           reflectionBlend
         );
       }
@@ -67,7 +79,7 @@ export function createSmoothCubeProbe(camera: THREE.CubeCamera, material: THREE.
       ${THREE.ShaderChunk.envmap_physical_pars_fragment.replaceAll("textureCubeUV( envMap,", "smoothReflection(")}`,
     );
   };
-  material.customProgramCacheKey = () => "smooth-cube-probe-v1";
+  material.customProgramCacheKey = () => "smooth-cube-probe-v2-aa";
   return {
     update(renderer: THREE.WebGLRenderer, scene: THREE.Scene, immediate: boolean) {
       // One face per display frame also advances the previous transition by 1/6.

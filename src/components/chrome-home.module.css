@@ -59,8 +59,12 @@
 .hero[data-view="transition"] .center p, .hero[data-view="work"] .center p { opacity: max(0, calc(1 - var(--work-progress) * 5)); pointer-events: none; }
 .hero[data-view="work"] .center { position: fixed; bottom: 24px; }
 .hero[data-view="transition"] .center { opacity: max(0, calc(1 - var(--work-progress) * 5)); pointer-events: none; }
-.homeLogo { display: none; position: absolute; z-index: 4; top: 15px; left: 50%; transform: translateX(-50%); width: 90px; height: 58px; border: 0; background: transparent; }
+.homeLogo { display: none; position: absolute; z-index: 4; top: 15px; left: 50%; transform: translateX(-50%); width: 90px; height: 58px; border: 0; background: url("/assets/logo-black.svg") center / 72px 24px no-repeat; cursor: pointer; }
 .hero[data-view="work"] .homeLogo { display: block; }
+.hero[data-view="work"] .stage canvas { visibility: hidden; }
+.hero[data-view="work"] { background: transparent; pointer-events: none; }
+.hero[data-view="work"]::after { display: none; }
+.hero[data-view="work"] .homeLogo { pointer-events: auto; }
 .menu > button { display: flex; width: 100%; align-items: center; justify-content: space-between; font: inherit; color: inherit; background: none; border: 0; border-top: 1px solid var(--line); font-size: clamp(25px,4vw,40px); padding: 17px 0; letter-spacing: -.05em; text-align: left; }
 .hero[data-view="work"] .menu { position: fixed; }
 @media (max-width: 700px) {
@@ -103,18 +107,16 @@
 .heroWordmark[inert] { visibility: hidden; }
 .heroWordmark img { display: block; width: 72px; height: 36px; object-fit: contain; filter: brightness(0); }
 
-/* Quiet preview switch: hover/focus reveals it; touch retains a faint target. */
-.motionControl { position: absolute; z-index: 8; right: 18px; bottom: 76px; }
-.motionTrigger { width: 44px; height: 44px; border: 0; background: transparent; color: #343b42; font-size: 25px; cursor: pointer; opacity: 0; transition: opacity .2s; }
-.motionControl:hover .motionTrigger, .motionControl:focus-within .motionTrigger { opacity: 1; }
-.motionMenu { position: absolute; right: 0; bottom: 52px; width: 186px; padding: 12px; background: #f5f5f0; color: #252a30; border: 1px solid #b9bec0; display: grid; gap: 4px; }
+/* Keep animation controls above scene/export hit areas and inside short viewports. */
+.motionControl { display: none; position: absolute; z-index: 12; right: 18px; bottom: max(76px, calc(100% - 100dvh + 76px)); pointer-events: auto; }
+.motionTrigger { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid #b9bec0; border-radius: 50%; background: #f5f5f0; color: #343b42; font-size: 25px; cursor: pointer; }
+.motionTrigger:hover, .motionTrigger[aria-expanded="true"] { background: #e4e6e3; }
+.motionMenu { position: absolute; right: 0; bottom: 52px; width: min(186px, calc(100vw - 36px)); max-height: calc(100dvh - 208px); overflow-y: auto; overscroll-behavior: contain; padding: 12px; background: #f5f5f0; color: #252a30; border: 1px solid #b9bec0; display: grid; gap: 4px; }
 .motionMenu > span { font-size: 11px; padding: 4px 8px 8px; color: #666c70; }
 .motionMenu button { font: inherit; font-size: 12px; text-align: left; padding: 10px 8px; min-height: 40px; border: 0; background: transparent; cursor: pointer; }
 .motionMenu button:hover { background: #e4e6e3; }
 .motionMenu button[aria-pressed="true"] { background: #252a30; color: #f5f5f0; }
 .page .motionControl button:focus-visible { outline: 2px solid #4779db; outline-offset: 2px; }
-@media (hover: none) { .motionTrigger { opacity: .25; } }
-@media (prefers-reduced-motion: reduce) { .motionTrigger { transition: none; } }
 
 .skyTagline, .skyYear { position: absolute; z-index: 3; margin: 0; color: #111; font-size: clamp(15px, 1.328125vw, 34px); font-weight: 600; line-height: .96; letter-spacing: -.065em; white-space: nowrap; pointer-events: none; opacity: max(0, calc(1 - var(--work-progress) * 5)); }
 .skyTagline { left: var(--home-edge); text-align: left; }
