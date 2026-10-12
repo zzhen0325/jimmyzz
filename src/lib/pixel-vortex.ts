@@ -2,14 +2,18 @@ import * as THREE from "three";
 
 /** Broad pixel spiral streams, projected onto a fixed tilted disk. */
 export function createPixelVortex(settings: { pixels: number; speed: number; arms: number }) {
+  const green = new THREE.Color("#4FCD75");
+  const yellow = new THREE.Color("#F0FFA7");
+  // Blend in linear light so intermediate pigments retain the endpoint brightness.
+  const lime = green.clone().lerp(yellow, .45);
   const material = new THREE.ShaderMaterial({
     uniforms: {
       formation: { value: 1 }, time: { value: 0 }, pixels: { value: settings.pixels },
       speed: { value: settings.speed }, arms: { value: settings.arms },
-      green: { value: new THREE.Color("#45B900") },
-      lime: { value: new THREE.Color("#86E21A") },
-      yellow: { value: new THREE.Color("#FFF140") },
-      highlight: { value: new THREE.Color("#FFF500") },
+      green: { value: green },
+      lime: { value: lime },
+      yellow: { value: yellow },
+      highlight: { value: new THREE.Color("#F0FFA7") },
     },
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
@@ -63,6 +67,28 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
           if (pigment < .22 && broad > .62 && patches > .60 && r > .58) color = highlight;
           if (patches < .42 && pigment > .20) color = green;
 
+        }
+        // Sparse pixel droplets peel off the rim along a rotating tangent.
+        // Use the same plane and pixel grid, keeping the effect to one draw call.
+        if (alpha < .5 && formation > .25) {
+          for (int i = 0; i < 12; i++) {
+            float seed = float(i) + 1.;
+            float life = fract(t * (.40 + hash(seed + 9.) * .16) + hash(seed));
+            float age = life / .72;
+            float angle = seed * 2.399963 + t * .32 + age * .22;
+            float radius = .88 + (.35 + hash(seed + 4.) * .12) * age;
+            vec2 droplet = vec2(cos(angle), sin(angle)) * radius;
+            droplet.y *= mix(1., .38, formation);
+            droplet = mat2(.819, .574, -.574, .819) * droplet;
+            droplet.y -= .065 * age * age;
+            float size = (.028 + hash(seed + 7.) * .022)
+              * smoothstep(0., .12, age) * (1. - smoothstep(.48, 1., age));
+            vec2 d = abs(p - droplet);
+            if (age < 1. && max(d.x, d.y) < size) {
+              color = mix(green, yellow, .25 + hash(seed + 2.) * .5);
+              alpha = 1.;
+            }
+          }
         }
         if (alpha < .5) discard;
         gl_FragColor = vec4(color, alpha);

@@ -44,8 +44,8 @@ export const referencePhysics = {
 };
 
 // Original free drift uses silhouette separation. Guided currents additionally
-// enable real prop contacts; the logo stays outside the physics world.
-const collisionGroup = { boundary: 1, prop: 2, pointer: 4, portalGun: 8 };
+// enable real prop contacts; the animated logo blocks props in every physics mode.
+const collisionGroup = { boundary: 1, prop: 2, pointer: 4, portalGun: 8, logo: 16 };
 
 export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorldOptions = {}) {
   const host = canvas.parentElement!;
@@ -149,7 +149,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const flowAcceleration = new THREE.Vector3();
   let flowBlend = 0;
   let flowSpeed = 1;
-  const propMask = () => collisionGroup.boundary | collisionGroup.pointer | ((isFlowMode(floatingMode) || floatingMode === "gravity") ? collisionGroup.prop | collisionGroup.portalGun : 0);
+  const propMask = () => collisionGroup.boundary | collisionGroup.pointer | collisionGroup.logo | ((isFlowMode(floatingMode) || floatingMode === "gravity") ? collisionGroup.prop | collisionGroup.portalGun : 0);
   let beltAngle = 0;
   let beltSpeed = .10;
   const beltKeys = new Set<string>();
@@ -264,6 +264,21 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     bakedMaterials?.setWeather(amount);
     plasterMaterials.setWeather(amount);
   };
+  const logoAnchor = new THREE.Vector3();
+  const logoReturnOffset = new THREE.Vector3();
+  let logoReturn: { offset: THREE.Vector3; velocity: THREE.Vector3; age: number } | null = null;
+  // An analytic critically damped spring preserves the portal's exit velocity,
+  // allows an overshoot, and settles without frame-rate-dependent integration.
+  const advanceLogoReturn = (delta: number) => {
+    if (!logoReturn) return;
+    logoReturn.age += delta;
+    const { offset, velocity, age } = logoReturn;
+    const frequency = 2.8;
+    const decay = Math.exp(-frequency * age);
+    logoReturnOffset.copy(offset).multiplyScalar(1 + frequency * age)
+      .addScaledVector(velocity, age).multiplyScalar(decay);
+    if (age > 6) { logoReturn = null; logoReturnOffset.set(0, 0, 0); }
+  };
   const logo = new THREE.Group(); logo.name = "fixed-silver-ZZ"; scene.add(logo);
   // User-directed silver adaptation. A real curved surface reflects the panorama;
   // this replaces the old sinusoidal fragment-normal trick and fabricated softboxes.
@@ -281,6 +296,46 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     geometries.add(geometry);
     logo.add(new THREE.Mesh(geometry, chrome));
   }
+
+  // Four separate prisms preserve the negative space between the logo triangles.
+  const logoBody = new CANNON.Body({ type: CANNON.Body.KINEMATIC,
+    collisionFilterGroup: collisionGroup.logo,
+    collisionFilterMask: collisionGroup.prop | collisionGroup.portalGun });
+  const logoShapes = triangles.map(vertices => {
+    const points = vertices.map(([x, y]) => [(x - 30) * .05, (y - 15) * .05]);
+    const [a, b, c] = points;
+    if ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) < 0) [points[1], points[2]] = [points[2], points[1]];
+    const offset = new CANNON.Vec3(points.reduce((sum, p) => sum + p[0], 0) / 3, points.reduce((sum, p) => sum + p[1], 0) / 3, .0075);
+    const vertices3d = [-.185, .2].flatMap(z => points.map(([x, y]) => new CANNON.Vec3(x - offset.x, y - offset.y, z - offset.z)));
+    const shape = new CANNON.ConvexPolyhedron({ vertices: vertices3d,
+      faces: [[2, 1, 0], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [2, 0, 3, 5]] });
+    logoBody.addShape(shape, offset);
+    return { shape, offset, vertices: vertices3d.map(vertex => vertex.clone()) };
+  });
+  world.addBody(logoBody);
+  let colliderScale = -1;
+  const stepPhysics = (delta: number) => {
+    updateLogoPose();
+    logoBody.collisionFilterMask = easterEgg.active || workProgress() >= 1
+      ? 0 : collisionGroup.prop | collisionGroup.portalGun;
+    if (colliderScale !== logo.scale.x) {
+      colliderScale = logo.scale.x;
+      for (const [shapeIndex, { shape, offset, vertices }] of logoShapes.entries()) {
+        offset.scale(colliderScale, logoBody.shapeOffsets[shapeIndex]);
+        vertices.forEach((vertex, index) => vertex.scale(colliderScale, shape.vertices[index]));
+        shape.computeNormals();
+        shape.computeEdges();
+        shape.updateBoundingSphereRadius();
+        shape.worldVerticesNeedsUpdate = true;
+        shape.worldFaceNormalsNeedsUpdate = true;
+      }
+      logoBody.updateBoundingRadius();
+    }
+    logoBody.position.set(logo.position.x, logo.position.y, logo.position.z);
+    logoBody.quaternion.set(logo.quaternion.x, logo.quaternion.y, logo.quaternion.z, logo.quaternion.w);
+    logoBody.aabbNeedsUpdate = true;
+    world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+  };
 
   const track=(object:THREE.Object3D)=>object.traverse(child=>{
     if(!(child instanceof THREE.Mesh))return;
@@ -485,7 +540,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (!vortex || !gun || easterEgg.active || entranceActive || !ready || paused || workProgress() > 0) return;
     finishBurstGravity();
     activePointer = null;
-    easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true }, ...items.filter(item => item !== vortex).map(({ object, billboard, body }) => ({
+    easterEgg.start(vortex.object, gun.object, [{ object: logo, billboard: true,
+      onRelease: (position: THREE.Vector3, velocity: THREE.Vector3) => {
+        logoReturn = { offset: position.clone().sub(logoAnchor), velocity: velocity.clone(), age: 0 };
+        logoReturnOffset.copy(logoReturn.offset);
+      },
+    }, ...items.filter(item => item !== vortex).map(({ object, billboard, body }) => ({
       object, billboard,
       onRelease: usesPhysics() ? (position: THREE.Vector3, velocity: THREE.Vector3) => {
         body.position.set(position.x, position.y, position.z);
@@ -828,7 +888,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     applyMagnet(delta);
     applyFlowForces();
     // Each released body immediately joins the live current while the rest enter.
-    world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+    stepPhysics(delta);
     items.forEach((item, index) => {
       if (item.object.name === 'floating-pixel-vortex') return;
       if (item.entranceReleased) {
@@ -892,17 +952,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       const edgeY = screen.y - THREE.MathUtils.clamp(screen.y, -limitY, limitY);
       screen.fx = -screen.x * .045 - edgeX * edgeStrength - body.velocity.x * .22;
       screen.fy = -screen.y * .045 - edgeY * edgeStrength - (body.velocity.y * upY + body.velocity.z * upZ) * .22;
-      // Leave a small breathing space around the central logo as silhouettes drift past.
-      const logoY = width < config.sizing.mobileBreakpoint ? 0 : viewHeight * (.5 - config.logo.centerY);
-      const clearX = logoScale * 1.55 + screen.radius * .7;
-      const clearY = logoScale * .525 + screen.radius * .7;
-      const dx = screen.x / clearX, dy = (screen.y - logoY) / clearY;
-      const distance = Math.hypot(dx, dy);
-      if (distance < 1) {
-        const direction = distance > .001 ? Math.atan2(dy, dx) : item.phase;
-        screen.fx += Math.cos(direction) * (1 - distance) * 1.2;
-        screen.fy += Math.sin(direction) * (1 - distance) * 1.2;
-      }
+
     }
     for (let i = 0; i < items.length; i++) {
       if (!items[i].body.collisionResponse) continue;
@@ -956,7 +1006,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         }
       }
       applyMagnet(delta);
-      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      stepPhysics(delta);
       for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
       canvas.dataset.burstGravity = gravity.toFixed(3);
       canvas.dataset.phase = recovery > 0 ? "burst-recover" : "burst-gravity";
@@ -978,7 +1028,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (floatingMode === "gravity") {
       cameraFrame();
       applyMagnet(delta);
-      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      stepPhysics(delta);
       for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
       canvas.dataset.phase = "gravity";
       return;
@@ -995,7 +1045,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       updateReleaseDrag();
       applyFlowForces();
       applyMagnet(delta);
-      world.step(referencePhysics.step, delta, referencePhysics.maxSubSteps);
+      stepPhysics(delta);
       for (const { body, object } of items) { object.position.copy(body.position); object.quaternion.copy(body.quaternion); }
       canvas.dataset.phase = floatingMode;
       return;
@@ -1029,28 +1079,32 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     spreadFloatingItems();
     applyMagnet(delta);
     updateReleaseDrag();
-    world.step(referencePhysics.step,delta,referencePhysics.maxSubSteps);
+    stepPhysics(delta);
     for(const {body,object} of items){object.position.copy(body.position);object.quaternion.copy(body.quaternion);}
     if(elapsed>1.5&&activePointer===null)canvas.dataset.phase='orbit';
   };
   // One progress value is shared with the DOM takeover. Camera-relative coordinates
   // keep the logo centered while the surrounding objects accelerate in world space.
-  const composeWork = () => {
+  const updateLogoPose = () => {
     const p = workProgress();
     logo.visible = true;
     // Returning to the hero keeps the live physics state instead of replaying the entrance.
     // Acceleration belongs to the shared timeline; local phases only remap its progress.
     const travel = THREE.MathUtils.clamp((p - .2) / .8, 0, 1);
     const turn = reduced ? 0 : THREE.MathUtils.clamp((p - .08) / .82, 0, 1) * Math.PI * 2;
-    pointerYaw = THREE.MathUtils.lerp(pointerYaw, reduced ? 0 : pointer.x * .675, .12);
     logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn + pointerYaw * (1 - p)));
     canvas.dataset.pointerYaw = String(pointerYaw);
     const introY = width < config.sizing.mobileBreakpoint ? 0 : height * (.5 - config.logo.centerY) / camera.zoom;
     const logoY = THREE.MathUtils.lerp(introY, (height / 2 - 44) / camera.zoom, travel);
-    logo.position.set(0, logoY, 0).applyQuaternion(camera.quaternion);
+    logoAnchor.set(0, logoY, 0).applyQuaternion(camera.quaternion);
+    logo.position.copy(logoAnchor).addScaledVector(logoReturnOffset, reduced ? 0 : 1 - travel);
     const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
     const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
+    return { p, turn, logoY };
+  };
+  const composeWork = () => {
+    const { p, turn, logoY } = updateLogoPose();
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
     const depthRange = Math.min(viewWidth, viewHeight) * config.depthSizing.range;
     const cameraDistance = camera.position.length();
@@ -1198,7 +1252,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       // The logo probe and other materials must see the same environment direction.
       scene.backgroundRotation.y = rotation;
     }
+    if (!paused) advanceLogoReturn(delta);
     if (easterEgg.active && workProgress() > 0) easterEgg.cancel();
+    pointerYaw = THREE.MathUtils.lerp(pointerYaw, reduced ? 0 : pointer.x * .675, .12);
     if (!easterEgg.active) {
       if(ready&&!paused&&!reduced&&workProgress()<1)step(delta);else cameraFrame();
       composeWork();
@@ -1470,7 +1526,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     glassComposite.render(scene,camera,skyScene);
     return results;
   };
-  const debug={exportFigmaLayers,snapshot:()=>({exportMode:exportLayout ? {...exportLayout,time:exportTime} : null,glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),visualPosition:object.position.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={exportFigmaLayers,snapshot:()=>({exportMode:exportLayout ? {...exportLayout,time:exportTime} : null,glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoBody:{id:logoBody.id,shapes:logoBody.shapes.length,collisionFilterMask:logoBody.collisionFilterMask,position:logoBody.position.toArray(),scale:colliderScale},logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),visualPosition:object.position.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {

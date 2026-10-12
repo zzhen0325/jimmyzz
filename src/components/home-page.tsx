@@ -17,7 +17,7 @@ function Introduction() {
     <section id="introduction" tabIndex={-1} className="profile-introduction" aria-labelledby="introduction-title">
       <div className="profile-identity">
         <h2 id="introduction-title"><ScrambleText>HEY, I’M ZZ</ScrambleText></h2>
-        <h3><ScrambleText>CREATIVE DESIGNER</ScrambleText><br /><ScrambleText>ENGINEERING</ScrambleText></h3>
+        <h3><ScrambleText>CREATIVE DESIGNER</ScrambleText><br /><ScrambleText>ENGINEER</ScrambleText></h3>
       </div>
       <PortraitWarp />
       <div className="profile-statement">
