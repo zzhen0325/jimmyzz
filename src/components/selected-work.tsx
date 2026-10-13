@@ -24,7 +24,7 @@ export function SelectedWork() {
           const isCompact = isPortrait || compactSlugs.has(project.slug);
           const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);
           return (
-            <article key={project.slug} className={styles.project} data-project={project.slug} data-size={isCompact ? "compact" : "large"} data-portrait={isPortrait || undefined} data-admin-size={sizes[project.slug]}
+            <article key={project.slug} id={`project-${project.slug}`} className={styles.project} data-project={project.slug} data-size={isCompact ? "compact" : "large"} data-portrait={isPortrait || undefined} data-admin-size={sizes[project.slug]}
               style={{ "--work-row": Math.floor(index / 2) + 1 } as CSSProperties}>
               <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
                 <div className={styles.caption} data-work-caption><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>

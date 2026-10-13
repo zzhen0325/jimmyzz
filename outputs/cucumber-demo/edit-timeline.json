@@ -1,0 +1,56 @@
+[
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.28.09.mov",
+    "in": 0.5,
+    "out": 5.5,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.25.30.mov",
+    "in": 8.5,
+    "out": 20.7,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.01.mov",
+    "in": 8.7,
+    "out": 9.8,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.01.mov",
+    "in": 11.6,
+    "out": 13.3,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.01.mov",
+    "in": 13.75,
+    "out": 15.8,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.01.mov",
+    "in": 16.5,
+    "out": 18.65,
+    "speed": 1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.45.mov",
+    "in": 2.5,
+    "out": 11.8,
+    "speed": 1.1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.45.mov",
+    "in": 14.65,
+    "out": 21.75,
+    "speed": 1.1
+  },
+  {
+    "source": "/Users/bytedance/Library/Mobile Documents/com~apple~CloudDocs/jimmyzz/cucumber/录屏2026-09-29 17.26.45.mov",
+    "in": 22.65,
+    "out": 25.65,
+    "speed": 1
+  }
+]

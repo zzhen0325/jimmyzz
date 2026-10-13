@@ -14,3 +14,7 @@
 
 .admin .upload-feedback { position: sticky; top: 90px; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0; padding: 16px 20px; border: 1px solid #d8d8d0; border-radius: 12px; background: #f4f5ed; color: #222; overflow-wrap: anywhere; }
 .admin .upload-feedback button { flex-shrink: 0; }
+
+.project-copy-fields{margin-bottom:28px}
+.project-copy-fields h3{margin:28px 0 14px;font-size:16px;font-weight:500}
+.project-copy-fields h3:first-child{margin-top:0}

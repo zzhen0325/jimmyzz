@@ -4,6 +4,7 @@ const MAX_INPUT = 200 * 1024 * 1024;
 const MAX_OUTPUT = 30 * 1024 * 1024;
 const BASE = '/assets/video-transcoder/v1';
 export const isVideoFile = (file: File) => file.type.startsWith('video/') || /\.(mov|mp4|webm)$/i.test(file.name);
+export const isWebMFile = (file: File) => file.type === 'video/webm' || /\.webm$/i.test(file.name);
 export const formatMB = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 /** Decode in WASM so MOV input does not depend on the browser's video decoder. */
@@ -11,7 +12,10 @@ export async function transcodeVideo(file: File, report: (message: string) => vo
   if (file.size > MAX_INPUT) throw new Error('原视频超过 200MB，请先裁短后再上传');
   signal.throwIfAborted();
   report('正在加载视频处理引擎…首次使用需要下载约 32MB');
-  const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+  // Load the browser module beside its worker so bundlers do not try to
+  // statically resolve FFmpeg's runtime-configurable Worker URL.
+  const moduleURL = `${BASE}/classes.js`;
+  const { FFmpeg } = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ moduleURL) as typeof import('@ffmpeg/ffmpeg');
   const ffmpeg = new FFmpeg();
   const logs: string[] = [];
   ffmpeg.on('log', ({ message }) => { logs.push(message); if (logs.length > 20) logs.shift(); });
@@ -52,8 +56,8 @@ export async function transcodeVideo(file: File, report: (message: string) => vo
     report('正在压缩为 WebM · 0%');
     const result = await ffmpeg.exec([
       '-threads', '1', '-i', input, '-map', '0:v:0', '-an',
-      '-vf', "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1",
-      '-c:v', 'libvpx', '-crf', '10', '-b:v', '4M', '-deadline', 'good', '-cpu-used', '4',
+      '-vf', "scale=w='max(2,trunc(iw*0.7/2)*2)':h='max(2,trunc(ih*0.7/2)*2)':flags=lanczos,setsar=1",
+      '-c:v', 'libvpx', '-crf', '6', '-b:v', '12M', '-deadline', 'good', '-cpu-used', '2',
       '-lag-in-frames', '0', '-auto-alt-ref', '0',
       '-pix_fmt', 'yuv420p', '-threads', '1', 'output.webm',
     ], -1, { signal: controller.signal });

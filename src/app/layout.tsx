@@ -7,6 +7,7 @@ import { ProjectTransition } from "@/components/project-transition";
 import { GlobalChrome } from "@/components/site-chrome";
 import { SiteSound } from "@/components/site-sound";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { ContentLiveRefresh } from "@/components/content-live-refresh";
 
 export const metadata: Metadata = {
   icons: {
@@ -28,6 +29,7 @@ export default function RootLayout({
       </head>
       <body className="m-0 overflow-x-hidden bg-[#090909] font-sans text-[15px] leading-[1.25] text-[#f4f2ed] [--page-pad:40px] selection:bg-[#db3903] selection:text-[#f4f2ed] max-[1199px]:[--page-pad:24px] max-[809px]:text-[13px] max-[809px]:[--page-pad:16px] [&_a]:text-inherit [&_a]:no-underline [&_button]:cursor-pointer">
         <SmoothScroll />
+        <ContentLiveRefresh />
         <SiteSound />
         {children}
         <ProjectTransition />

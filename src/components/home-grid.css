@@ -286,16 +286,16 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
 .home-page .home-work-ending { display: flow-root; }
 .home-page .home-work-ending .ribbon-section { background: transparent; overflow-x: clip; padding-top: clamp(80px, 12svh, 144px); }
 .home-page .ribbon-stage {
-  min-height: 520px;
+  min-height: 0;
   height: 100svh;
   background: transparent;
 }
-.home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(32px, 10svh); }
+.home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(24px, 4svh); }
 .home-page .ribbon-stage.is-animated .ribbon-guides { display: none; }
-.home-page .ribbon-stage.is-animated .ribbon-playhead { inset-block: 20% 24%; }
+.home-page .ribbon-stage.is-animated .ribbon-playhead { inset-block: 8% 14%; }
 .home-page .ribbon-stage:not(.is-animated) { height: auto; min-height: 0; }
 @media (max-width: 809px) {
-  .home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(24px, 8svh); }
+  .home-page .ribbon-stage.is-animated .ribbon-footer { bottom: max(20px, 3svh); }
 }
 
 /* Flying covers may cross the stage boundary before settling into the strip. */
@@ -304,9 +304,15 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
 .home-page .ribbon-card video { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 .home-page > .home-content {
-  translate: 0 var(--home-contact-offset, 0px);
-  transition: translate 800ms cubic-bezier(.76, 0, .24, 1);
+  /* A transform (even translate: 0) traps the gallery's fixed pin inside
+     this scrolling ancestor. Relative positioning keeps it viewport-based. */
+  position: relative;
+  top: var(--home-contact-offset, 0px);
+  transition: top 800ms cubic-bezier(.76, 0, .24, 1);
 }
 @media (prefers-reduced-motion: reduce) {
   .home-page > .home-content { transition: none; }
 }
+
+/* Fill the taller focus frame without distorting the original media. */
+.home-page .ribbon-stage.is-animated .ribbon-card :is(img, video) { object-fit: cover; }

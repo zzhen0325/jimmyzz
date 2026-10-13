@@ -54,6 +54,9 @@ export type Project = {
   assets: Asset[];
   title: string;
   english: string;
+  /** 设置后，详情信息区使用 Project / Date / Company / Tags 排版。 */
+  infoProjectName?: string;
+  date?: string;
   kind: Category;
   client: string;
   summary: string;
@@ -219,9 +222,11 @@ const configuredProjects: Project[] = [
     title: "LEMO Studio",
     english: "From experiments to tools",
     kind: "AIGC",
-    client: "Lemon8",
+    infoProjectName: "LEMOSTUDIO",
+    date: "2026.02",
+    client: "Lemon8, TikTok",
     summary: "从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。",
-    tags: ["AI Workshop", "LoRA", "Creative tools"],
+    tags: ["Product", "Design", "Engineering"],
     color: "#bbc9a5",
     description:
       "围绕 Lemon8 的日常设计场景，串联 AI 工具培训、定制化 LoRA 模型训练、工作流封装与团队资产管理。让非设计同学也能理解并使用 AI，让设计团队的生成经验逐步沉淀。",
@@ -782,7 +787,7 @@ export const projects: Project[] = [
 
 /** 首页展示顺序；compact 中的项目使用小尺寸卡片。 */
 export const selectedWork = {
-  order: ["portfolio-v1", "lemo-ai", "cucumber", "welcome-lemon8", "lemon8-campaigns", "vinyl-anniversary", "social-live", "bandao", "look-live", "inner-species", "miaoshi-brand", "meetup-plan", "winter-gathering", "youth-album", "design-operations", ...figmaNewProjects.map(project => project.slug)],
+  order: ["cucumber", "lemo-ai", "portfolio-v1", "welcome-lemon8", "lemon8-campaigns", "vinyl-anniversary", "social-live", "bandao", "look-live", "inner-species", "miaoshi-brand", "meetup-plan", "winter-gathering", "youth-album", "design-operations", ...figmaNewProjects.map(project => project.slug)],
   compact: ["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"],
 };
 

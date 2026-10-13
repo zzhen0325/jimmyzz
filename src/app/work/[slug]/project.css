@@ -82,6 +82,8 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
   font-weight: 200;
 }
 .case-page .case-overview .case-section-body > p {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
   font-size: clamp(12px, .75vw, 13px);
   line-height: 1.7;
   font-weight: 400;
@@ -96,9 +98,10 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-facts > div { display: grid; grid-template-columns: 2fr 3fr; gap: var(--grid-gap); padding: 12px 0; border-bottom: 1px solid var(--line); }
 .case-facts dt { color: var(--muted); }
 .case-facts dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.case-info .case-facts dd { text-align: right; }
 .case-facts dd span { display: block; }
 .case-impact dd { font-size: clamp(10px, 1.15vw, 20px); }
-.case-page .case-gallery { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 32px); padding: 0; margin: 0; }
+.case-page .case-gallery { display: flex; flex-direction: column; gap: 16px; padding: 0; margin: 0; }
 .case-visuals .case-chapter { margin: 0; }
 .case-visuals .chapter-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: default; }
 .case-visuals .chapter-image :is(img, video) { display: block; width: 100%; height: auto; max-width: none; max-height: none; }

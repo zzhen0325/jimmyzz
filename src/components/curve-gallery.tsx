@@ -3,22 +3,21 @@
 import { playSound } from "@/lib/site-sound";
 import { ScrambleText } from "./scramble-text";
 
-import Link from "next/link";
 import { useRef, useState, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { useContent } from "./content-provider";
 import Image from "next/image";
 import "./ribbon-gallery.css";
 
 export function CurveGallery() {
-  const { projects, gallery: images } = useContent();
+  const { gallery: images } = useContent();
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const jump = useRef<(index: number) => void>(() => {});
   const current = useRef(0);
   const [active, setActive] = useState(0);
-  const project = projects.find((item) => item.slug === images[active]?.project)!;
+  const activeIndex = Math.min(active, Math.max(0, images.length - 1));
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
@@ -27,12 +26,14 @@ export function CurveGallery() {
       if (!root || !images.length) return;
       const cards = Array.from(root.querySelectorAll<HTMLElement>(".ribbon-card"));
       if (conditions?.reduced) {
+        const videos = Array.from(root.querySelectorAll('video'));
+        videos.forEach(video => { void video.play().catch(() => {}); });
         jump.current = (index) => {
           const clamped = Math.max(0, Math.min(images.length - 1, index));
           if (current.current !== clamped) playSound("step", { step: clamped % 6 });
           current.current = clamped; setActive(clamped); cards[clamped]?.focus();
         };
-        return;
+        return () => { videos.forEach(video => video.pause()); jump.current = () => {}; };
       }
       root.classList.add("is-animated");
       const playhead = { value: 0 };
@@ -63,9 +64,13 @@ export function CurveGallery() {
       let stageWidth = 0;
       let stageHeight = 0;
       let size = 0;
+      let focusHeight = 0;
+      let focusWidth = 0;
       const measure = () => {
         stageWidth = root.clientWidth;
         stageHeight = root.clientHeight;
+        focusHeight = stageHeight * .7;
+        focusWidth = stageWidth * (stageWidth <= 809 ? .84 : .56);
         size = stageWidth <= 809 ? Math.min(stageWidth * .7, 295) : Math.min(stageWidth * .28, 385);
         // Use the pin spacer's natural position while the stage is fixed.
         // Layout offsets exclude the grid's transient scroll-skew transforms.
@@ -91,7 +96,7 @@ export function CurveGallery() {
         const progress = entrance.value;
         const landing = progress >= .9999;
         root.classList.toggle("is-transferring", progress > 0 && !landing);
-        const baseline = Math.max(size + 64, stageHeight * .64);
+        const baseline = stageHeight * .82;
         const radiusX = stageWidth * .35;
         const radiusY = Math.min(stageHeight * .12, stageWidth * .12);
         const tilt = -18 * Math.PI / 180;
@@ -101,18 +106,34 @@ export function CurveGallery() {
         const orbitExtentY = Math.hypot(radiusX * Math.sin(tilt), radiusY * Math.cos(tilt)) + size * .38;
         const orbitOffset = Math.max(0, stageHeight * .46 + orbitExtentY - (baseline - size) + 32)
           * smooth((firstCoverTravel - .8) / .2);
-        cards.forEach((card, i) => {
-          // Let the strip move during the final part of the cover handoff.
+        // Keep the handoff compact, then expand with the final scroll segment.
+        const expansion = smooth((progress - .86) / .14);
+        const gap = stageWidth <= 809 ? 8 : 12;
+        let stripWidth = 0;
+        const frames = images.map((image, i) => {
           const d = i - playhead.value;
           const focus = Math.exp(-Math.pow(d / 1.6, 2));
           const scale = .13 + .87 * focus;
-          const ratio = images[i].width / images[i].height;
+          const ratio = image.width / image.height;
+          const compactWidth = size * Math.min(1, ratio);
+          const compactHeight = size * Math.min(1, 1 / ratio);
+          const width = (compactWidth + (Math.min(focusHeight * ratio, focusWidth) - compactWidth) * expansion) * scale;
+          const height = (compactHeight + (focusHeight - compactHeight) * expansion) * scale;
+          const center = stripWidth + width / 2;
+          stripWidth += width + gap;
+          return { width, height, center, focus, ratio };
+        });
+        // Interpolate the anchor between neighboring centers for continuous scrolling.
+        // Accumulated widths preserve the gap even while both cards change size.
+        const anchorIndex = Math.max(0, Math.min(frames.length - 1, Math.floor(playhead.value)));
+        const nextAnchor = Math.min(frames.length - 1, anchorIndex + 1);
+        const anchor = frames[anchorIndex].center
+          + (frames[nextAnchor].center - frames[anchorIndex].center) * (playhead.value - anchorIndex);
+        cards.forEach((card, i) => {
+          const { width: targetWidth, height: targetHeight, center, focus, ratio } = frames[i];
           const widthFactor = Math.min(1, ratio);
           const heightFactor = Math.min(1, 1 / ratio);
-          const targetWidth = size * scale * (images[i].scale ?? 1) * widthFactor;
-          const targetHeight = size * scale * (images[i].scale ?? 1) * heightFactor;
-          const targetX = stageWidth * .5 + d * Math.max(24, stageWidth * .029)
-            + Math.tanh(d * .48) * size * 1.5 - targetWidth / 2;
+          const targetX = stageWidth * .5 + center - anchor - targetWidth / 2;
           const targetY = baseline - targetHeight;
           const source = sources[i];
           const from = bounds[i];
@@ -146,14 +167,14 @@ export function CurveGallery() {
             card.style.transform = `translate3d(${x}px, ${y}px, 0)`;
             stackOrder = Math.round((20 + near * 80) * (1 - merge) + focus * 100 * merge);
             setTransferred(source, travel > 0);
-            card.style.visibility = travel > 0 && (!landing || (targetX >= -size && targetX <= stageWidth + size)) ? "visible" : "hidden";
+            card.style.visibility = travel > 0 && (!landing || (targetX + targetWidth >= 0 && targetX <= stageWidth)) ? "visible" : "hidden";
             card.style.opacity = "1";
           } else {
             // Use the same box geometry through landing and strip navigation.
             card.style.width = `${targetWidth}px`;
             card.style.height = `${targetHeight}px`;
             card.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
-            card.style.visibility = targetX < -size || targetX > stageWidth + size ? "hidden" : "visible";
+            card.style.visibility = targetX + targetWidth < 0 || targetX > stageWidth ? "hidden" : "visible";
             card.style.opacity = source ? "1" : String(gsap.utils.clamp(0, 1, (progress - .88) / .12));
           }
           card.style.zIndex = String(stackOrder);
@@ -223,7 +244,7 @@ export function CurveGallery() {
       jump.current = (index) => {
         const clamped = Math.max(0, Math.min(images.length - 1, index));
         // Native scrolling also keeps the spring controller and pinned timeline in sync.
-        window.scrollTo({ top: trigger.start + (clamped / (images.length - 1)) * (trigger.end - trigger.start), behavior: "instant" });
+        window.scrollTo({ top: trigger.start + (clamped / Math.max(1, images.length - 1)) * (trigger.end - trigger.start), behavior: "instant" });
         ScrollTrigger.update();
       };
       let startX = 0;
@@ -293,7 +314,7 @@ export function CurveGallery() {
       };
     });
     return () => mm.revert();
-  }, { scope: section });
+  }, { scope: section, dependencies: [images], revertOnUpdate: true });
 
   if (!images.length) return null;
   return (
@@ -303,19 +324,19 @@ export function CurveGallery() {
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
           {images.map((item, i) => (
-            <Link className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} href={`/work/${item.project}`} data-hover-label={projects.find((project) => project.slug === item.project)?.title ?? item.title}
-              onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={`查看${item.title}`}>
+            <div tabIndex={0} className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} data-hover-label={item.title}
+              onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={item.title}>
               <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
-                ? <video src={item.src} poster={projects.find(p => p.slug === item.project)?.thumbnail} muted loop playsInline preload="none" aria-label={item.title} />
-                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 70vw, 440px" draggable={false} />
+                ? <video src={item.src} preload="metadata" muted loop playsInline aria-label={item.title} />
+                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 84vw, 56vw" draggable={false} />
               }</span>
-            </Link>
+            </div>
           ))}
         </div>
         <div className="ribbon-footer">
-          <span className="ribbon-count"><ScrambleText>{String(active + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>
-          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{project?.title}</ScrambleText></span><small><ScrambleText>{images[active].title}</ScrambleText></small></div>
-          <div className="ribbon-actions"><button onClick={() => jump.current(active - 1)} disabled={active === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(active + 1)} disabled={active === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button><Link href={`/work/${project.slug}`}><ScrambleText>查看项目 </ScrambleText><ArrowUpRight size={16} /></Link></div>
+          <span className="ribbon-count"><ScrambleText>{String(activeIndex + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>
+          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{images[activeIndex].title}</ScrambleText></span></div>
+          <div className="ribbon-actions"><button onClick={() => jump.current(activeIndex - 1)} disabled={activeIndex === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(activeIndex + 1)} disabled={activeIndex === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button></div>
         </div>
       </div>
     </section>

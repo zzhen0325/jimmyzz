@@ -12,14 +12,14 @@ function ProjectNavLink({ href, children, className, label }: { href: string; ch
   </Link>;
 }
 
-export function ProjectHeader() {
+export function ProjectHeader({ homeHref }: { homeHref: string }) {
   const { open, setOpen, header, toggle, contact } = useContactDrawer();
   const interaction = useTextRollInteraction(textRollDuration("CONTACT"));
   return (
     <>
     <ContactPanel open={open} panelRef={contact} id="project-contact" />
     <header ref={header} className="case-header">
-      <ProjectNavLink className="case-logo" href="/#top" label="Jimmy.zz 返回首页">Jimmy.zz</ProjectNavLink>
+      <ProjectNavLink className="case-logo" href={homeHref} label="Jimmy.zz 返回首页">Jimmy.zz</ProjectNavLink>
       <nav className="case-navigation" aria-label="项目页导航">
         <ProjectNavLink href="/#selected-work">WORK</ProjectNavLink>
         <ProjectNavLink href="/#introduction">ABOUT</ProjectNavLink>

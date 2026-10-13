@@ -31,10 +31,22 @@
       "coverHeight": 1080,
       "assets": [
         {
-          "name": "detail-01",
-          "src": "/assets/portfolio/cucumber/figma-1012/detail-01.webp",
-          "width": 3840,
-          "height": 3958
+          "name": "f102b1c4-85bb-4512-8a1c-76ae7924a77f",
+          "src": "/media/7eca1ae2-e255-491a-b16c-4045da45da47.png",
+          "width": 2600,
+          "height": 1950
+        },
+        {
+          "name": "b4eeba58-115e-494d-9409-5ed68e7fdf1f",
+          "src": "/media/992aa751-c089-480c-b4a8-d1f33169e58c.webm",
+          "width": 1997,
+          "height": 1080
+        },
+        {
+          "name": "96a62d01-1a9e-4ba5-a3b5-7728712d73ca",
+          "src": "/media/2117c196-593a-4b52-ab6f-eaa2103dd863.webm",
+          "width": 2314,
+          "height": 1080
         },
         {
           "name": "detail-02",
@@ -53,6 +65,12 @@
           "src": "/assets/portfolio/cucumber/figma-1012/detail-04.webp",
           "width": 3840,
           "height": 2160
+        },
+        {
+          "name": "dc580e72-5131-403a-b071-0143d946207b",
+          "src": "/media/146c5c5c-20f7-405f-856c-f85ffce1fa94.webm",
+          "width": 1080,
+          "height": 1080
         },
         {
           "name": "detail-05",
@@ -103,16 +121,25 @@
           "height": 2563
         }
       ],
-      "title": "Cucumber",
+      "title": "Cucumber Canvas  WIP",
       "english": "Cucumber",
-      "kind": "视觉探索",
-      "client": "Cucumber",
-      "summary": "Cucumber",
-      "tags": [],
+      "kind": "AIGC",
+      "client": "Lemon8,TikTok",
+      "summary": "Cucumber 是一个以无限画布为工作界面的 Agent OS：用户把目标、资料和灵感放到画布上，AI Agent 在可见上下文中执行任务，并把过程、分支和可复用产物沉淀为一张可持续生长的工作图。\nCucumber 融合了无限画布的自由组织能力与节点画布的关系表达能力，让画布既能承载创作内容，也能呈现创作如何一步步发生。",
+      "tags": [
+        "Product/Design/Engineering"
+      ],
       "color": "#eeeeee",
       "description": "",
-      "challenge": "",
-      "approach": ""
+      "challenge": "现有产品往往将 Canvas 与 Agent 分开，对话流与无限画布仍然是独立的两部分，画布更多承担结果展示的角色。但对创作者而言，单纯的对话难以完整呈现创作中的探索、选择与演变，于是我试图建立一种新的 AI 工作方式。\n\n聊天界面适合一次问答，却不擅长承载长期、分支、多模态工作：上下文埋在不断增长的消息历史中，用户难以确认模型到底使用了哪些信息\n传统画布擅长自动化能力，但通常依赖预制工作流，难以处理开放式目标，用户需要先理解模型、参数、端口和数据类型，再搭建工作流，临时任务的建图成本可能高于执行成本",
+      "approach": "Cucumber 将 Agent 对话与执行过程融入画布，让灵感、参考、尝试和成果都能被看见、保留，并建立联系。创作是持续发散的过程，每一个节点都可以成为新方向的起点，让创作者随时延伸思路、比较方案、继续迭代。\n\n画布不再是最终展示层，而是组织任务、上下文、执行和结果的空间界面；\n每次需求都是一个独立、可观察、可取消、可恢复的 Agent Run；\n图片、文档、代码、网页、数据和交互卡片不是聊天附件，而是有稳定身份、版本和来源关系的 Artifact",
+      "detailTheme": {
+        "background": "#0a0a0a",
+        "foreground": "#ffffff",
+        "muted": "#adadad"
+      },
+      "infoProjectName": "Cucumber Canvas  WIP",
+      "date": "2026.08"
     },
     {
       "slug": "welcome-lemon8",
@@ -202,36 +229,64 @@
       "hoverVideo": "/assets/videos/lemo.mp4",
       "assets": [
         {
-          "name": "lemo-studio-01",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_1.png"
+          "name": "69ca474b-3a2f-4634-8c82-a940b4c765ac",
+          "src": "/media/a5282331-784d-41e7-9bd1-2ed4e3af17ec.png",
+          "width": 2600,
+          "height": 1950
         },
         {
-          "name": "lemo-studio-02",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_2.png"
+          "name": "cd297200-f118-4cd1-b735-c3d99ea3529c",
+          "src": "/media/efde3826-14ec-41eb-ab83-afd2cd9b7eb9.webm",
+          "width": 2359,
+          "height": 1080
         },
         {
-          "name": "lemo-studio-03",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_3.png"
+          "name": "d2b1eb50-8716-4d03-8716-016fd49d8b43",
+          "src": "/media/e370adc2-fb23-42ea-9999-5ea412a5cf09.png",
+          "width": 2600,
+          "height": 1300
         },
         {
-          "name": "lemo-studio-05",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_5.png"
+          "name": "0311864d-2968-42af-bf41-8f929313cd2e",
+          "src": "/media/fe70ce85-f4c0-4759-bf44-508c12c46ec5.png",
+          "width": 2600,
+          "height": 659
         },
         {
-          "name": "lemo-studio-06",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_6.png"
+          "name": "63e2d313-c2ca-421a-a2bb-181199f90052",
+          "src": "/media/6f11dfdf-310f-4ba0-8212-9fc4264288cf.png",
+          "width": 2600,
+          "height": 1463
         },
         {
-          "name": "lemo-studio-07",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_7.png"
+          "name": "eef3b153-e1b1-4856-b044-93bc3069754b",
+          "src": "/media/fc89387c-0d27-4fd5-89e2-6f164559a566.webm",
+          "width": 1920,
+          "height": 1920
         },
         {
-          "name": "lemo-studio-08",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_8.png"
+          "name": "ae3affeb-ec5d-45f6-bbb1-76c4a23d5d74",
+          "src": "/media/b02d9eff-6bfd-49db-9088-299610f4888c.png",
+          "width": 2600,
+          "height": 1734
         },
         {
-          "name": "lemo-studio-09",
-          "src": "/assets/portfolio/lemo-ai/lemostudio_9.png"
+          "name": "10fb461c-7042-4544-93ec-f998d945f54d",
+          "src": "/media/d1868776-ea93-49de-9f00-488f5387c354.png",
+          "width": 2600,
+          "height": 3058
+        },
+        {
+          "name": "146f8144-88ff-4895-942d-74e54b097427",
+          "src": "/media/3de97e18-a906-43a0-a99b-cb4765b81447.png",
+          "width": 2600,
+          "height": 1463
+        },
+        {
+          "name": "e2412efd-3a24-4dda-8e01-41b92788419e",
+          "src": "/media/7260ab99-9017-4697-a9c9-25a17f561c61.png",
+          "width": 2600,
+          "height": 3940
         }
       ],
       "selectedWorkCover": "/assets/portfolio/covers/lemo-ai.png",
@@ -239,16 +294,16 @@
       "english": "From experiments to tools",
       "kind": "AIGC",
       "client": "Lemon8",
-      "summary": "从 AI 工作坊、模型训练到团队创作平台，让探索成为可复用的能力。",
+      "summary": "Lemo Studio 是面向 Lemon8 业务定制研发的 AI 图像创作集成平台，可帮助运营、产品及设计等人员高效、高质量地完成视觉素材创作。\n\nAI 图像创作：集生成、编辑、风格对齐与资产管理于一体的专业级 Studio ，适用于小型设计团队使用。\n资产化导向：让 Prompt、参考图、参数配置、工作流节点以及生成结果，整合沉淀为可复用的团队资产。\n",
       "tags": [
         "AI Workshop",
         "LoRA",
         "Creative tools"
       ],
       "color": "#bbc9a5",
-      "description": "围绕 Lemon8 的日常设计场景，串联 AI 工具培训、定制化 LoRA 模型训练、工作流封装与团队资产管理。让非设计同学也能理解并使用 AI，让设计团队的生成经验逐步沉淀。",
-      "challenge": "将分散的 AI 工具与个人生成经验转化为团队可理解、可复用的创作流程，兼顾非设计同学的使用门槛。",
-      "approach": "从 ComfyUI 工作流与简易界面开始，逐步整合提示词优化、模型选择、生成与编辑。Lemo AI Studio 将 Prompt、参考图、参数、工作流及结果汇聚为团队资产；Goodcase 则将图片与生成参数绑定，支持灵感探索与复用。"
+      "description": "",
+      "challenge": "将图像生成从一次性操作升级为可持续的创作流程，将每一次的 Prompt、参考图、风格设定、工作流配置、生成结果与反馈统一沉淀为可复用资产，让创作经验能够被保存、组织和分享。\n\n将分散的 AI 工具与个人生成经验转化为团队可理解、可复用的创作流程，兼顾非设计同学的使用门槛。，在统一工作台打通生成、筛选、编辑、沉淀、复用与项目编排，减少工具平台切换带来的操作成本上升和重复劳动。\n\n",
+      "approach": "Lemo Studio 将复杂的ComfyUI 工作流界面通过 API 转化为简易对话界面，接入 AI 模型帮助用户优化提示词，逐步整合提示词优化、模型选择、生成与编辑。\n\n统一记录每张生成结果的 Prompt、参考图、尺寸、模型、等参数。增加 Moodboard 功能让用户可以快速的收集优秀的生成案列，沉淀为团队资产提高复用率。\n\nPlayground ：Lemo Studio 的主创作工作台，集中搞定文生图、调参等创作操作，生成的内容还能后续复用。\n   -- Describe：把参考图转成清晰描述，方便后续生成图片。\n    -- Edit：对已生成的图做局部修改，精准调整细节和画面元素。\n    -- History：记录每次创作的提示词、参数和成品，方便回看、再次生成或编辑。\n    -- Gallery：所有生成作品的展示库，能搜能筛，方便直接复用素材和生成参数。\n    -- Moodboard：收集参考图定好创作风格，把模糊想法变成具体的视觉参考。\nInfinite Canvas ：无限画布创作区，可发散灵感、对比多方案，也是后续智能功能的承载载体。\nTools：各类图片特效和小工具合集，快速做视觉效果、轻量创作实验。\nDataset：专门整理存图的素材库，批量处理 Lora 训练图片，简化训练前的准备工作。"
     },
     {
       "slug": "lemon8-campaigns",
@@ -1229,15 +1284,6 @@
   "sizes": {},
   "gallery": [
     {
-      "name": "cover-design-operations",
-      "project": "design-operations",
-      "title": "设计团队与资源规划",
-      "src": "/assets/portfolio/covers/design-operations.png",
-      "width": 1080,
-      "height": 1080,
-      "sourceProject": "design-operations"
-    },
-    {
       "name": "cover-youth-album",
       "project": "youth-album",
       "title": "青春纪念册",
@@ -1373,15 +1419,6 @@
       "sourceProject": ""
     },
     {
-      "name": "miaoshi-brand-500-1939",
-      "title": "妙时生活海报 6",
-      "project": "miaoshi-brand",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1939.webp",
-      "width": 228,
-      "height": 407,
-      "sourceProject": ""
-    },
-    {
       "name": "lemo-model-2",
       "title": "3D Lemo 模型",
       "project": "lemo-ai",
@@ -1400,74 +1437,11 @@
       "sourceProject": ""
     },
     {
-      "name": "miaoshi-brand-500-1795",
-      "title": "妙时品牌图形 3",
-      "project": "miaoshi-brand",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1795.webp",
-      "width": 858,
-      "height": 470,
-      "sourceProject": ""
-    },
-    {
-      "name": "lemo-model-3",
-      "title": "插画风格模型",
-      "project": "lemo-ai",
-      "src": "/assets/portfolio/gallery/lemo-model-3.webp",
-      "width": 785,
-      "height": 392,
-      "sourceProject": ""
-    },
-    {
       "name": "miaoshi-brand-500-1937",
       "title": "妙时生活海报 4",
       "project": "miaoshi-brand",
       "src": "/assets/portfolio/gallery/miaoshi-brand-500-1937.webp",
       "width": 227,
-      "height": 407,
-      "sourceProject": ""
-    },
-    {
-      "name": "lemo-model-4",
-      "title": "日本活动视觉模型",
-      "project": "lemo-ai",
-      "src": "/assets/portfolio/gallery/lemo-model-4.webp",
-      "width": 785,
-      "height": 392,
-      "sourceProject": ""
-    },
-    {
-      "name": "miaoshi-brand-500-1780",
-      "title": "妙时品牌图形 1",
-      "project": "miaoshi-brand",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1780.webp",
-      "width": 859,
-      "height": 470,
-      "sourceProject": ""
-    },
-    {
-      "name": "miaoshi-brand-500-1938",
-      "title": "妙时生活海报 5",
-      "project": "miaoshi-brand",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1938.webp",
-      "width": 227,
-      "height": 407,
-      "sourceProject": ""
-    },
-    {
-      "name": "lemo-model-1",
-      "title": "Lemo IP 模型",
-      "project": "lemo-ai",
-      "src": "/assets/portfolio/gallery/lemo-model-1.webp",
-      "width": 785,
-      "height": 392,
-      "sourceProject": ""
-    },
-    {
-      "name": "miaoshi-brand-500-1935",
-      "title": "妙时生活海报 2",
-      "project": "miaoshi-brand",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1935.webp",
-      "width": 228,
       "height": 407,
       "sourceProject": ""
     },
@@ -1486,15 +1460,6 @@
       "height": 1660,
       "name": "d5c77036-5a9d-40a1-995f-58820a1f95ac",
       "title": "19-frame-23",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/2a9e08c7-ba73-4903-a83d-e2a682ff8f33.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "5c47e548-7cb6-4dc2-a43c-66158e9c9edd",
-      "title": "18-frame-22",
       "project": "portfolio-v1",
       "scale": 1
     },
@@ -1535,33 +1500,6 @@
       "scale": 1
     },
     {
-      "src": "/media/ae22ab77-887f-4858-b1a4-4e58e0e2f420.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "1c83800f-81a4-4215-af31-412f9d812b57",
-      "title": "13-frame-17",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/0869c91d-61bf-4508-8081-3f65a82554bb.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "b5f23b88-ab44-4578-ab7a-31829d8c3af2",
-      "title": "12-frame-16",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/45fbb1c6-34d5-4bb3-bd44-fca0ee20650c.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "6a1394fd-5c40-40b6-b754-48e245d06d3f",
-      "title": "11-frame-15",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
       "src": "/media/8fa38bf4-34eb-4ccb-98ef-8eb37acb1eed.png",
       "width": 1080,
       "height": 1660,
@@ -1594,60 +1532,6 @@
       "height": 1660,
       "name": "289a7018-39a1-482c-bca6-86497ee71a91",
       "title": "07-frame-11",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/327782ae-58db-4eb8-ab4d-24b3d380c449.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "0db04711-c217-4910-bb90-11d95e225db1",
-      "title": "06-frame-9",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/2177fc91-a4c0-4ce1-9787-12dcfe223df2.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "b19b08c8-6db4-4daf-b90d-30323ec89e43",
-      "title": "05-frame-8",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/dc4e151f-6f36-4b1b-b593-13b30ad9efed.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "23c6e2bd-a1c9-4c41-8a00-b388ff3c4539",
-      "title": "04-frame-7",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/67dfb82d-9621-48b3-b335-1625b98e5fdb.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "89839bde-aba8-42c7-8d35-182b17c42d0e",
-      "title": "03-frame-6",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/e07002ab-4220-48a7-9a7e-718532f65968.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "d7d78cf3-ff09-460e-a051-930737414781",
-      "title": "02-frame-5",
-      "project": "portfolio-v1",
-      "scale": 1
-    },
-    {
-      "src": "/media/fb250769-20c3-404d-a403-33a773e15bc4.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "93c050f7-d101-488b-9fb3-d9170637da64",
-      "title": "01-frame-4",
       "project": "portfolio-v1",
       "scale": 1
     },
@@ -1730,6 +1614,42 @@
       "name": "7e875d64-3fe5-4255-aa17-535e17416d32",
       "title": "nano-banan_composite",
       "project": "portfolio-v1",
+      "scale": 1
+    },
+    {
+      "src": "/media/c29db9d6-0985-48c0-b551-742d0f3b81c4.webm",
+      "width": 1440,
+      "height": 1920,
+      "name": "e1abc439-d615-4b5b-89b6-0ea7cfb1179f",
+      "title": "ASCII",
+      "project": "cucumber",
+      "scale": 1
+    },
+    {
+      "src": "/media/6eb0de1b-c2db-4df6-adc8-e18fbd7bfdd9.png",
+      "width": 1440,
+      "height": 1920,
+      "name": "692ce432-50ce-4fb1-b51d-25804eebda97",
+      "title": "ASCII (2)",
+      "project": "cucumber",
+      "scale": 1
+    },
+    {
+      "src": "/media/c988b48d-7734-4ab2-bfef-36c904ac5f80.png",
+      "width": 1440,
+      "height": 1920,
+      "name": "95f3c56d-9096-4d33-bef1-d3181024e15e",
+      "title": "ASCII (1)",
+      "project": "cucumber",
+      "scale": 1
+    },
+    {
+      "src": "/media/f685a6ae-3403-48fd-8c1d-c31f69f863d1.png",
+      "width": 1440,
+      "height": 1920,
+      "name": "2bf69e41-011d-488c-8706-23a6ff3938ac",
+      "title": "ASCII",
+      "project": "cucumber",
       "scale": 1
     }
   ]

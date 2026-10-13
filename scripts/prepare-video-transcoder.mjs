@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 const destination = new URL('../public/assets/video-transcoder/v1/', import.meta.url);
 await mkdir(destination, { recursive: true });
-for (const name of ['worker.js', 'const.js', 'errors.js']) {
+for (const name of ['classes.js', 'utils.js', 'worker.js', 'const.js', 'errors.js']) {
   await copyFile(new URL(`../node_modules/@ffmpeg/ffmpeg/dist/esm/${name}`, import.meta.url), new URL(name, destination));
 }
 await copyFile(new URL('../node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.js', import.meta.url), new URL('ffmpeg-core.js', destination));

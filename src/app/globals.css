@@ -1106,9 +1106,9 @@ button {
   overflow-wrap: anywhere;
 }
 .hover-label[data-project-cover="true"] {
-  background: #fff;
-  color: #000;
-  outline: 1px solid #000;
+  background: #000;
+  color: #fff;
+  outline: 1px solid #fff;
 }
 .hover-label[data-visible="true"] { opacity: 1; }
 .hover-label-character { display: inline-block; }
