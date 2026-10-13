@@ -20,6 +20,7 @@ if (process.env.NODE_ENV === "production") {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: { qualities: [75, 90] },
   experimental: { proxyClientMaxBodySize: "32mb" },
   turbopack: { root: process.cwd() },
   env: { NEXT_PUBLIC_HOME_ASSET_VERSIONS: JSON.stringify(homeAssetVersions) },

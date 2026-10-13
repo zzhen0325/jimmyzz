@@ -1,6 +1,7 @@
 /* Shared home tracks with a margin-label editorial layout. */
 html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-page {
+  --case-label-width: clamp(112px, 9vw, 184px);
   --home-background: #FFFFFF;
   --home-foreground: #0b0b0b;
   --muted: #666761;
@@ -12,11 +13,15 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
   color: var(--home-foreground);
 }
 .case-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--home-background);
   display: grid;
   grid-template-columns: var(--portfolio-grid);
   column-gap: var(--grid-gap);
   align-items: center;
-  margin-inline: var(--page-pad);
+  padding-inline: var(--page-pad);
   padding-block: 8px;
   font-size: clamp(18px, 1.35vw, 28px);
   font-weight: 500;
@@ -27,7 +32,7 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-navigation { grid-column: 5 / -1; display: flex; align-items: center; justify-content: space-between; font-size: clamp(14px, .9vw, 16px); }
 .case-header a { display: inline-flex; align-items: center; min-height: 48px; }
 .case-header a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.case-copy { grid-column: 1 / 5; position: sticky; top: var(--case-copy-top, 64px); min-width: 0; margin-top: 32px; --case-label-width: clamp(112px, 9vw, 184px); }
+.case-copy { grid-column: 1 / 5; position: sticky; top: var(--case-copy-top, 64px); min-width: 0; margin-top: 32px; }
 @media (min-width: 810px) {
   .case-logo, .case-copy { grid-column: 1 / 6; }
   .case-copy { padding-right: clamp(24px, 3vw, 72px); }
@@ -88,6 +93,42 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-copy .case-editorial-section:last-child p:last-child { margin-bottom: 0; }
 .case-page .case-project-list { margin-top: 0; padding-bottom: 64px; }
 .case-project-list .timeline-list { border-top: 1px solid var(--line); }
+/* Keep both TextRoll layers readable when a project name exceeds its track. */
+.case-project-list :is(.timeline-company, .timeline-project) > span > span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 810px) {
+  .case-project-list .timeline-row {
+    grid-template-columns: var(--portfolio-grid);
+    column-gap: var(--grid-gap);
+  }
+  .case-project-list .timeline-date { grid-column: 1; grid-row: 1; }
+  .case-project-list .timeline-company {
+    grid-column: 1 / 6;
+    grid-row: 1;
+    padding-left: calc(var(--case-label-width) + var(--grid-gap));
+    padding-right: clamp(24px, 3vw, 72px);
+  }
+  .case-project-list .timeline-project { grid-column: 6 / 11; grid-row: 1; }
+  .case-project-list .timeline-category {
+    grid-column: 11 / -1;
+    grid-row: 1;
+    justify-self: end;
+    text-align: right;
+  }
+  .case-project-list .timeline-arrow { position: absolute; right: 0; top: calc(50% - 8px); }
+}
+@media (hover: hover) and (min-width: 810px) {
+  .case-project-list .timeline-category { transition: transform .3s ease-in-out; }
+  .case-project-list .timeline-row:is([data-active="true"], :focus-visible) .timeline-category { transform: translateX(-28px); }
+}
+@media (hover: none) and (min-width: 810px) {
+  .case-project-list .timeline-arrow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .case-project-list .timeline-category { transition: none; }
+}
 .case-project-more {
   display: flex;
   align-items: center;

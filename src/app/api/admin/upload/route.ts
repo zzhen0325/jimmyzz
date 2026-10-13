@@ -3,6 +3,7 @@ import { contentDirectory } from '@/lib/content-store';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { cloudflareStorage } from '@/lib/cloudflare-storage';
 export async function POST(request: Request) {
   const denied = adminGuard(request); if (denied) return denied;
   try {
@@ -12,6 +13,13 @@ export async function POST(request: Request) {
     const extension = extensions[file.type];
     if (!extension) return Response.json({ error: '支持 JPG、PNG、WebP、GIF、AVIF、MP4、WebM、MOV' }, { status: 400 });
     const name = `${randomUUID()}.${extension}`;
+    const storage = cloudflareStorage();
+    if (storage) {
+      await storage.CONTENT_BUCKET.put(`uploads/${name}`, await file.arrayBuffer(), {
+        httpMetadata: { contentType: file.type, cacheControl: 'public, max-age=31536000, immutable' },
+      });
+      return Response.json({ src: `/media/${name}` });
+    }
     await mkdir(path.join(contentDirectory, 'uploads'), { recursive: true });
     await writeFile(path.join(contentDirectory, 'uploads', name), Buffer.from(await file.arrayBuffer()));
     return Response.json({ src: `/media/${name}` });

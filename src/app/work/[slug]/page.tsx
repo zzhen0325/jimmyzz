@@ -6,6 +6,7 @@ import { ProjectHeader, ProjectCopy } from "@/components/project-detail-chrome";
 import { RelatedProjectList } from "@/components/experience-timeline";
 import { CaseGallery } from "@/components/case-gallery";
 import { readContent } from "@/lib/content-store";
+import { resolveCaseImageMetadata } from "@/lib/case-image-metadata";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
@@ -29,7 +30,7 @@ export default async function ProjectPage({
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
   if (slug === "portfolio-v1") return <V1Experience />;
-  const assets = project.assets;
+  const assets = await resolveCaseImageMetadata(project.assets);
   const index = projects.indexOf(project);
   const relatedProjects = [...projects.slice(index + 1), ...projects.slice(0, index)].map((item) => ({
     company: item.client,

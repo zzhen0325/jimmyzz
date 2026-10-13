@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zzmax",
+  "account_id": "c4cfd01ba6e4e8d6b4976f089aee308b",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-13",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [{ "pattern": "zzmax.icu/*", "zone_name": "zzmax.icu" }],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zzmax" }],
+  "r2_buckets": [{ "binding": "CONTENT_BUCKET", "bucket_name": "zzmax-content" }],
+  "images": { "binding": "IMAGES" },
+  "observability": { "enabled": true }
+}

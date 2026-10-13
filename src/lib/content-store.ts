@@ -3,12 +3,25 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { initialContent, type Content } from './content';
+import { cloudflareStorage } from './cloudflare-storage';
 export const contentDirectory = process.env.CONTENT_DIR || path.join(process.cwd(), 'data');
 export async function readContent(): Promise<Content> {
+  const storage = cloudflareStorage();
+  if (storage) {
+    const object = await storage.CONTENT_BUCKET.get('content.json');
+    return object ? await object.json<Content>() : initialContent;
+  }
   try { return JSON.parse(await readFile(path.join(contentDirectory, 'content.json'), 'utf8')); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return initialContent; throw error; }
 }
 export async function writeContent(content: Content) {
+  const storage = cloudflareStorage();
+  if (storage) {
+    await storage.CONTENT_BUCKET.put('content.json', JSON.stringify(content, null, 2), {
+      httpMetadata: { contentType: 'application/json' },
+    });
+    return;
+  }
   await mkdir(contentDirectory, { recursive: true });
   const temp = path.join(contentDirectory, `${randomUUID()}.tmp`);
   await writeFile(temp, JSON.stringify(content, null, 2));
