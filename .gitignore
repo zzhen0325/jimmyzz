@@ -40,8 +40,11 @@ next-env.d.ts
 /test-results
 /playwright-report
 
-# Personal CMS content and uploads (back up this directory separately)
-/data/
+# Track CMS configuration and uploaded media across devices.
+# Keep other local data and temporary files out of Git.
+/data/*
+!/data/content.json
+!/data/uploads/
 
 # Cloudflare build output and local credentials
 /.open-next/
