@@ -1,5 +1,6 @@
 import { DoubleSide, type MeshPhysicalMaterialParameters } from "three";
 import type { GlassShapeConfig } from "./floating-glass";
+import type { SkyCloudSettings } from "./sky-clouds";
 
 export type ModelMaterialConfig = MeshPhysicalMaterialParameters & { normalStrength?: number };
 export type FloatingModelConfig = {
@@ -21,22 +22,22 @@ const silver: MeshPhysicalMaterialParameters = {
 export const home3DConfig = {
   // 相对原生分辨率：从 70% 起步，最低 70%，最高 100%；DPR 2 对应 1.4～2。
   // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
-  resolution: { min: .7, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
+  resolution: { min: .6, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .5, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .35, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
   depthSizing: { farScale: .82, range: .35 },
   entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.15, endSpeed: .18 },
-  magnet: { hoverRadius: .45, attractRadius: .85, repelStrength: 2.8, attractStrength: 40.5, burstSpeed: 5.1, burstRecovery: .9 },
+  magnet: { hoverRadius: .45, attractRadius: .85, repelStrength: 2.8, attractStrength: 60.5, burstSpeed: 5.1, burstRecovery: .9 },
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
-  floatingBounds: { desktop: 1.5, mobile: 1 },
+  floatingBounds: { desktop: 1.5, mobile: 1.2 },
   logo: {
-    scale: 1.5, // 正常尺寸上限
-    maxViewportWidth: .6, // 天空首屏：中央 Logo 占约五分之一屏宽。
+    scale: 1.2, // 正常尺寸上限
+    maxViewportWidth: .4, // 天空首屏：中央 Logo 占约五分之一屏宽。
     mobileViewportWidth: .48,
-    maxViewportHeight: .6,
+    maxViewportHeight: .4,
     centerY: .50, // 首屏垂直居中。
     material: { ...silver },
   },
@@ -48,14 +49,14 @@ export const home3DConfig = {
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
     // Blender 原始材质：03 粉黄程序纹理已烘焙进 GLB，06 保留蓝色清漆。
-    { visible: true, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb", size: 1.35 },
-    { visible: true, file: "knotted-veil", path: "/assets/models/soft-accretion/knotted-veil.glb", size: 1.4,
+    { visible: true, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb?v=padded-uv-1", size: 1.6 },
+    { visible: true, file: "knotted-veil", path: "/assets/models/soft-accretion/knotted-veil.glb", size: 1.7,
         material: { color: "#4de6ff", metalness: 0.2, roughness: .6, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
      },
-    { visible: true, file: "sculpted-branches", path: "/assets/models/sculpted-branches/sculpted-branches.glb", size: 1.9,
+    { visible: true, file: "sculpted-branches", path: "/assets/models/sculpted-branches/sculpted-branches.glb", size: 2.2,
       // 绿色植物：保留 Blender 原始绿色与哑光质感。
       material: { color: "#f1f1ef", metalness: 0.7, roughness: .2, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 } },
-    { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: 1.1,
+    { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: 1.4,
         material: { color: "#FFC1FC", metalness: 1, roughness: .22, clearcoat: 0, envMapIntensity: .65 } 
      },
     { visible: true, file: "arrow", path: "/assets/models/arrow/arrow.glb", size: 1 },
@@ -72,7 +73,7 @@ export const home3DConfig = {
   ].filter(item => item.visible),
   referenceSculptures: {
     goodLuck: {
-      size: 1.15,
+      size: 1.6,
       // 煤气罐：罐身与护圈、黄铜阀门、阀孔、纸标分别调整。
       materials: {
         body: { color: "#C8EDFF", metalness: 1, roughness: .28, envMapIntensity: .35, ior: 1.42, clearcoat: .14, clearcoatRoughness: .42 },
@@ -82,7 +83,7 @@ export const home3DConfig = {
       } satisfies Record<string, MeshPhysicalMaterialParameters>,
       labelColors: { background: "#eeeae3", ink: "#c82b33" },
     },
-    eat: { size: 1.25, inflation: .12 },
+    eat: { size: 1.5, inflation: .12 },
   },
   // 仅显示三角玻璃，其余配置保留以便恢复。
   glass: {
@@ -161,10 +162,10 @@ export const home3DConfig = {
   ] satisfies { file: string; size: number }[]).filter(item => item.file !== "tufted-flower"),
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
-    size: 1.5, pixels: 80, speed: .65, arms: 5,
+    size: 1.8, pixels: 80, speed: .65, arms: 5,
   },
   portalGun: {
-    size: 1.8,
+    size: 1.9,
     materials: {
       shell: { color: "#35B221", metalness: .08, roughness: .4, clearcoat: 0.8, clearcoatRoughness: .16, envMapIntensity: 1.1 },
       trim: { color: "#FAFF66", metalness: .02, roughness: .25, clearcoat: .65 },
@@ -182,12 +183,34 @@ export const home3DConfig = {
     },
     labels: { onRed: "#25292b", onDark: "#ff594b", material: { color: "#ffffff", opacity: 1, transparent: true, depthWrite: false } },
   },
+  // 背景天空与云层：修改十六进制颜色后保存、刷新页面即可查看。
+  // skyTop / skyBottom 控制天空上下渐变；设为相同颜色就是纯色天空。
+  // cloudShadow / cloudHighlight 控制云层暗部与亮部；晴天、雨天分别配置。
+  sky: {
+    sunny: {
+      skyTop: "#D6EAF5",
+      skyBottom: "#D6EAF5",
+      cloudShadow: "#F7FBFF",
+      cloudHighlight: "#FFFFFF",
+    },
+    rainy: {
+      skyTop: "#1D2023",
+      skyBottom: "#91A1B0",
+      cloudShadow: "#637385",
+      cloudHighlight: "#B8C2C9",
+    },
+    complexity: 8, // 噪声层数，整数 1～8；越高细节越丰富，越低越简洁、省性能。
+    scale: 1, // 大于 0；越大云块越小、越密，越小云块越大。
+    coverage: .1, // 基础覆盖量 0～1；越大云越多，雨天会额外增加覆盖量。
+    speed: .015, // 移动速度，大于等于 0；0 为静止。
+    initialTime: 135, // 从连片的大云团开始（动画秒数），随后按现有速度连续流动。
+  } satisfies SkyCloudSettings,
   // 金属外观也受环境与灯光影响。
   lighting: {
    
-    exposure: 1, environment: "/assets/environments/bg.jpg", environmentIntensity: .9,
+    exposure: 1, environment: "/assets/environments/bg.jpg", environmentIntensity: 1,
     // 环境沿水平方向匀速旋转，单位为弧度/秒。
-    environmentRotationSpeed: .06,
+    environmentRotationSpeed: .1,
     // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。
     reflectionBackgroundIntensity: 1.1,
     ambient: { color: "#FFFFFF", intensity: .08 },

@@ -32,6 +32,7 @@ export function HoverLabel() {
     let usesDefaultLabel = false;
     let x = 0, y = 0, targetX = 0, targetY = 0;
     let angle = 0, angularVelocity = 0;
+    let labelWidth = 0, labelHeight = 0;
 
     let characterAnimations: Animation[] = [];
     const clearCharacters = () => {
@@ -49,13 +50,15 @@ export function HoverLabel() {
       element.dataset.visible = "false";
       cancelAnimationFrame(frame);
       frame = 0;
+      targetDirty = needsHitTest = false;
+      pendingHit = null;
     };
     const updateTarget = (hit: Element | null) => {
       const labeledSurface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
       const control = hit?.closest("a, button, input, textarea, select, [role='button']");
       const hiddenControl = hit?.closest("button, [role='button'], input, textarea, select");
       const allowsLabel = hiddenControl === labeledSurface && labeledSurface?.hasAttribute("data-hover-label-on-control");
-      if (!finePointer.matches || hit?.closest("[data-native-cursor]") || (hiddenControl && !allowsLabel)) {
+      if (!hit || !finePointer.matches || hit.closest("[data-native-cursor], [data-pointer-dragging], canvas:active, [contenteditable]:not([contenteditable='false']), summary, video[controls]") || (hiddenControl && !allowsLabel)) {
         hide();
         return;
       }
@@ -93,6 +96,8 @@ export function HoverLabel() {
           }
           return span;
         }));
+        labelWidth = element.offsetWidth;
+        labelHeight = element.offsetHeight;
       }
       if (!visible) {
         x = targetX;
@@ -124,13 +129,18 @@ export function HoverLabel() {
       angularVelocity += ((targetAngle - angle) * 0.075 - angularVelocity * 0.23) * dt;
       angle = reducedMotion.matches ? 0 : angle + angularVelocity * dt;
       // Ease the center toward the pointer without adding a permanent offset.
-      element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}deg)`;
+      const radians = angle * Math.PI / 180;
+      const halfWidth = (Math.abs(Math.cos(radians)) * labelWidth + Math.abs(Math.sin(radians)) * labelHeight) / 2;
+      const halfHeight = (Math.abs(Math.sin(radians)) * labelWidth + Math.abs(Math.cos(radians)) * labelHeight) / 2;
+      const renderX = Math.max(halfWidth + 4, Math.min(window.innerWidth - halfWidth - 4, x));
+      const renderY = Math.max(halfHeight + 4, Math.min(window.innerHeight - halfHeight - 4, y));
+      element.style.transform = `translate3d(${renderX}px, ${renderY}px, 0) translate(-50%, -50%) rotate(${angle}deg)`;
       if (visible && (Math.abs(dx) + Math.abs(dy) + Math.abs(angle) + Math.abs(angularVelocity) > 0.05)) {
         frame = requestAnimationFrame(animate);
       }
     }
     const move = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return hide();
+      if (event.pointerType === "touch") return leave();
       pointerKnown = true;
       targetX = event.clientX;
       targetY = event.clientY;
@@ -143,7 +153,13 @@ export function HoverLabel() {
       targetDirty = needsHitTest = true;
       schedule();
     };
+    const resize = () => {
+      labelWidth = element.offsetWidth;
+      labelHeight = element.offsetHeight;
+      scroll();
+    };
     const leave = () => { pointerKnown = false; hide(); };
+    const visibility = () => { if (document.hidden) leave(); };
     const key = (event: KeyboardEvent) => { if (event.key === "Tab") leave(); };
     // Animated targets can move under a stationary pointer, even after the
     // follow animation has settled. Recheck independently of the label text.
@@ -157,8 +173,12 @@ export function HoverLabel() {
       scroll();
     }, 1600);
     window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerdown", move, { passive: true });
+    window.addEventListener("pointerup", scroll, { passive: true });
+    window.addEventListener("pointercancel", leave);
+    document.addEventListener("visibilitychange", visibility);
     window.addEventListener("scroll", scroll, { passive: true, capture: true });
-    window.addEventListener("resize", scroll, { passive: true });
+    window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("blur", leave);
     window.addEventListener("keydown", key);
     document.documentElement.addEventListener("pointerleave", leave);
@@ -167,8 +187,12 @@ export function HoverLabel() {
       window.clearInterval(hitTestTimer);
       window.clearInterval(smileyTimer);
       hide();
-      window.removeEventListener("resize", scroll);
+      window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerdown", move);
+      window.removeEventListener("pointerup", scroll);
+      window.removeEventListener("pointercancel", leave);
+      document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("blur", leave);
       window.removeEventListener("keydown", key);

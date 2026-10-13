@@ -1,5 +1,8 @@
 .cover {
   isolation: isolate;
+  mask-size: var(--cover-reveal-size);
+  mask-position: var(--cover-reveal-position);
+  mask-repeat: no-repeat;
 }
 
 /* Opacity composites descendants too; visibility alone can be overridden by
@@ -9,7 +12,7 @@
   pointer-events: none;
 }
 
-/* Refero's radial screen reveal, using the cover's blue-to-white palette. */
+/* The host mask fades the outer ring to transparency instead of a white tile. */
 .pastel {
   display: none;
   position: absolute;
@@ -17,20 +20,10 @@
   z-index: 1;
   pointer-events: none;
   mix-blend-mode: screen;
-  background-color: #fff;
-  background-image: radial-gradient(
-    circle closest-side at 50% 50%,
-    #000 0%,
-    #000 4.59%,
-    #003b6d 6.77%,
-    #31beff 8.92%,
-    #8edaff 9.92%,
-    #bce5fa 10.92%,
-    #def0f8 11.92%,
-    #f0f5f7 12.92%,
-    #fff 14.25%,
-    #fff 100%
-  );
+  background-color: transparent;
+  background-image: var(--project-reveal-gradient);
+  background-size: var(--cover-reveal-size);
+  background-position: var(--cover-reveal-position);
   background-repeat: no-repeat;
 }
 

@@ -1,5 +1,7 @@
 # Hero final-frame stone reveal
 
+Historical design record. The unused implementation was removed on 2026-10-13; the V1 homepage remains available without this overlay.
+
 The final decoded frame of `public/assets/videos/11.mp4` activates five independent hover targets. The mapping is Think → orange triangle, Plan → blue circles tile, Do → green arrow, Review → coral asterisk, Repeat → yellow sunburst. Moving away fades back; seeking away from the final frame clears the overlay immediately. Coordinates follow the video's center/top object-cover transform. The original scrolling, risograph treatment, and draggable windows remain in place.
 
 Implementation: `src/components/hero-stone-reveal.tsx`.

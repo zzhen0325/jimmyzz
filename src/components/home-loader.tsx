@@ -31,7 +31,7 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
     };
     const checkScene = () => {
       const canvas = scope.current?.querySelector("canvas");
-      if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("canvas ~ [role='status']")) finish();
+      if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("[data-scene-error='true']")) finish();
       else if (canvas?.dataset.ready === "true") finish();
     };
     const observer = new MutationObserver(checkScene);

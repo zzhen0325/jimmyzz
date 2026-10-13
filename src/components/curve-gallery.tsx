@@ -230,30 +230,61 @@ export function CurveGallery() {
       let startY = 0;
       let startScroll = 0;
       let dragged = false;
+      let pointerId: number | null = null;
+      const finish = () => {
+        const captured = pointerId;
+        pointerId = null;
+        delete root.dataset.pointerDragging;
+        if (captured !== null && root.hasPointerCapture(captured)) root.releasePointerCapture(captured);
+      };
+      const cancel = () => { finish(); dragged = false; };
       const down = (event: PointerEvent) => {
+        if (event.button !== 0 || pointerId !== null) return;
+        dragged = false;
         if ((event.target as HTMLElement).closest(".ribbon-footer")) return;
+        pointerId = event.pointerId;
         startX = event.clientX; startY = event.clientY; startScroll = window.scrollY; dragged = false;
       };
       const move = (event: PointerEvent) => {
-        if (!event.buttons && event.pointerType !== "touch") return;
+        if (event.pointerId !== pointerId) return;
+        if (!event.buttons && event.pointerType !== "touch") return cancel();
         const delta = startX - event.clientX;
         if (Math.abs(delta) < 10 || Math.abs(delta) < Math.abs(startY - event.clientY)) return;
         dragged = true;
+        root.dataset.pointerDragging = "";
+        if (!root.hasPointerCapture(event.pointerId)) root.setPointerCapture(event.pointerId);
         window.scrollTo({ top: Math.max(trigger.start, Math.min(trigger.end, startScroll + delta * 3)), behavior: "instant" });
       };
+      const up = (event: PointerEvent) => { if (event.pointerId === pointerId) finish(); };
+      const cancelPointer = (event: PointerEvent) => { if (event.pointerId === pointerId) cancel(); };
+      const visibility = () => { if (document.hidden) cancel(); };
+      const preventNativeDrag = (event: DragEvent) => event.preventDefault();
       const click = (event: MouseEvent) => {
         if (dragged) { event.preventDefault(); event.stopPropagation(); dragged = false; }
       };
       root.addEventListener("pointerdown", down);
       root.addEventListener("pointermove", move);
+      root.addEventListener("dragstart", preventNativeDrag);
+      root.addEventListener("lostpointercapture", cancelPointer);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", cancelPointer);
+      window.addEventListener("blur", cancel);
+      document.addEventListener("visibilitychange", visibility);
       root.addEventListener("click", click, true);
       render();
       return () => {
+        cancel();
         root.classList.remove("is-animated", "is-transferring");
         playingVideo?.pause();
         sources.forEach((source) => { if (source) setTransferred(source, false); });
         root.removeEventListener("pointerdown", down);
         root.removeEventListener("pointermove", move);
+        root.removeEventListener("dragstart", preventNativeDrag);
+        root.removeEventListener("lostpointercapture", cancelPointer);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancelPointer);
+        window.removeEventListener("blur", cancel);
+        document.removeEventListener("visibilitychange", visibility);
         root.removeEventListener("click", click, true);
         cards.forEach((card) => {
           ["width", "height", "transform", "visibility", "opacity", "z-index"].forEach((property) => card.style.removeProperty(property));

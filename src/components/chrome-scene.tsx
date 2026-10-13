@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import type { HomeWeather } from "@/lib/home-rain";
 import { isFlowMode } from "@/lib/floating-flow";
 import { createChromeWorld, defaultExportLayout, type ExportLayout, type FloatingMode } from "@/lib/chrome-world";
+import { attachHomeScene } from "@/lib/home-scene-cache";
 import styles from "./chrome-scene.module.css";
 
 export default function ChromeScene({ workProgress, interactive, paused = false, weather = "sunny", floatingMode = "physics" }: { workProgress: RefObject<number>; interactive: boolean; paused?: boolean; weather?: HomeWeather; floatingMode?: FloatingMode }) {
@@ -12,8 +13,8 @@ export default function ChromeScene({ workProgress, interactive, paused = false,
   const initialPaused = useRef(paused);
   const initialWeather = useRef(weather);
   const initialMode = useRef(floatingMode);
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const vortexTarget = useRef<HTMLButtonElement>(null);
+  const sceneHost = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement | null>(null);
   const controller = useRef<ReturnType<typeof createChromeWorld> | null>(null);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
@@ -45,15 +46,25 @@ export default function ChromeScene({ workProgress, interactive, paused = false,
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [interactive, ready, paused, failed]);
   useEffect(() => {
-    if (!canvas.current) return;
+    if (!sceneHost.current) return;
     let mounted = true;
     const fail = () => { if (mounted) queueMicrotask(() => { if (mounted) setFailed(true); }); };
+    let attachment: ReturnType<typeof attachHomeScene> | undefined;
     try {
-      controller.current = createChromeWorld(canvas.current, { weather: initialWeather.current, floatingMode: initialMode.current, paused: initialPaused.current, vortexTarget: vortexTarget.current ?? undefined, workProgress, debug: process.env.NODE_ENV !== "production", onError: fail });
+      attachment = attachHomeScene(sceneHost.current, { weather: initialWeather.current, floatingMode: initialMode.current, paused: initialPaused.current, workProgress, debug: process.env.NODE_ENV !== "production", onError: fail });
+      canvas.current = attachment.canvas;
+      controller.current = attachment.world;
       void controller.current.loaded.then(() => { if (mounted) setReady(true); }, fail);
     } catch { fail(); }
-    return () => { mounted = false; controller.current?.dispose(); controller.current = null; };
+    return () => { mounted = false; attachment?.release(); controller.current = null; canvas.current = null; };
   }, [workProgress]);
+  useEffect(() => {
+    if (!canvas.current) return;
+    canvas.current.tabIndex = interactive ? 0 : -1;
+    if (interactive) canvas.current.dataset.hoverLabel = "";
+    else delete canvas.current.dataset.hoverLabel;
+    canvas.current.setAttribute("aria-label", `${floatingMode === "gravity" ? "漂浮元素在重力下掉落到视口底部，碰撞后落稳，中央 ZZ 标志保持固定。" : guided ? "沿三维轨迹自然漂浮、旋转和碰撞，鼠标接触碰撞（传送枪除外），按住吸引，松开炸开，空格加速。" : usesPhysics ? "自由漂浮，鼠标接触碰撞（传送枪除外），按住吸引，松开炸开，空格加速旋转。" : floatingMode === "planet-belt" ? "行星带围绕中央 Logo 旋转，按住鼠标或空格、回车加速，松开后自然减速。" : floatingMode === "diagonal-drift" ? "元素从左下向右上穿过画面，各自缓慢翻转，离开画面后循环入场。" : "有序漂浮，移动鼠标探索。"}${weather === "rainy" ? "阴天灰蓝云层与斜落雨丝、" : "缓慢飘动的白云与浅蓝天空背景、"}银色 ZZ、漂浮的黑色高光 Jimmy 手写字标、金属土星与银色云朵雨滴、蓝色凹刻 ZZ 挂件、绿色曲线树干、始终朝向镜头的蓝色有机桌、蓝色穿环星星、黄色笑脸环、好运气瓶、扁苹果、花瓶、披风马、丘比特、粉色飞猪、戴银色耳机的金鱼、吃面人物和黄绿色像素漩涡、绿色传送枪、立体箭头、黑色 C 形、白色镂空雕塑、银色环形物体、银色块状茶壶与黄绿色透明玻璃三角形的互动场景。滚动进入作品。点击绿色传送枪或按 V 瞄准发射漩涡，触发吸入与喷出彩蛋，Esc 取消。`);
+  }, [interactive, floatingMode, guided, usesPhysics, weather]);
   useEffect(() => { controller.current?.setWeather(weather); }, [weather]);
   useEffect(() => { controller.current?.setPaused(paused); }, [paused]);
   useEffect(() => { controller.current?.setFloatingMode(floatingMode); }, [floatingMode]);
@@ -110,8 +121,7 @@ export default function ChromeScene({ workProgress, interactive, paused = false,
       </button>
       {exportError && <p role="alert">{exportError}</p>}
     </div>}
-    <canvas data-hover-label={interactive ? "" : undefined} ref={canvas} tabIndex={interactive ? 0 : -1} role="img" aria-label={`${floatingMode === "gravity" ? "漂浮元素在重力下掉落到视口底部，碰撞后落稳，中央 ZZ 标志保持固定。" : guided ? "沿三维轨迹自然漂浮、旋转和碰撞，鼠标接触碰撞（传送枪除外），按住吸引，松开炸开，空格加速。" : usesPhysics ? "自由漂浮，鼠标接触碰撞（传送枪除外），按住吸引，松开炸开，空格加速旋转。" : floatingMode === "planet-belt" ? "行星带围绕中央 Logo 旋转，按住鼠标或空格、回车加速，松开后自然减速。" : floatingMode === "diagonal-drift" ? "元素从左下向右上穿过画面，各自缓慢翻转，离开画面后循环入场。" : "有序漂浮，移动鼠标探索。"}${weather === "rainy" ? "阴天灰蓝云层与斜落雨丝、" : "缓慢飘动的白云与浅蓝天空背景、"}银色 ZZ、漂浮的黑色高光 Jimmy 手写字标、金属土星与银色云朵雨滴、蓝色凹刻 ZZ 挂件、绿色曲线树干、始终朝向镜头的蓝色有机桌、蓝色穿环星星、黄色笑脸环、好运气瓶、扁苹果、花瓶、披风马、丘比特、粉色飞猪、戴银色耳机的金鱼、吃面人物和黄绿色像素漩涡、绿色传送枪、立体箭头、黑色 C 形、白色镂空雕塑、银色环形物体、银色块状茶壶与黄绿色透明玻璃三角形的互动场景。滚动进入作品。点击绿色传送枪或按 V 瞄准发射漩涡，触发吸入与喷出彩蛋，Esc 取消。`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", touchAction: "pan-y", cursor: "pointer" }} />
-    <button ref={vortexTarget} type="button" aria-label="点击绿色传送枪，发射漩涡并触发吸入与吐出彩蛋" data-hover-label="Open The Portal" data-hover-label-on-control="" style={{ display: "none", position: "absolute", zIndex: 2, left: 0, top: 0, width: 1, height: 1, padding: 0, border: 0, borderRadius: "50%", background: "transparent", cursor: "pointer", touchAction: "pan-y", transformOrigin: "0 0" }} />
-    {failed && <p role="status" style={{ position: "absolute", top: "72%", left: 0, right: 0, textAlign: "center", fontSize: 12, color: "#aaa" }}>三维场景加载失败，请刷新重试。</p>}
+    <div ref={sceneHost} style={{ position: "absolute", inset: 0 }} />
+    {failed && <p data-scene-error="true" role="status" style={{ position: "absolute", top: "72%", left: 0, right: 0, textAlign: "center", fontSize: 12, color: "#aaa" }}>三维场景加载失败，请刷新重试。</p>}
   </>;
 }

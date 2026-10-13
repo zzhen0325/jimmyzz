@@ -62,7 +62,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   renderer.toneMappingExposure = config.lighting.exposure;
   const glassComposite = createGlassComposite(renderer);
   const scene = new THREE.Scene();
-  const sky = createSkyClouds();
+  const sky = createSkyClouds(config.sky);
   const rain = createHomeRain();
   let weather: HomeWeather = options.weather ?? "sunny";
   let rainAmount = weather === "rainy" ? 1 : 0;
@@ -121,6 +121,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let reduced = media.matches;
   let paused = !!options.paused;
   let disposed = false;
+  let suspended = false;
   let bakedMaterials: ReturnType<typeof createBakedPropMaterials> | undefined;
   const plasterMaterials = createFloatingPlasterMaterials(config.plaster);
   let ready = false;
@@ -477,6 +478,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     renderedWorkProgress = -1;
   };
   const resize=()=>{
+    if (suspended || !host.isConnected || !host.clientWidth || !host.clientHeight) return;
     renderedWorkProgress = -1;
     easterEgg.cancel();
     const rect=host.getBoundingClientRect();pointerRect=rect;pointerRectDirty=false;width=rect.width;height=rect.height;
@@ -659,7 +661,11 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
   const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;resolution.reset();resizeRenderBuffers();};
-  const observer=new ResizeObserver(resize);observer.observe(host);resize();
+  const resizeIfNeeded = () => {
+    const rect = host.getBoundingClientRect();
+    if (rect.width !== width || rect.height !== height) resize();
+  };
+  const observer=new ResizeObserver(resizeIfNeeded);observer.observe(host);resize();
   const updateViewportFloor = () => { if (floatingMode === "gravity") makeWalls(); };
   window.visualViewport?.addEventListener("resize", updateViewportFloor);
   const visibility=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;activePointer=null;if(!visible)easterEgg.cancel();});visibility.observe(host);
@@ -1208,6 +1214,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     canvas.dataset.phase = "export";
   };
   const render=(time:number)=>{
+    if (disposed || suspended) return;
     frame=requestAnimationFrame(render);
     const frameMs = time - previous;
     // One wall-time clock spans launch, orbit, release and drift. Fixed physics
@@ -1562,6 +1569,27 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (ready && (gravityChanged || (!keepPhysics && usesPhysics()) || reduced)) reset();
     },
     setWeather(value: HomeWeather) { weather = value; reflectionDirty = true; },
+    setSuspended(value: boolean) {
+      if (suspended === value || disposed) return;
+      suspended = value;
+      if (value) {
+        cancelAnimationFrame(frame);
+        cancelMagnet();
+        easterEgg.cancel();
+        observer.disconnect();
+        visibility.disconnect();
+        if (options.vortexTarget) options.vortexTarget.style.display = "none";
+      } else {
+        previous = performance.now();
+        pointerRectDirty = true;
+        renderedWorkProgress = -1;
+        visible = true;
+        resizeIfNeeded();
+        observer.observe(host);
+        visibility.observe(host);
+        frame = requestAnimationFrame(render);
+      }
+    },
     setPaused(value:boolean){paused=value;if(value)cancelMagnet();},
     setExportLayout(value: ExportLayout | null) {
       if (value && !exportLayout) { finishBurstGravity(); pointerCancel(); easterEgg.cancel(); exportTime = 0; }

@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode, type CSSProperties } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
+import { projectRevealFrame } from "@/lib/project-reveal";
 import styles from "./project-cover-reveal.module.css";
 
 export function ProjectCoverReveal({ children, className, style }: {
@@ -38,29 +39,24 @@ export function ProjectCoverReveal({ children, className, style }: {
 
       let ready = video ? video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA : (media as HTMLImageElement).complete;
       let poster: HTMLImageElement | null = null;
-      const size = () => {
-        const width = host.clientWidth;
-        const height = host.clientHeight;
-        return { height, edge: Math.max(width, height), diagonal: Math.hypot(width, height) };
-      };
-      // Refero's welcome reveal: expand a spectral ring over the original media.
-      // Black is neutral in screen blending; white conceals the unrevealed area.
-      // Adapt its viewport geometry to each cover, including portrait covers.
+      const frame = (revealed: boolean) => projectRevealFrame(host.clientWidth, host.clientHeight, revealed);
+      // Expand the colored ring and its alpha mask together, leaving the
+      // unrevealed area transparent rather than covering it with white.
+      const mask = "radial-gradient(circle closest-side at 50% 50%, #000 0%, #000 9.92%, transparent 14.25%, transparent 100%)";
       gsap.set(overlay, { display: "block", autoAlpha: 1 });
       const timeline = gsap.timeline({ paused: true, onComplete: resumeVideo })
-        .fromTo(overlay, {
-          backgroundSize: () => `${2 * size().edge}px ${2 * size().edge}px`,
-          backgroundPosition: () => `50% ${size().height - 0.8 * size().edge}px`,
+        .set(host, { maskImage: mask })
+        .fromTo(host, {
+          "--cover-reveal-size": () => frame(false).backgroundSize,
+          "--cover-reveal-position": () => frame(false).backgroundPosition,
         }, {
-          backgroundSize: () => {
-            const diameter = 21.7865 * size().diagonal + 43.573;
-            return `${diameter}px ${diameter}px`;
-          },
-          backgroundPosition: () => `50% ${(size().height - (21.7865 * size().diagonal + 43.573)) / 2}px`,
+          "--cover-reveal-size": () => frame(true).backgroundSize,
+          "--cover-reveal-position": () => frame(true).backgroundPosition,
           duration: 1.75,
           ease: "none",
         })
-        .set(overlay, { autoAlpha: 0 });
+        .set(overlay, { autoAlpha: 0 })
+        .set(host, { maskImage: "none" });
       const play = () => {
         if (!ready || !entered || timeline.progress() > 0) return;
         video?.pause();
@@ -68,6 +64,7 @@ export function ProjectCoverReveal({ children, className, style }: {
       };
       const reset = () => {
         timeline.pause(0);
+        host.style.maskImage = mask;
         overlay.style.visibility = "visible";
         overlay.style.opacity = "1";
         video?.pause();

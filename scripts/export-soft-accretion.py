@@ -4,6 +4,7 @@ Blender --background /tmp/jimmyzz-floating-source.blend --python scripts/export-
 """
 import bpy
 import math
+import subprocess
 from pathlib import Path
 from mathutils import Vector
 
@@ -64,3 +65,6 @@ for name, filename in [('03_Soft_Accretion', 'soft-accretion'), ('06_Knotted_Vei
         export_format='GLB', use_selection=True, export_yup=True,
         export_animations=False, export_cameras=False, export_lights=False)
     print('EXPORTED', filename, len(obj.data.polygons), flush=True)
+    if filename == 'soft-accretion':
+        # UV islands are tiny: black bake gutters leak through minification.
+        subprocess.run(['node', str(Path(__file__).with_name('pad-soft-accretion-texture.mjs'))], check=True)

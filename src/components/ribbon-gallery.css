@@ -12,6 +12,7 @@
 .ribbon-stage:not(.is-animated) { height: auto; }
 .is-animated .ribbon-images { display: block; position: absolute; inset: 0; padding: 0; touch-action: pan-y; cursor: grab; }
 .is-animated .ribbon-images:active { cursor: grabbing; }
+.ribbon-stage[data-pointer-dragging], .ribbon-stage[data-pointer-dragging] * { cursor: grabbing !important; }
 .is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(28vw, 385px); will-change: transform; }
 .is-animated .ribbon-playhead { display: block; }
 .ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; }

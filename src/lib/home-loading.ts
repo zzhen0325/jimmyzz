@@ -1,10 +1,10 @@
-// Keep this in memory so a full page refresh still gets the initial loader.
-let hasVisitedProject = false;
+// A fresh document loads normally; only a successfully retained scene skips it.
+let sceneReady = false;
 
-export function markProjectVisited() {
-  hasVisitedProject = true;
+export function setHomeSceneReady(ready: boolean) {
+  sceneReady = ready;
 }
 
 export function shouldShowHomeLoader() {
-  return !hasVisitedProject;
+  return !sceneReady;
 }

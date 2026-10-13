@@ -1,5 +1,21 @@
 import * as THREE from "three";
 
+export type SkyCloudPalette = {
+  skyTop: string;
+  skyBottom: string;
+  cloudShadow: string;
+  cloudHighlight: string;
+};
+export type SkyCloudSettings = {
+  sunny: SkyCloudPalette;
+  rainy: SkyCloudPalette;
+  complexity: number;
+  scale: number;
+  coverage: number;
+  speed: number;
+  initialTime?: number;
+};
+
 // drift — "2D Clouds", https://www.shadertoy.com/view/4tdSWr
 // Source mirror: https://github.com/Zygo/xscreensaver/blob/master/hacks/glx/glsl/driftclouds.glsl
 // Preserve the original noise and motion; match the supplied sky palette.
@@ -8,6 +24,18 @@ uniform vec3 iResolution;
 uniform float iTime;
 uniform float skyOpacity;
 uniform float rainAmount;
+uniform vec3 skycolour1;
+uniform vec3 skycolour2;
+uniform vec3 cloudshadow;
+uniform vec3 cloudhighlight;
+uniform vec3 rainySkyTop;
+uniform vec3 rainySkyBottom;
+uniform vec3 rainyCloudShadow;
+uniform vec3 rainyCloudHighlight;
+uniform int complexity;
+uniform float cloudscale;
+uniform float speed;
+uniform float cloudcover;
 
 // Title:  2D Clouds
 // Author: drift
@@ -26,15 +54,7 @@ uniform float rainAmount;
 // you choose. Credit would be nice but I won't insist on it."
 
 
-const float cloudscale = 1.1;
-const float speed = 0.03;
-const float cloudcover = 0.1;
 const float cloudalpha = 8.0;
-// Display-space colours sampled from the user's photographic reference.
-const vec3 skycolour1 = vec3(214.0, 234.0, 245.0) / 255.0; // #D6EAF5
-const vec3 skycolour2 = vec3(214.0, 234.0, 245.0) / 255.0; // #D6EAF5
-const vec3 cloudshadow = vec3(239.0, 245.0, 250.0) / 255.0;
-const vec3 cloudhighlight = vec3(251.0, 251.0, 252.0) / 255.0;
 
 const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );
 
@@ -59,6 +79,7 @@ float noise( in vec2 p ) {
 float fbm(vec2 n) {
 	float total = 0.0, amplitude = 0.1;
 	for (int i = 0; i < 7; i++) {
+        if (i >= complexity) break;
 		total += noise(n) * amplitude;
 		n = m * n;
 		amplitude *= 0.4;
@@ -80,6 +101,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     uv -= q - time;
     float weight = 0.8;
     for (int i=0; i<8; i++){
+        if (i >= complexity) break;
 		r += abs(weight*noise( uv ));
         uv = m*uv + time;
 		weight *= 0.7;
@@ -92,6 +114,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     uv -= q - time;
     weight = 0.7;
     for (int i=0; i<8; i++){
+        if (i >= complexity) break;
 		f += weight*noise( uv );
         uv = m*uv + time;
 		weight *= 0.6;
@@ -107,6 +130,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     uv -= q - time;
     weight = 0.4;
     for (int i=0; i<7; i++){
+        if (i >= complexity) break;
 		c += weight*noise( uv );
         uv = m*uv + time;
 		weight *= 0.6;
@@ -120,6 +144,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     uv -= q - time;
     weight = 0.4;
     for (int i=0; i<7; i++){
+        if (i >= complexity) break;
 		c1 += abs(weight*noise( uv ));
         uv = m*uv + time;
 		weight *= 0.6;
@@ -128,12 +153,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     c += c1;
     
     vec3 skycolour = mix(skycolour2, skycolour1, p.y);
-    skycolour = mix(skycolour, mix(vec3(.57, .63, .69), vec3(.32, .39, .47), p.y), rainAmount);
+    skycolour = mix(skycolour, mix(rainySkyBottom, rainySkyTop, p.y), rainAmount);
     // Keep the animated fine shading, with pale blue shadows and neutral whites.
     // Explicit endpoints avoid the original additive sky tint's grey-green cast.
     vec3 cloudcolour = mix(cloudshadow, cloudhighlight, smoothstep(-0.12, 0.55, c));
    
-    cloudcolour = mix(cloudcolour, mix(vec3(.39, .45, .52), vec3(.72, .76, .79), smoothstep(-.12, .65, c)), rainAmount);
+    cloudcolour = mix(cloudcolour, mix(rainyCloudShadow, rainyCloudHighlight, smoothstep(-.12, .65, c)), rainAmount);
     f = cloudcover + rainAmount * .48 + cloudalpha*f*r;
     
     vec3 result = mix(skycolour, cloudcolour, clamp(f + c, 0.0, 1.0));
@@ -148,14 +173,30 @@ void main() {
 `;
 
 /** drift's Shadertoy 4tdSWr with the supplied reference's sky/cloud colours. */
-export function createSkyClouds(renderScale = .5) {
+export function createSkyClouds(settings: SkyCloudSettings, renderScale = .5) {
+  // This shader outputs display-space RGB directly; undo Color's sRGB decoding.
+  const displayColor = (hex: string) => new THREE.Color(hex).convertLinearToSRGB();
   const group = new THREE.Group();
   group.name = "sky-clouds";
+  // Start from a composed cloud formation, then continue the same noise motion.
+  const initialTime = Math.max(0, settings.initialTime ?? 0);
   const uniforms = {
     iResolution: { value: new THREE.Vector3(1, 1, 1) },
-    iTime: { value: 0 },
+    iTime: { value: initialTime },
     skyOpacity: { value: 1 },
     rainAmount: { value: 0 },
+    skycolour1: { value: displayColor(settings.sunny.skyTop) },
+    skycolour2: { value: displayColor(settings.sunny.skyBottom) },
+    cloudshadow: { value: displayColor(settings.sunny.cloudShadow) },
+    cloudhighlight: { value: displayColor(settings.sunny.cloudHighlight) },
+    rainySkyTop: { value: displayColor(settings.rainy.skyTop) },
+    rainySkyBottom: { value: displayColor(settings.rainy.skyBottom) },
+    rainyCloudShadow: { value: displayColor(settings.rainy.cloudShadow) },
+    rainyCloudHighlight: { value: displayColor(settings.rainy.cloudHighlight) },
+    complexity: { value: Math.round(THREE.MathUtils.clamp(settings.complexity, 1, 8)) },
+    cloudscale: { value: Math.max(.01, settings.scale) },
+    cloudcover: { value: THREE.MathUtils.clamp(settings.coverage, 0, 1) },
+    speed: { value: Math.max(0, settings.speed) },
   };
   const material = new THREE.ShaderMaterial({
     name: "shadertoy-4tdSWr-drift-2d-clouds",
@@ -228,14 +269,19 @@ export function createSkyClouds(renderScale = .5) {
       if (!group.visible) return;
       uniforms.rainAmount.value = rainAmount;
       clock += Math.max(0, delta);
-      uniforms.iTime.value = clock;
+      uniforms.iTime.value = initialTime + clock;
       uniforms.skyOpacity.value = 1 - THREE.MathUtils.clamp(progress, 0, 1);
     },
     snapshot() {
       return {
         time: clock,
+        initialTime,
         rainAmount: uniforms.rainAmount.value,
         mode: "shadertoy-4tdSWr",
+        complexity: uniforms.complexity.value,
+        scale: uniforms.cloudscale.value,
+        coverage: uniforms.cloudcover.value,
+        speed: uniforms.speed.value,
         resolution: uniforms.iResolution.value.toArray(),
         opacity: uniforms.skyOpacity.value,
         loaded: !disposed,

@@ -59,7 +59,7 @@ Jimmy ZZ 个人作品集站点（`package.json` 名称 `Jimmy-ZZ`）。定位是
 - **物理**：`cannon-es` 无重力世界（`ChromeWorldOptions` 见 `chrome-world.ts:15`），所有漂浮物为 `Body`，含静态墙/地板与可拖拽交互；`canvas.dataset.*` 暴露阶段、接触数、加载项数量等调试状态（`phase` / `ready` / `contacts` / `visibleItems` …）。
 - **物件来源**（统一由 `lib/home-3d-config.ts` 调参）：
   - GLB 模型：`public/assets/models/emotions/*.glb`（情绪角色、蓝色 ZZ、笑脸键帽、strongman）、`plaques/*.glb`（Think/Plan/Do/Review/Repeat 立牌）
-  - 程序化几何：`chrome-logo-geometry.ts`（银色 ZZ 三角）、`jimmy-wordmark-geometry.ts`（由 `jimmy-wordmark-contours.json` 轮廓重建的手写体）、`chrome-portal-gun.ts`、`chrome-celestial.ts`（金属行星与雨云）、`chrome-gamepad.ts`（**当前未被引用**）、`pixel-vortex.ts`
+  - 程序化几何：`chrome-logo-geometry.ts`（银色 ZZ 三角）、`jimmy-wordmark-geometry.ts`（由 `jimmy-wordmark-contours.json` 轮廓重建的手写体）、`chrome-portal-gun.ts`、`chrome-celestial.ts`（金属行星与雨云）、`pixel-vortex.ts`
   - 贴图抠图：`public/assets/images/floating/*.webp`（6 个 billboard）+ `skater-cutout.webp`
 - **环境光照**：`lib/home-3d-config.ts` 的 `lighting` — HDR/EXR/JPG 三种加载分支（`GLTFLoader` / `HDRLoader` / `EXRLoader` / `TextureLoader`）+ 三盏 RectAreaLight 棚拍光 + 反射帧。
 - **彩蛋 / 交互反馈**：`vortex-easter-egg.ts`（点击 vortex 触发吞入动画）、`chrome-home.module.css` 中的 `data-view`（`intro` / `transition` / `work`）与滚动进度驱动 `--work-progress`、`--hero-scroll`；加载动画 `home-loader.tsx`（11 帧序列）。
@@ -67,7 +67,7 @@ Jimmy ZZ 个人作品集站点（`package.json` 名称 `Jimmy-ZZ`）。定位是
 
 ## 5. 项目详情页
 
-`app/work/[slug]/page.tsx`（服务端组件）→ `ProjectHeader`（复用 3D 世界的静态帧）+ `ProjectCopy`（About / Challenge / Solution 编辑式排版）+ `CaseGallery`（图片长图/灯箱、键盘与缩放操作，`motion-image.tsx` 提供指针涂抹效果）+ 下一项目卡片 + `Footer variant="project"`。
+`app/work/[slug]/page.tsx`（服务端组件）→ `ProjectHeader`（复用 3D 世界的静态帧）+ `ProjectCopy`（About / Challenge / Solution 编辑式排版）+ `CaseGallery`（图片长图/灯箱、键盘与缩放操作）+ 下一项目卡片 + `Footer variant="project"`。
 
 内容数据全部来自 `lib/site-data.ts`：
 
@@ -81,8 +81,8 @@ Jimmy ZZ 个人作品集站点（`package.json` 名称 `Jimmy-ZZ`）。定位是
 | --- | --- |
 | 数据 | `site-data.ts`、`portfolio-assets.json`、`curve-gallery-assets.json`、`jimmy-wordmark-contours.json` |
 | 3D 世界 | `chrome-world.ts`、`home-3d-config.ts`、`chrome-*.ts`、`jimmy-wordmark-geometry.ts`、`pixel-vortex.ts`、`vortex-easter-egg.ts` |
-| 动效基座 | `gsap.ts`（统一注册 + `motionConditions` / `motionTiming`）、`home-reveals.ts`、`collage-motion.ts`、`pointer-smear.ts`、`motion-image.tsx` |
-| 视频 / 印刷效果 | `risograph.ts`、`risograph-video.tsx`、`lattice-collage.ts`、`hero-palettes.ts`、`hero-video-geometry.ts`、`hero-subject-tracker.ts`（部分已停用，见第 8 节） |
+| 动效基座 | `gsap.ts`（统一注册 + `motionConditions` / `motionTiming`）、`home-reveals.ts`、`collage-motion.ts` |
+| 视频 / 印刷效果 | `risograph.ts`、`risograph-video.tsx`、`lattice-collage.ts`、`hero-palettes.ts`、`hero-video-geometry.ts`（V1 仍使用，见第 8 节） |
 | 小游戏 | `minesweeper.ts` |
 
 ## 7. 素材与脚本
@@ -103,15 +103,13 @@ Jimmy ZZ 个人作品集站点（`package.json` 名称 `Jimmy-ZZ`）。定位是
 
 素材方案与还原记录：`docs/portfolio-content-plan.md`、`docs/curve-gallery-assets-plan.json`、`docs/figma-source-map.json`、`docs/home-grid.md`、`docs/animation-migration.md`、`docs/risograph-reference.md`、`docs/sphere-reference.md`、`docs/floating-cutouts.md`、`docs/hero-stone-reveal.md`。
 
-## 8. 已知冗余 / 待清理
+## 8. V1 保留与未使用代码清理
 
-以下模块当前没有任何引用（多为被 `ChromeHero` 替换掉的旧实现，或未接线的接口）：
+`/work/portfolio-v1` 使用 `components/v1-experience.tsx`，其视频滚动、印刷画布、拖拽窗口和扫雷交互仍在使用。`risograph-video.tsx`、`scanner-type.tsx`、`hero-minesweeper.tsx`、`lattice-collage.ts` 和 `vendor/lattice/` 是这条链路的依赖，需保留。
 
-- 旧滚动视频首屏链路：`components/risograph-video.tsx`、`components/riso-preview.tsx`、`components/scanner-type.tsx`、`components/hero-stone-reveal.tsx`、`components/hero-minesweeper.tsx`、`lib/hero-subject-tracker.ts`、`lib/lattice-collage.ts`
-- 旧黑洞首屏：`lib/black-hole-glow.ts`、`lib/black-hole-lens.ts`、`lib/black-hole-ring.ts`（`public/assets/models/black-hole/` 同理），但 `site-chrome.tsx` 页脚仍保留署名文案
-- 旧球体画廊：`lib/curve-gallery-scene.ts`（`createCurveScene` + `spherePreset`，见 `docs/sphere-reference.md`）与 `lib/chrome-gamepad.ts`
-- 未接线组件：`components/project-index.tsx`（`/work` 已改为跳首页）、`components/work-link.tsx`、`components/gsap-presence.tsx`
-- `site-chrome.tsx` 中未被使用的 `TopNav` / `Timeline` / `SectionLabel` 导出，与 `GlobalChrome`（恒返回 `null`）
+2026-10-13 按所有 App Router 页面和接口的引用关系，移除了未接线的黑洞渲染、旧球体画廊、程序化游戏手柄、指针涂抹、石板揭示、视频主体追踪、配色面板和旧作品目录等 19 个源文件。当前首页和 V1 的交互不变。
+
+`chrome-celestial.ts` 仍被 `scripts/export-celestial.mjs` 用于模型导出；旧素材清单、建模源文件和导出资源仍保留。历史设计文档中的旧实现路径仅供查阅，实际入口以当前代码为准。
 
 ## 9. 运行与校验
 

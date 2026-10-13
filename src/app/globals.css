@@ -1083,6 +1083,9 @@ button {
   opacity: 0;
   transition: opacity 120ms ease;
   will-change: transform;
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 .hover-label[data-visible="true"] { opacity: 1; }
 .hover-label-character { display: inline-block; }

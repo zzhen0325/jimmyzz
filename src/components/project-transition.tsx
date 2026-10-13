@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { projectRevealFrame } from "@/lib/project-reveal";
 import { playSound } from "@/lib/site-sound";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -16,7 +17,11 @@ export function ProjectTransition() {
     if (timeout.current) clearTimeout(timeout.current);
     timeout.current = null;
     pending.current = null;
-    if (root.current) root.current.dataset.active = "false";
+    if (root.current) {
+      root.current.dataset.active = "false";
+      root.current.style.removeProperty("background-size");
+      root.current.style.removeProperty("background-position");
+    }
     window.dispatchEvent(new CustomEvent("project-transition", { detail: false }));
   }, []);
 
@@ -40,18 +45,20 @@ export function ProjectTransition() {
       window.dispatchEvent(new CustomEvent("project-transition", { detail: true }));
       const href = url.pathname + url.search + url.hash;
       router.prefetch(href);
-      const strips = Array.from(curtain.children).filter((node) => (node as HTMLElement).offsetWidth > 0);
-      gsap.set(curtain.children, { y: 0, yPercent: 100, willChange: "transform" });
-      // Uneven column timing echoes the reference without moving the page itself.
       animation.current?.kill();
-      animation.current = gsap.timeline({ defaults: { duration: .58, ease: "power3.inOut" } })
-        .to(strips, { yPercent: 0, stagger: (index) => (index % 3) * .065 + Math.floor(index / 3) * .025 })
+      // Reverse the cover reveal until every pixel is white before navigating.
+      gsap.set(curtain, projectRevealFrame(window.innerWidth, window.innerHeight, true));
+      animation.current = gsap.timeline()
+        .to(curtain, {
+          ...projectRevealFrame(window.innerWidth, window.innerHeight, false),
+          duration: .8,
+          ease: "power2.in",
+        })
         .call(() => router.push(href));
       // Failed or interrupted navigation must never leave an opaque, locked page.
       timeout.current = setTimeout(() => {
         animation.current?.kill();
-        gsap.killTweensOf(curtain.children);
-        gsap.set(curtain.children, { yPercent: 100, clearProps: "willChange" });
+        gsap.killTweensOf(curtain);
         finish();
       }, 10000);
     });
@@ -62,18 +69,19 @@ export function ProjectTransition() {
   useGSAP(() => {
     if (!pending.current || !root.current) return;
     // A committed route (including browser-history interruption) can be revealed.
-    const strips = Array.from(root.current.children).filter((node) => (node as HTMLElement).offsetWidth > 0);
+    const curtain = root.current;
     animation.current?.kill();
     animation.current = gsap.timeline({ onComplete: () => {
-      gsap.set(strips, { clearProps: "willChange" });
       finish();
       const heading = document.querySelector<HTMLElement>(".case-intro h1");
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
     } })
-      .to(strips, { yPercent: -100, duration: .7, ease: "power3.inOut", stagger: (index) => (index % 3) * .05 + Math.floor(index / 3) * .02 }, .08);
+      .fromTo(curtain,
+        projectRevealFrame(window.innerWidth, window.innerHeight, false),
+        { ...projectRevealFrame(window.innerWidth, window.innerHeight, true), duration: 1.25, ease: "none" },
+        .08,
+      );
   }, { scope: root, dependencies: [pathname, finish], revertOnUpdate: false });
 
-  return <div ref={root} className="route-curtain" data-active="false" aria-hidden="true">
-    {Array.from({ length: 12 }, (_, index) => <i key={index} />)}
-  </div>;
+  return <div ref={root} className="route-curtain" data-active="false" aria-hidden="true" />;
 }

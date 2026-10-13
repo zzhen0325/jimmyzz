@@ -3,10 +3,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { ScrambleText } from "./scramble-text";
-import { markProjectVisited } from "@/lib/home-loading";
 
 export function ProjectHeader() {
-  useEffect(markProjectVisited, []);
   return (
     <header className="case-header">
       <Link className="case-logo" href="/#top" aria-label="Jimmy.zz 返回首页"><ScrambleText>Jimmy.zz</ScrambleText></Link>
