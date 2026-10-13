@@ -1,0 +1,652 @@
+{
+  "cucumber": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 3958
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 1920
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-06.webp",
+      "width": 3840,
+      "height": 1920
+    },
+    {
+      "name": "detail-07",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-07.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-08",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-08.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-09",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-09.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-10",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-10.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-11",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-11.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-12",
+      "src": "/assets/portfolio/cucumber/figma-1012/detail-12.webp",
+      "width": 3840,
+      "height": 2563
+    }
+  ],
+  "welcome-lemon8": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/welcome-lemon8/figma-1012/detail-01.webp",
+      "width": 3420,
+      "height": 2233
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/welcome-lemon8/figma-1012/detail-02.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/welcome-lemon8/figma-1012/detail-03.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/welcome-lemon8/figma-1012/detail-04.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/welcome-lemon8/figma-1012/detail-05.webp",
+      "width": 3420,
+      "height": 1924
+    }
+  ],
+  "lemon8-valentines": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/lemon8-valentines/figma-1012/detail-01.webp",
+      "width": 3420,
+      "height": 2233
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/lemon8-valentines/figma-1012/detail-02.webp",
+      "width": 3420,
+      "height": 1824
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/lemon8-valentines/figma-1012/detail-03.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/lemon8-valentines/figma-1012/detail-04.webp",
+      "width": 3420,
+      "height": 1204
+    }
+  ],
+  "lemon8-campaigns": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/lemon8-campaigns/figma-1012/detail-01.webp",
+      "width": 3420,
+      "height": 2121
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/lemon8-campaigns/figma-1012/detail-02.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/lemon8-campaigns/figma-1012/detail-03.webp",
+      "width": 3420,
+      "height": 1924
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/lemon8-campaigns/figma-1012/detail-04.webp",
+      "width": 3420,
+      "height": 1923
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/lemon8-campaigns/figma-1012/detail-05.webp",
+      "width": 3420,
+      "height": 1924
+    }
+  ],
+  "lemon8-campaign-collection": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/lemon8-campaign-collection/figma-1012/detail-01.webp",
+      "width": 3420,
+      "height": 2493
+    }
+  ],
+  "inner-species": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2395
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2880
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-06.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-07",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-07.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-08",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-08.webp",
+      "width": 3840,
+      "height": 2634
+    },
+    {
+      "name": "detail-09",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-09.webp",
+      "width": 3840,
+      "height": 1499
+    },
+    {
+      "name": "detail-10",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-10.webp",
+      "width": 3840,
+      "height": 4264
+    },
+    {
+      "name": "detail-11",
+      "src": "/assets/portfolio/inner-species/figma-1012/detail-11.webp",
+      "width": 3840,
+      "height": 2448
+    }
+  ],
+  "vinyl-anniversary": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/vinyl-anniversary/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2485
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/vinyl-anniversary/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2880
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/vinyl-anniversary/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/vinyl-anniversary/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/vinyl-anniversary/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 1174
+    }
+  ],
+  "winter-gathering": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2444
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 1606
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/winter-gathering/figma-1012/detail-06.webp",
+      "width": 3840,
+      "height": 1342
+    }
+  ],
+  "miaoshi-brand": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-01.webp",
+      "width": 3553,
+      "height": 1998
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-02.webp",
+      "width": 3553,
+      "height": 1270
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-03.webp",
+      "width": 3553,
+      "height": 1998
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-04.webp",
+      "width": 3553,
+      "height": 1399
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-05.webp",
+      "width": 3553,
+      "height": 1999
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-06.webp",
+      "width": 3553,
+      "height": 1998
+    },
+    {
+      "name": "detail-07",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-07.webp",
+      "width": 3553,
+      "height": 1754
+    },
+    {
+      "name": "detail-08",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-08.webp",
+      "width": 3553,
+      "height": 2065
+    },
+    {
+      "name": "detail-09",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-09.webp",
+      "width": 3553,
+      "height": 2369
+    },
+    {
+      "name": "detail-10",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-10.webp",
+      "width": 3553,
+      "height": 1052
+    },
+    {
+      "name": "detail-11",
+      "src": "/assets/portfolio/miaoshi-brand/figma-1012/detail-11.webp",
+      "width": 3553,
+      "height": 1998
+    }
+  ],
+  "bandao": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2441
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-06.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-07",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-07.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-08",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-08.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-09",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-09.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-10",
+      "src": "/assets/portfolio/bandao/figma-1012/detail-10.webp",
+      "width": 3840,
+      "height": 2160
+    }
+  ],
+  "social-live": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2434
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2065
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 1624
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2606
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 2100
+    },
+    {
+      "name": "detail-06",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-06.webp",
+      "width": 3840,
+      "height": 2536
+    },
+    {
+      "name": "detail-07",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-07.webp",
+      "width": 3840,
+      "height": 2346
+    },
+    {
+      "name": "detail-08",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-08.webp",
+      "width": 3840,
+      "height": 2390
+    },
+    {
+      "name": "detail-09",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-09.webp",
+      "width": 3840,
+      "height": 2347
+    },
+    {
+      "name": "detail-10",
+      "src": "/assets/portfolio/social-live/figma-1012/detail-10.webp",
+      "width": 3840,
+      "height": 2160
+    }
+  ],
+  "design-operations": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/design-operations/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 1338
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/design-operations/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 3271
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/design-operations/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2032
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/design-operations/figma-1012/detail-04.webp",
+      "width": 3840,
+      "height": 2085
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/design-operations/figma-1012/detail-05.webp",
+      "width": 3840,
+      "height": 1920
+    }
+  ],
+  "ai-workshop": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/ai-workshop/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2444
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/ai-workshop/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/ai-workshop/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 4886
+    }
+  ],
+  "lora-training": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/lora-training/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2444
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/lora-training/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2926
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/lora-training/figma-1012/detail-03.webp",
+      "width": 3840,
+      "height": 2918
+    }
+  ],
+  "creative-ai-workflow": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/creative-ai-workflow/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2898
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/creative-ai-workflow/figma-1012/detail-02.webp",
+      "width": 3840,
+      "height": 2414
+    }
+  ],
+  "look-live": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/look-live/figma-1012/detail-01.webp",
+      "width": 1920,
+      "height": 1920
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/look-live/figma-1012/detail-02.webp",
+      "width": 1920,
+      "height": 1920
+    }
+  ],
+  "look-design-yearbook": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/look-design-yearbook/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 2808
+    }
+  ],
+  "visual-explorations": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/visual-explorations/figma-1012/detail-01.webp",
+      "width": 3840,
+      "height": 1042
+    }
+  ],
+  "meetup-plan": [
+    {
+      "name": "detail-01",
+      "src": "/assets/portfolio/meetup-plan/figma-1012/detail-01.webp",
+      "width": 3553,
+      "height": 1998
+    },
+    {
+      "name": "detail-02",
+      "src": "/assets/portfolio/meetup-plan/figma-1012/detail-02.webp",
+      "width": 3553,
+      "height": 1776
+    },
+    {
+      "name": "detail-03",
+      "src": "/assets/portfolio/meetup-plan/figma-1012/detail-03.webp",
+      "width": 3553,
+      "height": 1134
+    },
+    {
+      "name": "detail-04",
+      "src": "/assets/portfolio/meetup-plan/figma-1012/detail-04.webp",
+      "width": 3553,
+      "height": 2395
+    },
+    {
+      "name": "detail-05",
+      "src": "/assets/portfolio/meetup-plan/figma-1012/detail-05.webp",
+      "width": 3553,
+      "height": 1843
+    }
+  ]
+}

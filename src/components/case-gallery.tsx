@@ -1,5 +1,5 @@
 "use client";
-/* Native images use their intrinsic proportions without configured dimensions. */
+/* Export dimensions reserve space; CSS keeps the original aspect ratio. */
 /* eslint-disable @next/next/no-img-element */
 import { ScrollBend } from "./scroll-bend";
 import type { Asset } from "@/lib/site-data";
@@ -19,6 +19,9 @@ export function CaseGallery({
             <img
               src={asset.src}
               alt={`${projectTitle} · ${index + 1}`}
+              width={asset.width}
+              height={asset.height}
+              loading={index === 0 ? "eager" : "lazy"}
               decoding="async"
             />
           </div>

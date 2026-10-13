@@ -11,8 +11,13 @@
  * assets 图片自动撑满详情容器，保持图片原始比例。
  * 新增图片：复制一项并修改 name、src；删除或拖动整项可删图或排序。
  * 修改 slug 会改变详情页网址；新增项目后可将 slug 加入 selectedWork.order。
- * 原始 *-assets.json 仅保留为素材导入记录，页面不再读取它们。
+ * 1012 新版详情图由 figma-project-details.json 覆盖，新增项目见 figma-new-projects.ts。
+ * 网页后台已有 data/content.json 时，以其中内容为准；导入后运行同步脚本。
+ * 原始 portfolio-assets.json 仅保留为早期素材导入记录。
  */
+
+import figmaProjectDetails from "./figma-project-details.json";
+import { figmaNewProjects } from "./figma-new-projects";
 
 export const categories = [
   "全部",
@@ -27,6 +32,9 @@ export type Category = (typeof categories)[number];
 export type Asset = {
   name: string;
   src: string;
+  /** 导出尺寸用于预留图片空间，避免高清图片加载时页面跳动。 */
+  width?: number;
+  height?: number;
   /** 原始裁切坐标，仅导入素材时使用，可省略。 */
   rect?: number[];
 };
@@ -55,7 +63,7 @@ export type Project = {
   approach: string;
   results?: { value: string; label: string }[];
 };
-export const projects: Project[] = [
+const configuredProjects: Project[] = [
   {
     slug: "portfolio-v1",
     title: "Portfolio V1",
@@ -759,9 +767,19 @@ export const projects: Project[] = [
   },
 ];
 
+// Latest chapter exports override only matched galleries; LEMO Studio and
+// projects absent from the source keep their hand-authored content.
+export const projects: Project[] = [
+  ...configuredProjects.map((project) => ({
+    ...project,
+    assets: figmaProjectDetails[project.slug as keyof typeof figmaProjectDetails] ?? project.assets,
+  })),
+  ...figmaNewProjects,
+];
+
 /** 首页展示顺序；compact 中的项目使用小尺寸卡片。 */
 export const selectedWork = {
-  order: ["portfolio-v1", "lemo-ai", "cucumber", "welcome-lemon8", "lemon8-campaigns", "vinyl-anniversary", "social-live", "bandao", "look-live", "inner-species", "miaoshi-brand", "meetup-plan", "winter-gathering", "youth-album", "design-operations"],
+  order: ["portfolio-v1", "lemo-ai", "cucumber", "welcome-lemon8", "lemon8-campaigns", "vinyl-anniversary", "social-live", "bandao", "look-live", "inner-species", "miaoshi-brand", "meetup-plan", "winter-gathering", "youth-album", "design-operations", ...figmaNewProjects.map(project => project.slug)],
   compact: ["miaoshi-brand", "inner-species", "lemon8-campaigns", "meetup-plan", "youth-album", "design-operations"],
 };
 
