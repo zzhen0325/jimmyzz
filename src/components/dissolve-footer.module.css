@@ -2,7 +2,7 @@
   min-height: 100svh;
   background: #fff;
   color: #0b0b0b;
-  font-family: "Apfel Grotezk", var(--font-bdo), sans-serif;
+  font-family: var(--font-sans);
   display: flex;
   flex-direction: column;
 }

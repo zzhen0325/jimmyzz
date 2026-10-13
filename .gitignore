@@ -47,3 +47,6 @@ next-env.d.ts
 /.open-next/
 /.wrangler/
 .dev.vars*
+
+# Generated from pinned FFmpeg packages before dev/build
+/public/assets/video-transcoder/

@@ -61,7 +61,7 @@ export function RisographVideo({
       }
       labelContext.setTransform(labels.width / labelWidth, 0, 0, labels.height / labelHeight, 0, 0);
       labelContext.clearRect(0, 0, labelWidth, labelHeight);
-      labelContext.font = `${labelWidth < 600 ? 7 : 8}px monospace`;
+      labelContext.font = `${labelWidth < 600 ? 7 : 8}px "Geist Mono", "MiSans VF", monospace`;
       labelContext.textBaseline = "top";
       const positions = renderer.getWindowPositions();
       const rotations = renderer.getWindowRotations();

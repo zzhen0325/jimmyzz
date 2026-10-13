@@ -47,6 +47,8 @@ function TimelineRow({ entry, cover, reveal = true }: { entry: TimelineEntry; co
 
 export function RelatedProjectList({ entries }: { entries: (TimelineEntry & { cover: string })[] }) {
   const [expanded, setExpanded] = useState(false);
+  const label = expanded ? "Less" : "More";
+  const interaction = useTextRollInteraction(textRollDuration(label));
   const visible = expanded ? entries : entries.slice(0, 5);
   return (
     <section className="timeline-section case-project-list" aria-label="更多项目">
@@ -54,8 +56,8 @@ export function RelatedProjectList({ entries }: { entries: (TimelineEntry & { co
         {visible.map((entry) => <TimelineRow key={entry.slug} entry={entry} cover={entry.cover} reveal={false} />)}
       </ul>
       {entries.length > 5 && (
-        <button className="case-project-more" type="button" aria-expanded={expanded} aria-controls="related-projects" onClick={() => setExpanded((value) => !value)}>
-          {expanded ? "Less" : "More"}
+        <button className="case-project-more" type="button" aria-label={label} aria-expanded={expanded} aria-controls="related-projects" {...interaction} onClick={() => setExpanded((value) => !value)}>
+          <TextRoll>{label}</TextRoll>
         </button>
       )}
     </section>

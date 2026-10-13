@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { projectRevealFrame } from "@/lib/project-reveal";
+import { projectRevealFrame, projectRevealTiming } from "@/lib/project-reveal";
 import { playSound } from "@/lib/site-sound";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -71,16 +71,22 @@ export function ProjectTransition() {
     // A committed route (including browser-history interruption) can be revealed.
     const curtain = root.current;
     animation.current?.kill();
-    animation.current = gsap.timeline({ onComplete: () => {
+    const reveal = gsap.timeline({ onComplete: () => {
       finish();
       const heading = document.querySelector<HTMLElement>(".case-intro h1");
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
     } })
       .fromTo(curtain,
         projectRevealFrame(window.innerWidth, window.innerHeight, false),
-        { ...projectRevealFrame(window.innerWidth, window.innerHeight, true), duration: 1.25, ease: "none" },
-        .08,
+        { ...projectRevealFrame(window.innerWidth, window.innerHeight, true), duration: projectRevealTiming.duration, ease: "none" },
+        projectRevealTiming.start,
       );
+    // Run after the destination has mounted; its entrance joins this timeline
+    // while the gradient opens, rather than starting after finish().
+    reveal.call(() => {
+      window.dispatchEvent(new CustomEvent("project-transition-reveal", { detail: reveal }));
+    }, [], projectRevealTiming.start);
+    animation.current = reveal;
   }, { scope: root, dependencies: [pathname, finish], revertOnUpdate: false });
 
   return <div ref={root} className="route-curtain" data-active="false" aria-hidden="true" />;

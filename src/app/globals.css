@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* Latin comes first; Chinese glyphs fall through to the local MiSans subsets. */
+@theme {
+  --font-sans: "Apfel Grotezk", "MiSans VF", sans-serif;
+  --font-mono: "Geist Mono", "MiSans VF", monospace;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/geist-mono-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+}
+
 :root {
   --muted: #a0a09a;
   --line: rgba(244, 242, 237, 0.17);
@@ -986,7 +1004,7 @@ button {
   margin: -4px 0 0 -22px;
   border-radius: 0 5px 5px 0;
   color: var(--muted);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   transition: background-color 180ms, color 180ms;
 }
@@ -1022,7 +1040,7 @@ button {
   display: block;
   margin-top: 24px;
   color: var(--muted);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.8;
 }
@@ -1086,6 +1104,11 @@ button {
   max-width: calc(100vw - 16px);
   box-sizing: border-box;
   overflow-wrap: anywhere;
+}
+.hover-label[data-project-cover="true"] {
+  background: #fff;
+  color: #000;
+  outline: 1px solid #000;
 }
 .hover-label[data-visible="true"] { opacity: 1; }
 .hover-label-character { display: inline-block; }
@@ -1713,7 +1736,7 @@ button {
   font-display: swap;
 }
 .home-page {
-  font-family: "Apfel Grotezk", var(--font-bdo), "PingFang SC", sans-serif;
+  font-family: var(--font-sans);
 }
 .profile-introduction {
   display: grid;

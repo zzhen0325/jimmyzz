@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ScrollBend } from "./scroll-bend";
 import Image from "next/image";
+import { isVideoAsset } from "@/lib/media";
 import type { Asset } from "@/lib/site-data";
 
 export function CaseGallery({
@@ -17,7 +18,18 @@ export function CaseGallery({
       {assets.map((asset, index) => (
         <section key={asset.name} id={asset.name} className="case-chapter">
           <div className="chapter-image" data-work-skew>
-            {asset.width && asset.height ? <Image
+            {isVideoAsset(asset.src) ? <video
+              src={asset.src}
+              aria-label={`${projectTitle} · 视频 ${index + 1}`}
+              width={asset.width}
+              height={asset.height}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              style={asset.width && asset.height ? { aspectRatio: `${asset.width} / ${asset.height}` } : undefined}
+            /> : asset.width && asset.height ? <Image
               src={asset.src}
               alt={`${projectTitle} · ${index + 1}`}
               width={asset.width}

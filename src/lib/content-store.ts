@@ -4,6 +4,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { initialContent, type Content } from './content';
 import { cloudflareStorage } from './cloudflare-storage';
+import { defaultProjectTheme, isThemeColor } from './project-theme';
 export const contentDirectory = process.env.CONTENT_DIR || path.join(process.cwd(), 'data');
 export async function readContent(): Promise<Content> {
   const storage = cloudflareStorage();
@@ -36,6 +37,10 @@ export function validateContent(value: unknown): asserts value is Content {
   for (const p of c.projects) {
     if (!p || !/^[a-z0-9-]+$/.test(p.slug) || ids.has(p.slug) || !p.title?.trim() || !media(p.selectedWorkCover) || !media(p.thumbnail)) fail();
     ids.add(p.slug);
+    if (p.detailTheme !== undefined && (
+      !p.detailTheme || typeof p.detailTheme !== 'object' || Array.isArray(p.detailTheme) ||
+      Object.entries(p.detailTheme).some(([key, value]) => !Object.hasOwn(defaultProjectTheme, key) || !isThemeColor(value))
+    )) throw new Error(`“${p.title}”的详情页颜色格式有误，请使用 #RGB 或 #RRGGBB 色值。`);
     for (const key of ['english','kind','client','summary','description','challenge','approach'] as const) if (typeof p[key] !== 'string') fail();
     if (!Array.isArray(p.tags) || p.tags.some(t => typeof t !== 'string') || !Array.isArray(p.assets) || p.assets.some(a => !a.name || !media(a.src)) || new Set(p.assets.map(a=>a.name)).size !== p.assets.length) fail();
     if (p.hoverVideo && !media(p.hoverVideo)) fail();

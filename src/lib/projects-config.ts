@@ -18,6 +18,7 @@
 
 import figmaProjectDetails from "./figma-project-details.json";
 import { figmaNewProjects } from "./figma-new-projects";
+import type { ProjectTheme } from "./project-theme";
 
 export const categories = [
   "全部",
@@ -58,6 +59,8 @@ export type Project = {
   summary: string;
   tags: string[];
   color: string;
+  /** 详情页独立配色；省略时使用默认白底黑字。 */
+  detailTheme?: ProjectTheme;
   description: string;
   challenge: string;
   approach: string;

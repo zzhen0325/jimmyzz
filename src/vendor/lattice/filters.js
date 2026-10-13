@@ -262,7 +262,7 @@ export function createLatticeFilters(sctx, deps) {
       sctx.fillStyle = "#040404";
       sctx.fillRect(px, py, pw, ph);
     }
-    sctx.font = (options.asciiWeight || 400) + " " + cell + 'px ui-monospace, "SF Mono", Menlo, monospace'; // glyph matches the cell: a touch bigger, still fits the dense grid
+    sctx.font = (options.asciiWeight || 400) + " " + cell + 'px "Geist Mono", "MiSans VF", monospace'; // glyph matches the cell: a touch bigger, still fits the dense grid
     sctx.textBaseline = "middle";
     sctx.textAlign = "center";
     for (let r = 0; r < rows; r++) {
@@ -414,7 +414,7 @@ export function createLatticeFilters(sctx, deps) {
       hx: cellCX(k.c),
       hy: cellCY(k.r),
     }));
-    sctx.font = '7px ui-monospace, "SF Mono", Menlo, monospace';
+    sctx.font = '7px "Geist Mono", "MiSans VF", monospace';
     const boxes = anns.map((a) => {
       const label =
         String(a.k.c).padStart(2, "0") + "," + String(a.k.r).padStart(2, "0");
@@ -448,7 +448,7 @@ export function createLatticeFilters(sctx, deps) {
   function drawMosaicAnnotations() {
     if (!MOSAIC_ANNS.length) return;
     sctx.save();
-    sctx.font = '7px ui-monospace, "SF Mono", Menlo, monospace';
+    sctx.font = '7px "Geist Mono", "MiSans VF", monospace';
     // Connectors first (white), so the boxes and hexes sit on top.
     for (const bo of MOSAIC_ANNS) {
       const bcx = bo.bx + (bo.bx + bo.bw / 2 < bo.hx ? bo.bw : 0);
@@ -690,7 +690,7 @@ export function createLatticeFilters(sctx, deps) {
           String(nx).padStart(2, "0") +
           "," +
           String(ny).padStart(2, "0");
-        sctx.font = '7px ui-monospace, "SF Mono", Menlo, monospace';
+        sctx.font = '7px "Geist Mono", "MiSans VF", monospace';
         const bw = sctx.measureText(label).width + 6;
         let bx = p[0] + 5,
           by = p[1] - 12;

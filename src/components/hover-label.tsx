@@ -1,13 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import localFont from "next/font/local";
-
-const geistMono = localFont({
-  src: "../../public/assets/fonts/geist-mono-latin.woff2",
-  display: "swap",
-  weight: "100 900",
-});
 
 const SMILEYS = ["(＾▽＾)", "(◕‿◕)", "(^‿^)", "(≧◡≦)"];
 
@@ -67,7 +60,8 @@ export function HoverLabel() {
         : document.documentElement;
       const customText = surface.dataset.hoverLabel?.trim();
       usesDefaultLabel = !customText;
-      element.style.fontFamily = usesDefaultLabel ? geistMono.style.fontFamily : "";
+      element.dataset.projectCover = String(surface.matches('a[href^="/work/"]'));
+      element.style.fontFamily = usesDefaultLabel ? "var(--font-mono)" : "";
       const text = customText || SMILEYS[smileyIndex];
       if (active !== surface || activeText !== text) {
         if (active !== surface) {

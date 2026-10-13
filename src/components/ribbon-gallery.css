@@ -16,7 +16,7 @@
 .is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(28vw, 385px); will-change: transform; }
 .is-animated .ribbon-playhead { display: block; }
 .ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; }
-.ribbon-count { font: 20px Georgia, serif; }
+.ribbon-count { font: 20px var(--font-sans); }
 .ribbon-count small { font-size: 12px; color: #a4a39e; }
 .ribbon-title { text-align: center; }
 .ribbon-title > span { display: block; font-size: clamp(16px, 2vw, 26px); }

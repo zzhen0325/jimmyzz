@@ -4,12 +4,13 @@ import { readFile } from "node:fs/promises";
 import { imageSize } from "image-size";
 import { cloudflareStorage } from "./cloudflare-storage";
 import { contentDirectory } from "./content-store";
+import { isVideoAsset } from "./media";
 import type { Asset } from "./projects-config";
 
 /** Older galleries and CMS uploads may not include their intrinsic dimensions. */
 export async function resolveCaseImageMetadata(assets: Asset[]): Promise<Asset[]> {
   return Promise.all(assets.map(async (asset) => {
-    if (asset.width && asset.height) return asset;
+    if (isVideoAsset(asset.src) || (asset.width && asset.height)) return asset;
     if (!asset.src.startsWith('/assets/') && !asset.src.startsWith('/media/')) return asset;
     const storage = cloudflareStorage();
     if (storage) {

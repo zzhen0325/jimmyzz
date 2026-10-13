@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import Script from "next/script";
+import "./misans.css";
 import "./globals.css";
 import "@/components/portfolio-system.css";
 import { ProjectTransition } from "@/components/project-transition";
 import { GlobalChrome } from "@/components/site-chrome";
 import { SiteSound } from "@/components/site-sound";
 import { SmoothScroll } from "@/components/smooth-scroll";
-
-const bdo = localFont({
-  src: "../../public/assets/fonts/bdo-grotesk.woff2",
-  variable: "--font-bdo",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   icons: {
@@ -27,11 +21,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN" className={`${bdo.variable} bg-[#090909] scroll-auto`}>
+    <html lang="zh-CN" className="bg-[#090909] scroll-auto">
       <head>
+        <link rel="preload" href="/assets/fonts/apfel-grotezk-regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <Script src="/figma-export-prep.js" strategy="beforeInteractive" />
       </head>
-      <body className="m-0 overflow-x-hidden bg-[#090909] font-[family-name:var(--font-bdo)] text-[15px] leading-[1.25] text-[#f4f2ed] [--page-pad:40px] selection:bg-[#db3903] selection:text-[#f4f2ed] max-[1199px]:[--page-pad:24px] max-[809px]:text-[13px] max-[809px]:[--page-pad:16px] [&_a]:text-inherit [&_a]:no-underline [&_button]:cursor-pointer">
+      <body className="m-0 overflow-x-hidden bg-[#090909] font-sans text-[15px] leading-[1.25] text-[#f4f2ed] [--page-pad:40px] selection:bg-[#db3903] selection:text-[#f4f2ed] max-[1199px]:[--page-pad:24px] max-[809px]:text-[13px] max-[809px]:[--page-pad:16px] [&_a]:text-inherit [&_a]:no-underline [&_button]:cursor-pointer">
         <SmoothScroll />
         <SiteSound />
         {children}

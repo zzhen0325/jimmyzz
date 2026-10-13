@@ -7,6 +7,8 @@ import { RelatedProjectList } from "@/components/experience-timeline";
 import { CaseGallery } from "@/components/case-gallery";
 import { readContent } from "@/lib/content-store";
 import { resolveCaseImageMetadata } from "@/lib/case-image-metadata";
+import { projectThemeStyle } from "@/lib/project-theme";
+import { ProjectEntrance } from "@/components/project-entrance";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
@@ -41,7 +43,7 @@ export default async function ProjectPage({
     cover: item.thumbnail,
   }));
   return (
-    <main id="top" className="case-page">
+    <ProjectEntrance key={slug} style={projectThemeStyle(project.detailTheme)}>
       <ProjectHeader />
       <article className="case-editorial mx-[var(--page-pad)] grid grid-cols-[var(--portfolio-grid)] items-start gap-x-[var(--grid-gap)] pb-[clamp(64px,8vw,128px)] max-[599px]:gap-y-10">
         <ProjectCopy>
@@ -81,11 +83,11 @@ export default async function ProjectPage({
 
         </div>
         </ProjectCopy>
-        <div className="case-visuals col-[5/-1] min-w-0 max-[599px]:col-[1/-1]" aria-label={`${project.title}作品长图`}>
+        <div className="case-visuals col-[5/-1] min-w-0 max-[599px]:col-[1/-1]" aria-label={`${project.title}作品素材`}>
           <CaseGallery assets={assets} projectTitle={project.title} />
         </div>
       </article>
       <RelatedProjectList key={slug} entries={relatedProjects} />
-    </main>
+    </ProjectEntrance>
   );
 }
