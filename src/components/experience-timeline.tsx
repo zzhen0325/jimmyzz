@@ -3,7 +3,7 @@
 import { ScrambleText } from "./scramble-text";
 import { useState } from "react";
 
-import Image from "next/image";
+import Image from "./content-image";
 import Link from "next/link";
 import { TextRoll, textRollDuration, useTextRollInteraction } from "./text-roll";
 import { ArrowRight } from "lucide-react";

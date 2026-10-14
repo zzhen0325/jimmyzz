@@ -2,7 +2,7 @@
 /* Export dimensions reserve space; CSS keeps the original aspect ratio. */
 /* eslint-disable @next/next/no-img-element */
 import { ScrollBend } from "./scroll-bend";
-import Image from "next/image";
+import Image from "./content-image";
 import { isVideoAsset } from "@/lib/media";
 import type { Asset } from "@/lib/site-data";
 

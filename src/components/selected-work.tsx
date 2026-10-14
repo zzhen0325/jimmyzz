@@ -2,7 +2,7 @@
 
 import { ScrambleText } from "./scramble-text";
 
-import Image from "next/image";
+import Image from "./content-image";
 import Link from "next/link";
 import { type CSSProperties } from "react";
 import { ScrollBend } from "./scroll-bend";

@@ -7,7 +7,7 @@ import { useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { useContent } from "./content-provider";
-import Image from "next/image";
+import Image from "./content-image";
 import "./ribbon-gallery.css";
 
 export function CurveGallery() {
