@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import styles from "./dissolve-footer.module.css";
 
 // Reference palette: white → blue halo → pink core → pale lime inner core.
@@ -11,12 +11,8 @@ const stops = [
   { at: 1, rgb: [234, 255, 158] },
 ];
 
-export function DissolveFooter({ children }: { children: ReactNode }) {
+export function DissolveFooter() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(false);
-
-  useEffect(() => { pausedRef.current = paused; }, [paused]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,7 +54,7 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
 
     const resetPointer = () => { pointer.x = 0; pointer.y = 0; };
     const movePointer = (event: PointerEvent) => {
-      if (event.pointerType === "touch" || pausedRef.current || motion.matches) return;
+      if (event.pointerType === "touch" || motion.matches) return;
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       pointer.x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
@@ -156,12 +152,12 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
       if (disposed || !visible || document.hidden) return;
       const elapsed = lastTime ? now - lastTime : 0;
       if (elapsed >= 1000 / 24 || !lastTime || dirty) {
-        if (!pausedRef.current && !motion.matches) {
+        if (!motion.matches) {
           const delta = Math.min(elapsed, 80);
           time += delta / 1000;
           followPointer(delta);
         }
-        if (dirty || (!pausedRef.current && !motion.matches)) draw();
+        if (dirty || (!motion.matches)) draw();
         lastTime = now;
       }
       if (!motion.matches) frame = requestAnimationFrame(tick);
@@ -213,11 +209,7 @@ export function DissolveFooter({ children }: { children: ReactNode }) {
         <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
         <span className={styles.fallback} aria-hidden="true">Jimmyzz</span>
         <span className={styles.srOnly}>Jimmyzz</span>
-        <button className={styles.pause} type="button" aria-pressed={paused} onClick={() => setPaused(value => !value)}>
-          {paused ? "播放动效" : "暂停动效"}
-        </button>
       </div>
-      {children}
     </footer>
   );
 }

@@ -1,3 +1,4 @@
+import { getVideoLayers } from './video-layers';
 import type { Content } from './content';
 
 export function uploadedFileName(src: unknown): string | null {
@@ -7,8 +8,8 @@ export function uploadedFileName(src: unknown): string | null {
 
 export function uploadedReferences(content: Content): Set<string> {
   const sources = content.projects.flatMap(project => [
-    project.thumbnail, project.selectedWorkCover, project.hoverVideo,
-    ...project.assets.map(asset => asset.src),
+    project.thumbnail, project.selectedWorkCover, project.hoverVideo, project.homeCover?.src,
+    ...project.assets.flatMap(asset => [asset.src, ...getVideoLayers(asset).map(layer => layer.src)]),
   ]);
   sources.push(...content.gallery.map(item => item.src));
   return new Set(sources.filter((src): src is string => uploadedFileName(src) !== null));

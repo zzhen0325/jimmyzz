@@ -1108,7 +1108,6 @@ button {
 .hover-label[data-project-cover="true"] {
   background: #000;
   color: #fff;
-  outline: 1px solid #fff;
 }
 .hover-label[data-visible="true"] { opacity: 1; }
 .hover-label-character { display: inline-block; }

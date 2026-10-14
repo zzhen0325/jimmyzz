@@ -1,4 +1,5 @@
 import 'server-only';
+import { getVideoLayers } from './video-layers';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -36,6 +37,7 @@ export function validateContent(value: unknown): asserts value is Content {
   const ids = new Set<string>();
   for (const p of c.projects) {
     if (!p || !/^[a-z0-9-]+$/.test(p.slug) || ids.has(p.slug) || !p.title?.trim() || !media(p.selectedWorkCover) || !media(p.thumbnail)) fail();
+    if (p.homeCover !== undefined && (!p.homeCover || !media(p.homeCover.source) || !media(p.homeCover.src))) fail();
     ids.add(p.slug);
     if (p.detailTheme !== undefined && (
       !p.detailTheme || typeof p.detailTheme !== 'object' || Array.isArray(p.detailTheme) ||
@@ -43,6 +45,17 @@ export function validateContent(value: unknown): asserts value is Content {
     )) throw new Error(`“${p.title}”的详情页颜色格式有误，请使用 #RGB 或 #RRGGBB 色值。`);
     for (const key of ['english','kind','client','summary','description','challenge','approach'] as const) if (typeof p[key] !== 'string') fail();
     if (!Array.isArray(p.tags) || p.tags.some(t => typeof t !== 'string') || !Array.isArray(p.assets) || p.assets.some(a => !a.name || !media(a.src)) || new Set(p.assets.map(a=>a.name)).size !== p.assets.length) fail();
+    for (const asset of p.assets) {
+      if (asset.videoLayers !== undefined && (!Array.isArray(asset.videoLayers) || asset.videoLayers.length > 20 || asset.videoLayer !== undefined)) fail();
+      if (asset.videoLayer === null) fail();
+      for (const layer of getVideoLayers(asset)) {
+      if (layer !== undefined && (!layer || !media(layer.src) || !/\.(webm|mp4|mov)$/i.test(layer.src) || /\.(webm|mp4|mov)$/i.test(asset.src) ||
+        !['above', 'below'].includes(layer.order) || !['cover', 'contain', 'center-crop'].includes(layer.fit) ||
+        [layer.x, layer.y, layer.width, layer.height, layer.radius].some(n => !Number.isFinite(n)) ||
+        layer.x < 0 || layer.y < 0 || layer.width <= 0 || layer.height <= 0 ||
+        layer.x + layer.width > 100.001 || layer.y + layer.height > 100.001 || layer.radius < 0 || layer.radius > 50)) fail();
+      }
+    }
     for (const key of ['infoProjectName', 'date'] as const) if (p[key] !== undefined && typeof p[key] !== 'string') fail();
     if (p.hoverVideo && !media(p.hoverVideo)) fail();
     if (p.results !== undefined && (!Array.isArray(p.results) || p.results.some(r => !r || typeof r.label !== 'string' || typeof r.value !== 'string'))) fail();

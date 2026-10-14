@@ -7,11 +7,13 @@ import { useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { useContent } from "./content-provider";
+import { homeCoverSource } from "@/lib/home-cover";
 import Image from "./content-image";
 import "./ribbon-gallery.css";
 
 export function CurveGallery() {
-  const { gallery: images } = useContent();
+  const { gallery: images, projects } = useContent();
+  const projectsBySlug = new Map(projects.map(project => [project.slug, project]));
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const jump = useRef<(index: number) => void>(() => {});
@@ -323,15 +325,17 @@ export function CurveGallery() {
         <div className="ribbon-guides" aria-hidden="true" />
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
-          {images.map((item, i) => (
+          {images.map((item, i) => {
+            const cover = homeCoverSource(item.src, projectsBySlug.get(item.sourceProject || ""));
+            return (
             <div tabIndex={0} className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} data-hover-label={item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={item.title}>
               <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
                 ? <video src={item.src} preload="metadata" muted loop playsInline aria-label={item.title} />
-                : <Image src={item.src} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 84vw, 56vw" draggable={false} />
+                : <Image unoptimized={cover !== item.src} src={cover} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 84vw, 56vw" draggable={false} />
               }</span>
             </div>
-          ))}
+          ); })}
         </div>
         <div className="ribbon-footer">
           <span className="ribbon-count"><ScrambleText>{String(activeIndex + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>

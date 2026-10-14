@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { categories, type Project } from '@/lib/projects-config';
 import { syncGallery, type Content } from '@/lib/content';
 import { notifyContentSaved } from '@/lib/content-updates';
+import { VideoLayerEditor, defaultVideoLayer } from './video-layer-editor';
+import { getVideoLayers } from '@/lib/video-layers';
+import { LayeredMedia } from '@/components/layered-media';
 import { ProjectThemeEditor } from './project-theme-editor';
 import './admin.css';
+import { compressHomeCover } from '@/lib/compress-home-cover';
 import { isVideoAsset } from '@/lib/media';
 import { transcodeVideo, isVideoFile, isWebMFile, formatMB } from '@/lib/video-transcode';
 function Preview({ src }: { src: string }) { return src ? isVideoAsset(src) ? <video src={src} muted controls preload="metadata" /> : <img src={src} alt="素材预览" loading="lazy" /> : <span className="placeholder">上传一张封面，开始你的新项目</span>; }
@@ -88,14 +92,58 @@ export function AdminEditor({ initial }: { initial: Content }) {
       for (const [index, file] of pending.entries()) {
         const result = await upload(file, text => setMessage(`${index + 1}/${pending.length} · ${file.name}：${text}`), controller.signal);
         cleanupCandidates.current.push(result.src);
+        let homeCover: Project['homeCover'];
+        if (kind === 'cover') {
+          setMessage('正在生成高质量首页封面…');
+          const compressedCover = await compressHomeCover(file);
+          if (compressedCover) {
+            const derivative = await upload(compressedCover, setMessage, controller.signal);
+            cleanupCandidates.current.push(derivative.src);
+            homeCover = { source: result.src, src: derivative.src };
+          }
+        }
         const { summary, ...r } = result; lastSummary = summary;
-        update(d => kind === 'gallery' ? { ...d, gallery: [...d.gallery, { ...r, scale: 1 }] } : { ...d, projects: d.projects.map(p => p.slug !== target ? p : kind === 'cover' ? { ...p, selectedWorkCover: r.src, thumbnail: r.src, coverWidth: r.width, coverHeight: r.height } : kind === 'hover' ? { ...p, hoverVideo: r.src } : { ...p, assets: [...p.assets, { name: r.name, src: r.src, width: r.width, height: r.height }] }) });
+        update(d => kind === 'gallery' ? { ...d, gallery: [...d.gallery, { ...r, scale: 1 }] } : { ...d, projects: d.projects.map(p => p.slug !== target ? p : kind === 'cover' ? { ...p, homeCover, selectedWorkCover: r.src, thumbnail: r.src, coverWidth: r.width, coverHeight: r.height } : kind === 'hover' ? { ...p, hoverVideo: r.src } : { ...p, assets: [...p.assets, { name: r.name, src: r.src, width: r.width, height: r.height }] }) });
         completed++;
       }
       setMessage(`上传完成${lastSummary ? `（${lastSummary}）` : ''}，点击保存后生效`);
     } catch(e) {
       setMessage(`${controller.signal.aborted ? '已取消处理' : (e as Error).message}${completed ? `；已上传 ${completed} 个素材，点击保存后生效` : ''}`);
     } finally { uploadController.current = null; setBusy(false); }
+  }
+  async function uploadLayer(file: File, name: string, index?: number) {
+    if (busy) return;
+    if (!isVideoFile(file)) { setMessage('请选择视频文件'); return; }
+    const target = selected;
+    const controller = new AbortController(); uploadController.current = controller;
+    setBusy(true); setMessage('正在准备叠层视频…');
+    try {
+      const result = await upload(file, setMessage, controller.signal);
+      cleanupCandidates.current.push(result.src);
+      update(d => ({ ...d, projects: d.projects.map(p => p.slug !== target ? p : { ...p, assets: p.assets.map(a => a.name !== name ? a : { ...a, videoLayer: undefined, videoLayers: index === undefined ? [...getVideoLayers(a), defaultVideoLayer(result.src)] : getVideoLayers(a).map((layer, i) => i === index ? { ...layer, src: result.src } : layer) }) }) }));
+      setMessage('视频图层已添加，可展开调整对齐，保存后生效');
+    } catch (e) { setMessage(controller.signal.aborted ? '已取消处理' : (e as Error).message); }
+    finally { uploadController.current = null; setBusy(false); }
+  }
+  async function replaceAssetImage(file: File | undefined, name: string) {
+    if (!file || busy) return;
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif'].includes(file.type)) {
+      setMessage('请选择 PNG、JPEG、WebP、GIF 或 AVIF 图片');
+      return;
+    }
+    const target = selected;
+    const controller = new AbortController(); uploadController.current = controller;
+    setBusy(true); setMessage('正在准备替换图片…');
+    try {
+      const result = await upload(file, setMessage, controller.signal);
+      cleanupCandidates.current.push(result.src);
+      update(d => ({ ...d, projects: d.projects.map(p => p.slug !== target ? p : {
+        ...p,
+        assets: p.assets.map(a => a.name !== name ? a : { ...a, src: result.src, width: result.width, height: result.height }),
+      }) }));
+      setMessage('图片已替换，原顺序和视频叠层设置已保留，点击保存后生效');
+    } catch (e) { setMessage(controller.signal.aborted ? '已取消处理，原图片未改变' : (e as Error).message); }
+    finally { uploadController.current = null; setBusy(false); }
   }
   async function replaceGallery(file: File | undefined, name: string) {
     if (!file) return;
@@ -106,6 +154,11 @@ export function AdminEditor({ initial }: { initial: Content }) {
   }
   const uploader = (kind: 'cover' | 'assets' | 'gallery' | 'hover', text: string) => <label className="upload">{text}<input type="file" aria-label={text} accept={kind === 'hover' ? 'video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm' : kind === 'gallery' || kind === 'assets' ? 'image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm' : 'image/png,image/jpeg,image/webp,image/gif,image/avif'} multiple={kind === 'assets' || kind === 'gallery'} onChange={e => { void files(e.target.files, kind); e.target.value = ''; }} /></label>;
   function add() { const slug = `project-${crypto.randomUUID().slice(0, 8)}`; const p: Project = { slug, title: '未命名项目', english: '', kind: '视觉探索', client: '', summary: '', tags: [], color: '#eeeeee', description: '', challenge: '', approach: '', thumbnail: '', selectedWorkCover: '', assets: [] }; update(d => ({ ...d, projects: [...d.projects, p], selectedWork: { ...d.selectedWork, order: [...d.selectedWork.order, slug] } })); setSelected(slug); }
+  function deleteProject() {
+    if (!project) return;
+    if (busy || !confirm(`删除“${project.title}”？自动加入的封面也会移除，单独上传的底部素材会保留，保存后生效。`)) return; update(d=>({...d,projects:d.projects.filter(p=>p.slug!==selected),selectedWork:{order:d.selectedWork.order.filter(s=>s!==selected),compact:d.selectedWork.compact.filter(s=>s!==selected)},sizes:Object.fromEntries(Object.entries(d.sizes).filter(([s])=>s!==selected)),gallery:d.gallery.filter(g=>g.sourceProject!==selected)})); setSelected(data.projects.find(p=>p.slug!==selected)?.slug || '');
+    setMessage(`已移除“${project.title}”，点击保存修改后生效`);
+  }
   return <main className="admin" data-sound="off">
     <header className="admin-header"><a href="/" target="_blank" rel="noreferrer" className="wordmark">ZZ<span> / 内容管理</span></a><div className="admin-actions"><span role="status" aria-live="polite">{message || (dirty ? '有未保存的修改' : '所有修改已保存')}</span><a href="/" target="_blank" rel="noreferrer">查看网站 ↗</a><button className="primary" disabled={busy || !dirty} onClick={save}>{busy ? '处理中…' : '保存修改'}</button></div></header>
     <div className="admin-heading"><div><p>YOUR SPACE, YOUR WORK.</p><h1>让作品保持更新。</h1></div><p>上传、整理、保存。就这么简单。</p></div>
@@ -113,7 +166,7 @@ export function AdminEditor({ initial }: { initial: Content }) {
     {message && <div className="upload-feedback" role="status"><span>{message}</span>{busy && uploadController.current && <button type="button" onClick={() => uploadController.current?.abort()}>取消处理</button>}</div>}
     <fieldset disabled={busy} className="admin-body">
     {tab === 'projects' ? <div className="editor-layout"><aside><div className="list-heading"><span>项目顺序</span><button onClick={add}>＋ 新建项目</button></div><p className="hint">箭头调整首页顺序；隐藏后详情页仍可访问。</p><div className="project-list">{ordered.map(slug => { const p = data.projects.find(p => p.slug === slug)!; const index = data.selectedWork.order.indexOf(slug); return <div key={slug} className={`project-row ${selected === slug ? 'active' : ''}`}><button className="project-select" onClick={() => setSelected(slug)}><div className="mini"><Preview src={p.thumbnail} /></div><span>{p.title}<small>{index < 0 ? '首页隐藏' : `${String(index + 1).padStart(2, '0')} / 首页展示`}</small></span></button>{index >= 0 && <Sort index={index} count={data.selectedWork.order.length} onMove={to => update(d => ({ ...d, selectedWork: { ...d.selectedWork, order: move(d.selectedWork.order, index, to) } }))} />}</div>; })}</div></aside>
-    {project ? <section className="project-editor" key={project.slug}><div className="section-top"><h2>{project.title}</h2><a href={`/work/${project.slug}`} target="_blank" rel="noreferrer">查看详情 ↗</a></div><div className="cover-preview"><Preview src={project.selectedWorkCover} /></div><div className="upload-bar">{uploader('cover', '上传 / 替换封面')}{uploader('hover', '上传悬停视频')}{project.hoverVideo && <button onClick={() => patch({ hoverVideo: '' })}>移除悬停视频</button>}<span className="hint">图片 / WebM ≤ 30MB，WebM 原文件直传；MOV / MP4 ≤ 200MB，按原宽高 70% 转为高质量 WebM</span></div>
+    {project ? <section className="project-editor" key={project.slug}><div className="section-top"><h2>{project.title}</h2><div className="project-heading-actions"><a href={`/work/${project.slug}`} target="_blank" rel="noreferrer">查看详情 ↗</a><button type="button" className="danger" onClick={deleteProject}>删除项目</button></div></div><div className="cover-preview"><Preview src={project.selectedWorkCover} /></div><div className="upload-bar">{uploader('cover', '上传 / 替换封面')}{uploader('hover', '上传悬停视频')}{project.hoverVideo && <button onClick={() => patch({ hoverVideo: '' })}>移除悬停视频</button>}<span className="hint">图片 / WebM ≤ 30MB，WebM 原文件直传；MOV / MP4 ≤ 200MB，按原宽高 70% 转为高质量 WebM</span></div>
     <section className="project-copy-fields" aria-label="详情页文字配置">
       <h3>Info · 项目信息</h3>
       <div className="fields">
@@ -138,8 +191,8 @@ export function AdminEditor({ initial }: { initial: Content }) {
     <label className="check"><input type="checkbox" checked={data.selectedWork.order.includes(selected)} onChange={e => update(d => ({ ...d, selectedWork: { ...d.selectedWork, order: e.target.checked ? [...d.selectedWork.order, selected] : d.selectedWork.order.filter(s => s !== selected) } }))} />在首页展示</label>
     {project.slug === 'portfolio-v1' ? <p className="hint">Portfolio V1 使用独立交互页面，不应用详情页配色。</p> : <ProjectThemeEditor theme={project.detailTheme} title={project.title} onChange={detailTheme => patch({ detailTheme })} />}
 
-    <div className="section-top"><h2>详情素材 <small>{project.assets.length}</small></h2>{uploader('assets', '＋ 上传图片 / 视频')}</div><p className="hint">图片和视频按顺序混排，保留原始比例。移除或替换后，保存时会删除未被其他位置引用的上传文件。WebM（≤ 30MB）原文件直传；MP4 / MOV（≤ 200MB）按原宽高 70% 转为高质量静音 WebM，处理后 ≤ 30MB。{project.slug === 'portfolio-v1' && '此项目使用独立交互页面，详情素材不参与展示。'}</p><div className="asset-grid">{project.assets.map((a,i)=><div className="asset" key={a.name}><Preview src={a.src} /><Sort index={i} count={project.assets.length} onMove={to=>patch({assets:move(project.assets,i,to)})} onRemove={()=>patch({assets:project.assets.filter((_,j)=>j!==i)})} /></div>)}</div>
-    <button className="delete-project" onClick={() => { if (!confirm(`删除“${project.title}”？自动加入的封面也会移除，单独上传的底部素材会保留，保存后生效。`)) return; update(d=>({...d,projects:d.projects.filter(p=>p.slug!==selected),selectedWork:{order:d.selectedWork.order.filter(s=>s!==selected),compact:d.selectedWork.compact.filter(s=>s!==selected)},sizes:Object.fromEntries(Object.entries(d.sizes).filter(([s])=>s!==selected)),gallery:d.gallery.filter(g=>g.sourceProject!==selected)})); setSelected(data.projects.find(p=>p.slug!==selected)?.slug || ''); }}>删除这个项目</button></section> : <section className="empty"><h2>你的下一个作品，从这里开始。</h2><button onClick={add}>＋ 新建项目</button></section>}</div>
+    <div className="section-top"><h2>详情素材 <small>{project.assets.length}</small></h2>{uploader('assets', '＋ 上传图片 / 视频')}</div><p className="hint">图片和视频按顺序混排，保留原始比例。移除或替换后，保存时会删除未被其他位置引用的上传文件。WebM（≤ 30MB）原文件直传；MP4 / MOV（≤ 200MB）按原宽高 70% 转为高质量静音 WebM，处理后 ≤ 30MB。{project.slug === 'portfolio-v1' && '此项目使用独立交互页面，详情素材不参与展示。'}</p><div className="asset-grid">{project.assets.map((a,i)=><div className="asset" key={a.name}><div className="asset-thumbnail">{getVideoLayers(a).length > 0 ? <LayeredMedia asset={a} alt="素材叠层预览" /> : <Preview src={a.src} />}</div>{!isVideoAsset(a.src) && <label className="upload">替换图片<input type="file" aria-label={`替换第 ${i + 1} 张详情图片`} accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e => { void replaceAssetImage(e.target.files?.[0], a.name); e.target.value = ''; }} /></label>}{!isVideoAsset(a.src) && <VideoLayerEditor asset={a} onUpload={(file, index) => { void uploadLayer(file, a.name, index); }} onChange={videoLayers => patch({ assets: project.assets.map(item => item.name === a.name ? { ...item, videoLayer: undefined, videoLayers } : item) })} />}<Sort index={i} count={project.assets.length} onMove={to=>patch({assets:move(project.assets,i,to)})} onRemove={()=>patch({assets:project.assets.filter((_,j)=>j!==i)})} /></div>)}</div>
+    <button type="button" className="delete-project" onClick={deleteProject}>删除这个项目</button></section> : <section className="empty"><h2>你的下一个作品，从这里开始。</h2><button onClick={add}>＋ 新建项目</button></section>}</div>
     : <section className="gallery-editor"><div className="section-top"><div><h2>底部横向素材</h2><p className="hint">首页展示的封面自动加入并同步更新；单独上传的素材接在后面，无需关联项目。可替换、排序和调整大小。</p></div>{uploader('gallery', '＋ 批量上传素材')}</div><p className="hint">已自动加入 {data.gallery.filter(g => g.sourceProject).length} 张首页封面，以下为单独上传的素材。</p><div className="gallery-grid">{data.gallery.map((g,i)=>g.sourceProject ? null : <article className="gallery-item" key={g.name}><div className="gallery-preview"><Preview src={g.src} /></div><label className="upload">替换素材<input aria-label="替换素材" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm" onChange={e => { void replaceGallery(e.target.files?.[0], g.name); e.target.value = ''; }} /></label><label>名称<input value={g.title} onChange={e=>update(d=>({...d,gallery:d.gallery.map((v,j)=>j===i?{...v,title:e.target.value}:v)}))} /></label><label>大小 · {Math.round((g.scale || 1)*100)}%<input type="range" min="0.5" max="1.5" step="0.1" value={g.scale || 1} onChange={e=>update(d=>({...d,gallery:d.gallery.map((v,j)=>j===i?{...v,scale:Number(e.target.value)}:v)}))} /></label><Sort index={i - data.gallery.filter(g => g.sourceProject).length} count={data.gallery.filter(g => !g.sourceProject).length} onMove={to=>update(d=>({...d,gallery:move(d.gallery,i,to + d.gallery.filter(g => g.sourceProject).length)}))} onRemove={()=>update(d=>({...d,gallery:d.gallery.filter((_,j)=>i!==j)}))} /></article>)}</div>{!data.gallery.some(g => !g.sourceProject) && <p className="empty">还没有素材。上传图片或视频，组成你的横向画廊。</p>}</section>}
     </fieldset><footer className="admin-footer">Jimmy ZZ · Personal workspace<span>修改完成后，记得保存。</span></footer>
   </main>;

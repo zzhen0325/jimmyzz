@@ -2,6 +2,7 @@
 
 import { ScrambleText } from "./scramble-text";
 
+import { homeCoverSource } from "@/lib/home-cover";
 import Image from "./content-image";
 import Link from "next/link";
 import { type CSSProperties } from "react";
@@ -19,7 +20,7 @@ export function SelectedWork() {
     <section tabIndex={-1} id="work-index" className={styles.section} aria-label="精选作品">
       <ScrollBend className={styles.grid}>
         {selected.map((project, index) => {
-          const cover = project.selectedWorkCover;
+          const cover = homeCoverSource(project.selectedWorkCover, project);
           const isPortrait = (project.coverHeight ?? 9) > (project.coverWidth ?? 16);
           const isCompact = isPortrait || compactSlugs.has(project.slug);
           const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(cover);
@@ -34,7 +35,7 @@ export function SelectedWork() {
                       muted loop playsInline preload="none"
                       aria-label={`${project.title}项目视频`} />
                   ) : (
-                    <Image src={cover} alt={`${project.title}项目视觉`} fill
+                    <Image unoptimized={cover !== project.selectedWorkCover} src={cover} alt={`${project.title}项目视觉`} fill
                       sizes={`(max-width: 599px) ${[0, 7, 9].includes(index) ? "94vw" : "46vw"}, ${[0, 3, 7, 9].includes(index) ? "50vw" : "34vw"}`} />
                   )}
                   {project.hoverVideo && <HoverCoverVideo src={project.hoverVideo} />}

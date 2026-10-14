@@ -51,12 +51,7 @@ export function HomePage() {
           <CurveGallery />
           {/* 项目与经历目录暂时隐藏，保留组件以便后续恢复。 */}
         </div>
-        <DissolveFooter>
-        <div className="home-credits">
-          <span><ScrambleText>©2026 ZZ · 张振</ScrambleText></span>
-          <span><ScrambleText>Black Hole by </ScrambleText><a href="https://sketchfab.com/3d-models/black-hole-e410da98b1e5445eae2acafaaa53587d"><ScrambleText>NestaEric</ScrambleText></a> <ScrambleText>· </ScrambleText><a href="https://creativecommons.org/licenses/by/4.0/"><ScrambleText>CC BY 4.0</ScrambleText></a> <ScrambleText>· Adapted for web</ScrambleText></span>
-        </div>
-        </DissolveFooter>
+        <DissolveFooter />
       </div>
     </main>
   );

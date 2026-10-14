@@ -45,8 +45,9 @@
   margin-top: 10px;
   line-height: 1.4;
 }
-.caption h3 { font-size: clamp(11px, .85vw, 15px); font-weight: 500; letter-spacing: -.02em; overflow-wrap: anywhere; }
-.caption > span { flex-shrink: 0; font-size: 10px; color: var(--muted); }
+.caption h3, .caption > span { font-size: clamp(11px, .85vw, 15px); }
+.caption h3 { font-weight: 500; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.caption > span { flex-shrink: 0; }
 .projectLink:hover h3 { text-decoration: underline; text-underline-offset: 4px; }
 
 @media (max-width: 599px) {
@@ -58,7 +59,7 @@
   .project:nth-of-type(11) { grid-column: 2; }
   .project[data-portrait] { grid-column: span 1; width: min(100%, 145px); }
   .caption { gap: 6px; margin-top: 8px; }
-  .caption h3 { font-size: 12px; }
+  .caption h3, .caption > span { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .image img, .image video, .image canvas { transition: none; } }
 

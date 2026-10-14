@@ -1,0 +1,5 @@
+/* Keep the final output crop stable before, during, and after bending.
+   Restoring these pixels when the filter switches off causes a visible jump. */
+.root [data-work-skew] {
+  clip-path: inset(2px);
+}

@@ -21,7 +21,7 @@ const silver: MeshPhysicalMaterialParameters = {
 
 export const home3DConfig = {
   // HDR 高光阈值、柔光强度、四向星芒强度与长度（CSS 像素）。
-  glow: { threshold: .85, strength: .24, starStrength: 1.1, starLength: 80 },
+  glow: { threshold: .85, strength: .1, starStrength: .6, starLength: 20 },
   // 相对原生分辨率：从 70% 起步，最低 70%，最高 100%；DPR 2 对应 1.4～2。
   // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
   resolution: { min: .6, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
@@ -190,8 +190,8 @@ export const home3DConfig = {
   // cloudShadow / cloudHighlight 控制云层暗部与亮部；晴天、雨天分别配置。
   sky: {
     sunny: {
-      skyTop: "#D6EAF5",
-      skyBottom: "#D6EAF5",
+      skyTop: "#E7F1F7",
+      skyBottom: "#E7F1F7",
       cloudShadow: "#F7FBFF",
       cloudHighlight: "#FFFFFF",
     },

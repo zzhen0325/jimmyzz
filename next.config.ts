@@ -25,11 +25,15 @@ const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
   env: { NEXT_PUBLIC_HOME_ASSET_VERSIONS: JSON.stringify(homeAssetVersions) },
   async headers() {
-    return Object.entries(homeAssetVersions).map(([source, version]) => ({
+    const coverHeaders = [{
+      source: '/assets/home-covers/:path*',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    }];
+    return [...coverHeaders, ...Object.entries(homeAssetVersions).map(([source, version]) => ({
       source,
       has: [{ type: "query" as const, key: "assetVersion", value: version }],
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-    }));
+    }))];
   },
 };
 

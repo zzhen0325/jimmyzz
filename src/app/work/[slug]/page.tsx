@@ -28,7 +28,7 @@ export default async function ProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { projects, selectedWork } = await readContent();
+  const { projects } = await readContent();
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
   if (slug === "portfolio-v1") return <V1Experience />;
@@ -44,7 +44,7 @@ export default async function ProjectPage({
   }));
   return (
     <ProjectEntrance key={slug} style={projectThemeStyle(project.detailTheme)}>
-      <ProjectHeader homeHref={selectedWork.order.includes(slug) ? `/#project-${encodeURIComponent(slug)}` : "/#selected-work"} />
+      <ProjectHeader homeHref="/" />
       <article className="case-editorial mx-[var(--page-pad)] grid grid-cols-[var(--portfolio-grid)] items-start gap-x-[var(--grid-gap)] pb-[clamp(64px,8vw,128px)] max-[599px]:gap-y-10">
         <ProjectCopy>
         <header className="case-intro">

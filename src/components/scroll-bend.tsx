@@ -2,6 +2,7 @@
 
 import { useId, useRef, type ReactNode } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
+import styles from "./scroll-bend.module.css";
 
 /** Shared velocity-driven curvature for home covers and project images. */
 export function ScrollBend({ children, className }: { children: ReactNode; className?: string }) {
@@ -203,7 +204,7 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
   }, { scope: root });
 
   return (
-    <div ref={root} className={className}>
+    <div ref={root} className={`${styles.root}${className ? ` ${className}` : ""}`}>
       <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute" }}>
         <defs ref={definitions}>
           <filter ref={template} id={filterId} x="0%" y="-50%" width="100%" height="200%" colorInterpolationFilters="sRGB">

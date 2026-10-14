@@ -30,7 +30,18 @@ export const categories = [
   "视觉探索",
 ] as const;
 export type Category = (typeof categories)[number];
+export type VideoLayer = {
+  src: string;
+  /** Position and size as percentages of the image canvas. */
+  x: number; y: number; width: number; height: number;
+  /** Corner radius as a percentage of layer width. */
+  radius: number;
+  fit: "cover" | "contain" | "center-crop";
+  order: "above" | "below";
+};
 export type Asset = {
+  videoLayer?: VideoLayer;
+  videoLayers?: VideoLayer[];
   name: string;
   src: string;
   /** 导出尺寸用于预留图片空间，避免高清图片加载时页面跳动。 */
@@ -43,6 +54,8 @@ export type Project = {
   slug: string;
   /** 首页精选作品封面：填写 /assets/... 路径，支持图片或 .mp4 / .webm / .mov 视频。 */
   selectedWorkCover: string;
+  /** Homepage derivative; source binds it to the original cover. */
+  homeCover?: { source: string; src: string };
   /** 封面的原始尺寸，用于保持展示比例。 */
   coverWidth?: number;
   coverHeight?: number;
@@ -376,11 +389,6 @@ const configuredProjects: Project[] = [
       "将复杂的情绪反应变成容易理解的测试体验，连接角色识别、社交配对与用户分享。",
     approach:
       "以鉴定中心建立场景，结合专家、答题卡和情绪小人降低参与门槛。将复杂情绪转译成通俗易懂的物种形象，贯穿加载、答题、结果与分享流程，为传播创造动机。",
-    results: [
-      { value: "33.7%", label: "总分享率" },
-      { value: "52.3%", label: "完成测试用户分享率" },
-      { value: "近 100%", label: "五道问答题漏斗留存" },
-    ],
   },
   {
     slug: "bandao",
