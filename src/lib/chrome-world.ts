@@ -20,6 +20,7 @@ import { applyVinylMaterial } from "./vinyl-material";
 import { createFloatingGlass } from "./floating-glass";
 import { createSkyClouds } from "./sky-clouds";
 import { createGoodLuckCylinder, createEatSculpture } from "./home-reference-sculptures";
+import { createHomeGlow } from "./home-glow";
 import { createGlassComposite } from "./glass-composite";
 import { createAdaptiveResolution, homeAntialiasSamples } from "./adaptive-resolution";
 
@@ -61,6 +62,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = config.lighting.exposure;
   const glassComposite = createGlassComposite(renderer);
+  const glow = createHomeGlow(renderer, config.glow);
   const scene = new THREE.Scene();
   const sky = createSkyClouds(config.sky);
   const rain = createHomeRain();
@@ -473,6 +475,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const samples = homeAntialiasSamples(width, height, nativeDpr);
     renderer.setDrawingBufferSize(width, height, resolution.pixelRatio);
     glassComposite.resize(width, height, resolution.pixelRatio, samples);
+    glow.resize(width, height, resolution.pixelRatio, samples);
     canvas.dataset.pixelRatio = String(resolution.pixelRatio);
     canvas.dataset.msaaSamples = String(Math.min(samples, renderer.capabilities.maxSamples));
     renderedWorkProgress = -1;
@@ -1213,6 +1216,10 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (options.vortexTarget) options.vortexTarget.style.display = "none";
     canvas.dataset.phase = "export";
   };
+  const renderScene = () => {
+    glow.render(() => glassComposite.render(scene, camera), () => renderer.render(skyScene, camera));
+    rain.render(renderer);
+  };
   const render=(time:number)=>{
     if (disposed || suspended) return;
     frame=requestAnimationFrame(render);
@@ -1240,7 +1247,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       cameraFrame(); composeWork(); composeExport();
       if (reflectionDirty || exportLayout.playing) updateReflection();
       sky.update(camera, viewWidth, viewHeight, 0, 0, rainAmount);
-      sky.prepare(renderer); glassComposite.render(scene, camera, skyScene); rain.render(renderer);
+      sky.prepare(renderer); renderScene();
       return;
     }
     // Once the hero becomes the stationary header logo, skip scene updates as
@@ -1291,8 +1298,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
     updateVortexTarget();
     sky.prepare(renderer);
-    if (ready) glassComposite.render(scene, camera, skyScene); else renderer.render(scene, camera);
-    if (ready) rain.render(renderer);
+    if (ready) renderScene(); else renderer.render(scene, camera);
     renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
@@ -1533,7 +1539,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     glassComposite.render(scene,camera,skyScene);
     return results;
   };
-  const debug={exportFigmaLayers,snapshot:()=>({exportMode:exportLayout ? {...exportLayout,time:exportTime} : null,glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoBody:{id:logoBody.id,shapes:logoBody.shapes.length,collisionFilterMask:logoBody.collisionFilterMask,position:logoBody.position.toArray(),scale:colliderScale},logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),visualPosition:object.position.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
+  const debug={exportFigmaLayers,snapshot:()=>({exportMode:exportLayout ? {...exportLayout,time:exportTime} : null,glow:glow.snapshot(),glass:glassComposite.snapshot(),sky:sky.snapshot(),lighting:{amount:lightingAmount,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,ambientIntensity:ambient.intensity,studio:studio.children.map(light=>({intensity:(light as THREE.Light).intensity,color:(light as THREE.Light).color.getHexString()}))},ready,paused,reduced,reflectionFrames,elapsed,angle,power,beltAngle,beltSpeed,steps:world.stepnumber,contacts,collisionPairs:[...collisions],bursts,view:{width:viewWidth,height:viewHeight},bounds:{scale:boundsScale,width:motionWidth,height:motionHeight},assetScale,camera:camera.position.toArray(),logoBody:{id:logoBody.id,shapes:logoBody.shapes.length,collisionFilterMask:logoBody.collisionFilterMask,position:logoBody.position.toArray(),scale:colliderScale},logoQuaternion:logo.quaternion.toArray(),cameraQuaternion:camera.quaternion.toArray(),bodies:items.map(({body,object,billboard,entranceReleased})=>({id:body.id,name:object.name,collisionFilterMask:body.collisionFilterMask,entranceReleased:!!entranceReleased,bodyType:body.type,billboard:!!billboard,visualQuaternion:object.quaternion.toArray(),visualPosition:object.position.toArray(),position:body.position.toArray(),velocity:body.velocity.toArray(),quaternion:body.quaternion.toArray(),mass:body.mass}))}),replay:reset};
   const debugCanvas=canvas as HTMLCanvasElement & {__chromeDebug?:typeof debug};
   if(options.debug)debugCanvas.__chromeDebug=debug;
   return {
@@ -1619,9 +1625,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
         renderer.setRenderTarget(null);
         renderer.setDrawingBufferSize(width, height, ratio);
         glassComposite.resize(width, height, ratio, 4);
+        glow.resize(width, height, ratio, 4);
         sky.prepare(renderer);
-        glassComposite.render(scene, camera, skyScene);
-        rain.render(renderer);
+        renderScene();
         // Snapshot before restoring the live buffers; PNG encoding is asynchronous.
         return new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("高清图片生成失败，请重试。")), "image/png");
@@ -1645,6 +1651,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       plasterMaterials.dispose();
       reflectionProbe.dispose();
       glassComposite.dispose();
+      glow.dispose();
       sky.dispose();
       rain.dispose();
       scene.clear();[...world.bodies].forEach(body=>world.removeBody(body));resources.forEach(texture=>texture.dispose());geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());reflectionTarget.dispose();renderer.dispose();delete debugCanvas.__chromeDebug;delete canvas.dataset.ready;

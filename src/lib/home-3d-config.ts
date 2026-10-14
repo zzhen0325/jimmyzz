@@ -20,6 +20,8 @@ const silver: MeshPhysicalMaterialParameters = {
 };
 
 export const home3DConfig = {
+  // HDR 高光阈值、柔光强度、四向星芒强度与长度（CSS 像素）。
+  glow: { threshold: .85, strength: .24, starStrength: 1.1, starLength: 80 },
   // 相对原生分辨率：从 70% 起步，最低 70%，最高 100%；DPR 2 对应 1.4～2。
   // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
   resolution: { min: .6, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
@@ -200,7 +202,7 @@ export const home3DConfig = {
       cloudHighlight: "#B8C2C9",
     },
     complexity: 8, // 噪声层数，整数 1～8；越高细节越丰富，越低越简洁、省性能。
-    scale: 1, // 大于 0；越大云块越小、越密，越小云块越大。
+    scale: 1.2, // 大于 0；越大云块越小、越密，越小云块越大。
     coverage: .1, // 基础覆盖量 0～1；越大云越多，雨天会额外增加覆盖量。
     speed: .015, // 移动速度，大于等于 0；0 为静止。
     initialTime: 135, // 从连片的大云团开始（动画秒数），随后按现有速度连续流动。
