@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Explicit content publishing is separate from code deployment.
+// Used after code deployment, or independently to publish content only.
 const root = fileURLToPath(new URL('../', import.meta.url));
 process.chdir(root);
 const args = process.argv.slice(2);

@@ -10,7 +10,7 @@
     "optimize:home-models": "node scripts/optimize-home-models.mjs",
     "build:cloudflare": "npm run check:cloudflare && opennextjs-cloudflare build",
     "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
-    "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy",
+    "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy && npm run sync:content -- --publish",
     "prepare:video": "node scripts/prepare-video-transcoder.mjs",
     "predev": "npm run prepare:video",
     "prebuild": "npm run prepare:video",

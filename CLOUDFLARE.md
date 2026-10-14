@@ -22,14 +22,26 @@ project details in Workers preview before deploying.
 
 ## Publish changes
 
+After installing locked dependencies with `npm ci` and signing into Cloudflare,
+use one command for both code and the latest local content:
+
 ```sh
-npm ci
-npx wrangler whoami
 npm run deploy:cloudflare
 ```
 
-The configuration is in `wrangler.jsonc`. Code deployment does not overwrite
-remote CMS content. To publish the current local content as the source of truth:
+This checks compatible dependency versions, builds the application, deploys the
+Worker and public assets, then runs `sync:content -- --publish`. Local
+`data/content.json` and its referenced uploads are the source of truth on every
+deployment, including when online content differs. The configuration is in
+`wrangler.jsonc`.
+
+Each step runs only if the preceding step succeeds. If content sync fails after
+code deployment, the code is already live; the command reports failure and does
+not automatically roll back code. Fix the reported issue and retry content sync.
+The content sync still backs up online content and uploads media before replacing
+the content configuration.
+
+To compare or publish content independently without deploying code:
 
 ```sh
 # Read-only comparison and a timestamped backup of online content
@@ -49,8 +61,10 @@ Avoid editing either admin during the sync: the command rechecks local and remot
 content immediately before publishing and stops if either changed, but this is
 not an atomic lock against a simultaneous admin save. If local content references
 new files in `public/assets`, deploy code/assets first. Online admin saves apply
-directly to R2 without a deployment; local admin saves require this explicit sync.
-Do not run the publish command when online content should be the source of truth.
+directly to R2 without a deployment. Local admin saves are published by the next
+`deploy:cloudflare` run or an independent `sync:content -- --publish` run.
+Deployments use local content as the source of truth, so bring any desired
+online-only edits into local content before deploying.
 
 The `zzmax.icu/*` Worker route serves the production domain. The existing proxied
 DNS record and older `aigaoji` Pages deployment are retained; removing this Worker

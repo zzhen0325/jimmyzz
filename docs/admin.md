@@ -13,11 +13,11 @@
 
 ## 存储和部署
 
-本机开发内容保存至 `data/content.json`，文件位于 `data/uploads/`；这两处已纳入 Git。Cloudflare 线上内容独立保存在 `zzmax-content` R2 存储桶，通过 `CONTENT_BUCKET` 读取，上传文件通过 `/media/文件名` 提供。代码部署不会自动把本地内容覆盖到线上。
+本机开发内容保存至 `data/content.json`，文件位于 `data/uploads/`；这两处已纳入 Git。Cloudflare 线上内容独立保存在 `zzmax-content` R2 存储桶，通过 `CONTENT_BUCKET` 读取，上传文件通过 `/media/文件名` 提供。运行 `npm run deploy:cloudflare` 会依次检查版本、构建、部署代码和静态文件，再自动将本地最新内容同步到线上；每次部署均以本地内容为准。
 
 线上编辑请访问 `https://zzmax.icu/admin`，点击「保存修改」后直接写入 R2，不需要重新部署。首页和项目详情按请求读取内容；同一浏览器中已打开的页面会接收保存通知并刷新，其他设备可刷新页面获取最新内容。本地后台只修改本地数据。
 
-以本地内容为准发布到线上时，运行 `npm run sync:content -- --publish`；不加 `--publish` 只比较并备份。命令会先备份线上配置、校验素材、补传缺失文件，最后更新配置并读回确认。已有线上素材保留，备份位于 `output/cloudflare/content-sync-*/`。同步期间不要在两边后台编辑；若发布前发现内容变动，命令会停止，需重新比较。新增 `public/assets` 文件时先部署代码和静态文件。更多部署步骤及依赖版本要求见 `CLOUDFLARE.md`。
+只更新内容、不部署代码时，运行 `npm run sync:content -- --publish`；不加 `--publish` 只比较并备份。命令会先备份线上配置、校验素材、补传缺失文件，最后更新配置并读回确认。已有线上素材保留，备份位于 `output/cloudflare/content-sync-*/`。同步期间不要在两边后台编辑；若发布前发现内容变动，命令会停止，需重新比较。新增 `public/assets` 文件时使用完整部署命令，它会先发布静态文件再同步内容。若内容同步失败，已完成的代码部署不会自动回滚，修复问题后可单独重试同步。线上后台的独有编辑需先带回本地，否则下次部署会以本地版本覆盖。更多部署步骤及依赖版本要求见 `CLOUDFLARE.md`。
 
 删除素材引用并保存后，后台会清理不再引用的上传文件；备份应同时保留内容配置和素材。自托管 Node.js 时可通过 `CONTENT_DIR` 指定持久目录；Cloudflare 部署使用 R2，无需持久磁盘。
 
