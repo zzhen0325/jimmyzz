@@ -212,22 +212,66 @@
           "height": 1920
         },
         {
-          "name": "detail-02",
-          "src": "/assets/portfolio/look-live/figma-1012/detail-02.webp",
+          "name": "1c39a89d-e006-4cbd-aade-2cc60bdf7b5f",
+          "src": "/media/b95ea426-5389-4735-9fbb-05f2ff2bd0af.png",
           "width": 1920,
-          "height": 1920
+          "height": 824
+        },
+        {
+          "name": "c992a0f7-96ed-4f44-8a68-984263eb5d8e",
+          "src": "/media/1b059251-5f87-4ff2-a30c-65dbf7cb7303.png",
+          "width": 1920,
+          "height": 917
+        },
+        {
+          "name": "54ce965b-b66a-42e1-939b-9e3b462122bf",
+          "src": "/media/3ad89829-0bfb-4496-99e1-fa2e21fc5f64.png",
+          "width": 1920,
+          "height": 1641,
+          "videoLayers": [
+            {
+              "src": "/media/8f460c66-55dd-4b3f-9768-319d6526c1e8.webm",
+              "x": 14.1,
+              "y": 8.4,
+              "width": 32.6,
+              "height": 82.9,
+              "radius": 11,
+              "fit": "cover",
+              "order": "above"
+            },
+            {
+              "src": "/media/fb5bcfcd-26c2-411c-86e7-ea065b882ec2.webm",
+              "x": 53.5,
+              "y": 8.6,
+              "width": 32.6,
+              "height": 83,
+              "radius": 11.7,
+              "fit": "contain",
+              "order": "above"
+            }
+          ]
+        },
+        {
+          "name": "5a1f3a44-77a0-4707-9065-21b8f12e371f",
+          "src": "/media/a0daa9e6-83c6-4d0b-9ec1-6a8996791017.png",
+          "width": 1920,
+          "height": 874
         }
       ],
       "title": "LOOK 直播盛典",
       "english": "LOOK 直播盛典",
-      "kind": "视觉探索",
+      "kind": "H5 营销",
       "client": "LOOK 直播",
-      "summary": "LOOK 直播盛典",
-      "tags": [],
+      "summary": "2020年look直播最大的营收活动，横跨2个月时间，分为预赛和正赛两个阶段，年度赛应当有区别于日常活动的视觉升级来给与用户应有的地位感和荣誉感\n基于长时间的预赛与正赛赛制，整体的视觉框架设定在赛博城市中心的一座高塔对顶端的舞台之上，由外到内，由下到上对应了整个互动的两个赛段，舞台元素给了用户比赛概念的暗示",
+      "tags": [
+        "视觉/动效/交互"
+      ],
       "color": "#eeeeee",
       "description": "",
       "challenge": "",
-      "approach": ""
+      "approach": "",
+      "infoProjectName": "LOOK 直播盛典",
+      "date": "2020.12"
     },
     {
       "slug": "lemo-ai",
@@ -1185,19 +1229,47 @@
       "kind": "视觉探索",
       "client": "网易云音乐 · LOOK 直播",
       "tags": [
-        "Yearbook",
-        "Visual Design",
-        "Campaign"
+        ""
       ],
       "color": "#ed4299",
-      "summary": "LOOK 直播营收设计的年度视觉整理。",
+      "summary": "LOOK 直播营收设计的年度视觉整理。\n整合多个业务的视觉、UI、动效等作品，采用了游戏机概念进行整体视觉包装。",
       "description": "以鲜明的粉色与数字舞台语言，呈现 LOOK 直播 2021—2022 营收设计年鉴的视觉设计。",
       "assets": [
         {
-          "name": "detail-01",
-          "src": "/assets/portfolio/look-design-yearbook/figma-1012/detail-01.webp",
-          "width": 3840,
-          "height": 2808
+          "name": "0ee610b9-2bbe-4100-b3ea-5dfe8e67e814",
+          "src": "/media/a9908b8a-ce8c-4410-a90f-2029decea3c5.webm",
+          "width": 848,
+          "height": 604
+        },
+        {
+          "name": "f8b7a710-8969-486f-ae7d-91cb3eaa5b0c",
+          "src": "/media/9d82b089-5ac0-4b83-a47a-a05c9d64f0c1.png",
+          "width": 1919,
+          "height": 1415
+        },
+        {
+          "name": "6e4743ae-7561-4a1a-9c5b-a781df1b1795",
+          "src": "/media/530b6e7c-7035-4946-b58a-a695cbf79cc2.png",
+          "width": 1920,
+          "height": 500
+        },
+        {
+          "name": "69eff65f-d23a-4c2b-bbf6-9dc21a789d17",
+          "src": "/media/64c7a034-4280-4494-9421-f7b11d6a092f.png",
+          "width": 1920,
+          "height": 959
+        },
+        {
+          "name": "ce95e25a-c1bc-468a-931b-ddae877c595c",
+          "src": "/media/28b34d40-d9c9-46ec-a544-c59b71ad7418.png",
+          "width": 1920,
+          "height": 1469
+        },
+        {
+          "name": "98136509-b761-4c1f-b606-43278dd72a5d",
+          "src": "/media/84f9e2da-248c-41b7-9b4c-703d8089b8b8.png",
+          "width": 1919,
+          "height": 1097
         }
       ],
       "selectedWorkCover": "/assets/portfolio/look-design-yearbook/figma-1012/thumbnail.webp",
@@ -1205,7 +1277,14 @@
       "coverWidth": 3840,
       "coverHeight": 2808,
       "challenge": "",
-      "approach": ""
+      "approach": "",
+      "infoProjectName": "LOOK · 营收设计年鉴",
+      "date": "2021",
+      "detailTheme": {
+        "background": "#1c1c1c",
+        "foreground": "#ffffff",
+        "muted": "#e3e3e3"
+      }
     }
   ],
   "selectedWork": {
@@ -1224,7 +1303,6 @@
       "ai-workshop",
       "lora-training",
       "look-live",
-      "portfolio-v1",
       "look-design-yearbook"
     ],
     "compact": [
@@ -1253,14 +1331,6 @@
       "width": 3840,
       "height": 2808,
       "sourceProject": "look-design-yearbook"
-    },
-    {
-      "name": "cover-portfolio-v1",
-      "title": "Portfolio V1",
-      "src": "/assets/portfolio/portfolio-v1/cover.jpg",
-      "width": 1440,
-      "height": 900,
-      "sourceProject": "portfolio-v1"
     },
     {
       "name": "cover-look-live",
@@ -1375,155 +1445,19 @@
       "sourceProject": "cucumber"
     },
     {
-      "name": "miaoshi-brand-500-1781",
-      "title": "妙时品牌图形 2",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1781.webp",
-      "width": 859,
-      "height": 498,
-      "sourceProject": ""
-    },
-    {
-      "name": "lemo-model-2",
-      "title": "3D Lemo 模型",
-      "src": "/assets/portfolio/gallery/lemo-model-2.webp",
-      "width": 785,
-      "height": 392,
-      "sourceProject": ""
-    },
-    {
-      "name": "miaoshi-brand-500-1936",
-      "title": "妙时生活海报 3",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1936.webp",
-      "width": 227,
-      "height": 407,
-      "sourceProject": ""
-    },
-    {
-      "name": "miaoshi-brand-500-1937",
-      "title": "妙时生活海报 4",
-      "src": "/assets/portfolio/gallery/miaoshi-brand-500-1937.webp",
-      "width": 227,
-      "height": 407,
-      "sourceProject": ""
-    },
-    {
-      "src": "/media/21edc1a7-37b8-4a4b-acd0-0b899e950e25.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "b5a321ea-da71-41ef-9b06-9f61c4591f0b",
-      "title": "20-frame-24",
-      "scale": 1
-    },
-    {
-      "src": "/media/6428e229-8b2e-4bef-8f48-066fb05fc2b4.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "d5c77036-5a9d-40a1-995f-58820a1f95ac",
-      "title": "19-frame-23",
-      "scale": 1
-    },
-    {
-      "src": "/media/e4e06553-e6be-4b96-bec5-9004afcf30a9.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "f613c8e6-3c5a-4c27-8c4c-5a151faafd82",
-      "title": "17-frame-21",
-      "scale": 1
-    },
-    {
-      "src": "/media/3922636a-f7fe-4bc2-9fbf-226e3c365731.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "5b1fd32b-3cd1-4d12-83cf-0ebd321fe85c",
-      "title": "16-frame-20",
-      "scale": 1
-    },
-    {
-      "src": "/media/f819c225-1b65-42f5-b449-5175da87a5f4.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "539d44ca-f881-4d31-97d7-3bd10d0d48d5",
-      "title": "15-frame-19",
-      "scale": 1
-    },
-    {
-      "src": "/media/698b008c-ec27-4b96-82ec-15218f82d4d3.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "82537173-93a6-4b55-9856-63fd27419c72",
-      "title": "14-frame-18",
-      "scale": 1
-    },
-    {
-      "src": "/media/8fa38bf4-34eb-4ccb-98ef-8eb37acb1eed.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "1d3405a5-59bc-4ce6-b504-97e969cc2457",
-      "title": "10-frame-14",
-      "scale": 1
-    },
-    {
-      "src": "/media/90d70314-e454-48d4-9b5a-44e6191d511e.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "9051c8f6-d157-4cf2-a02d-b47a3ee3337c",
-      "title": "09-frame-13",
-      "scale": 1
-    },
-    {
-      "src": "/media/1c953d24-a4aa-41db-8942-8639cf0ae993.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "a2060349-5a59-4674-a4c9-ed3ee78f282e",
-      "title": "08-frame-12",
-      "scale": 1
-    },
-    {
-      "src": "/media/e2b9c89d-5686-4e1d-905a-18a3ecc71003.png",
-      "width": 1080,
-      "height": 1660,
-      "name": "289a7018-39a1-482c-bca6-86497ee71a91",
-      "title": "07-frame-11",
-      "scale": 1
-    },
-    {
       "src": "/media/14be7dc2-c4cb-498a-b3c7-470aaceab346.png",
       "width": 1127,
       "height": 1395,
       "name": "ff5efdc2-8b83-40c2-9bf6-ce5bb5fa5394",
-      "title": "ChatGPT Image 2026年10月7日 22_39_16",
+      "title": "Dog",
       "scale": 1
     },
     {
-      "src": "/media/7042bb56-cfaf-4904-aee5-028ff5b2e839.png",
-      "width": 3834,
-      "height": 1831,
-      "name": "6831bc72-18af-4aef-8fe1-844a5a09eb35",
-      "title": "3DLogoLab",
-      "scale": 1
-    },
-    {
-      "src": "/media/c42384e2-4075-4cde-9fa8-463d49864401.png",
-      "width": 3520,
-      "height": 4693,
-      "name": "8824714c-e653-4e96-98ae-c2c6aeea4a48",
-      "title": "jimeng-2025-10-19-2550-A striking high-fashion portrait of a pe...",
-      "scale": 1
-    },
-    {
-      "src": "/media/2d790022-b5ee-4928-ab60-dce507315bae.png",
-      "width": 3520,
-      "height": 4693,
-      "name": "94b56620-3c21-4f04-9671-76dff055bb99",
-      "title": "jimeng-2025-10-19-6006-A striking high-fashion portrait of a pe...",
-      "scale": 1
-    },
-    {
-      "src": "/media/6c4f2fda-e9b1-4708-8e8a-d492341e9995.png",
-      "width": 2048,
-      "height": 1364,
-      "name": "06fe7f80-49f7-4d7d-b5b5-9f75eca8a8ec",
-      "title": "2025-07-21_17-45-46_ByteArtist",
+      "src": "/media/481886a3-8e02-44e8-afbd-d4f21fbf8e8f.png",
+      "width": 1920,
+      "height": 2996,
+      "name": "73495ca6-e019-401b-a87a-e91d0de6b490",
+      "title": "时尚焕新企划",
       "scale": 1
     },
     {
@@ -1531,15 +1465,7 @@
       "width": 1456,
       "height": 816,
       "name": "3dd8a9b9-0857-4b3b-a574-ad815404dd34",
-      "title": "shadow122_Award_winning_astrophotography._summer_dayA_surreal_ed9a9f62-6cfa-4ad9-8ce2-8296fefb4e63_0",
-      "scale": 1
-    },
-    {
-      "src": "/media/2199eb0e-ef61-4ba7-b387-1b90f84856fc.png",
-      "width": 1179,
-      "height": 2556,
-      "name": "7f4b3ac9-445f-4b33-b00e-c80889cb164a",
-      "title": "IMG_0740",
+      "title": "Green",
       "scale": 1
     },
     {
@@ -1547,7 +1473,7 @@
       "width": 2912,
       "height": 1632,
       "name": "f43ef9fd-4520-48ef-98c8-bc76a542d855",
-      "title": "bg55",
+      "title": "Blue",
       "scale": 1
     },
     {
@@ -1555,23 +1481,7 @@
       "width": 4096,
       "height": 2751,
       "name": "7e875d64-3fe5-4255-aa17-535e17416d32",
-      "title": "nano-banan_composite",
-      "scale": 1
-    },
-    {
-      "src": "/media/c29db9d6-0985-48c0-b551-742d0f3b81c4.webm",
-      "width": 1440,
-      "height": 1920,
-      "name": "e1abc439-d615-4b5b-89b6-0ea7cfb1179f",
-      "title": "ASCII",
-      "scale": 1
-    },
-    {
-      "src": "/media/6eb0de1b-c2db-4df6-adc8-e18fbd7bfdd9.png",
-      "width": 1440,
-      "height": 1920,
-      "name": "692ce432-50ce-4fb1-b51d-25804eebda97",
-      "title": "ASCII (2)",
+      "title": "夜枭",
       "scale": 1
     },
     {
@@ -1579,7 +1489,7 @@
       "width": 1440,
       "height": 1920,
       "name": "95f3c56d-9096-4d33-bef1-d3181024e15e",
-      "title": "ASCII (1)",
+      "title": "ASCII  Flower",
       "scale": 1
     },
     {
@@ -1587,7 +1497,95 @@
       "width": 1440,
       "height": 1920,
       "name": "2bf69e41-011d-488c-8706-23a6ff3938ac",
-      "title": "ASCII",
+      "title": "ASCII People",
+      "scale": 1
+    },
+    {
+      "src": "/media/5e485adf-87d4-4aae-8366-5bb44f6102c4.webm",
+      "width": 524,
+      "height": 1136,
+      "name": "9c7ca740-779b-4153-bb8f-7d124fdad3cc",
+      "title": "马蜂窝 - 足迹分享",
+      "scale": 1
+    },
+    {
+      "src": "/media/69d6ec39-2ebf-42d3-b4f9-94c808990872.png",
+      "width": 1000,
+      "height": 749,
+      "name": "44ac4238-00f6-4e0e-b235-aa93c51be29d",
+      "title": "Octopus",
+      "scale": 1
+    },
+    {
+      "src": "/media/710506c5-bdb6-43a2-a9c0-57877d9ba761.png",
+      "width": 1000,
+      "height": 1427,
+      "name": "9b437bf5-a15d-43a9-94a2-e3493e0ad71c",
+      "title": "霸王龙",
+      "scale": 1
+    },
+    {
+      "src": "/media/a48c5d23-b03f-4869-b20d-cb803b694192.png",
+      "width": 1000,
+      "height": 1395,
+      "name": "9de00332-7a55-408f-bc2a-ec344961f881",
+      "title": "圣诞歌会-厕所",
+      "scale": 1
+    },
+    {
+      "src": "/media/8386b80e-ba00-4796-8b78-a6a9c8e77be1.png",
+      "width": 1000,
+      "height": 1395,
+      "name": "8caf4f45-a63f-4ed2-9da5-7df1b2cd0905",
+      "title": "圣诞歌会-厕所2",
+      "scale": 1
+    },
+    {
+      "src": "/media/ca856144-4792-461d-a75b-01701649306a.png",
+      "width": 1000,
+      "height": 1395,
+      "name": "4ed55129-492e-4032-89eb-309e4f974dfb",
+      "title": "圣诞歌会-厕所3",
+      "scale": 1
+    },
+    {
+      "src": "/media/f96efb38-2c61-4667-82af-540eac276174.png",
+      "width": 1000,
+      "height": 1780,
+      "name": "6c0de95f-d66c-43b5-b988-9cf057c981b5",
+      "title": "旺福",
+      "scale": 1
+    },
+    {
+      "src": "/media/46b407bc-7f4d-4b1b-8ea7-12d315ce2ed0.png",
+      "width": 1000,
+      "height": 1778,
+      "name": "2244145c-3842-4716-be6a-b6711a287ca3",
+      "title": "旺财",
+      "scale": 1
+    },
+    {
+      "src": "/media/fae26984-3d4f-437c-968c-353408da2bf3.png",
+      "width": 1000,
+      "height": 1774,
+      "name": "cdbbdee6-bf03-47a0-8e42-6555d5cce3eb",
+      "title": "澡堂子有灵感",
+      "scale": 1
+    },
+    {
+      "src": "/media/0b450a99-a78b-4cc5-83d9-f47d9f811b78.png",
+      "width": 1000,
+      "height": 1780,
+      "name": "da6aef0c-3a9f-4d06-a125-6e7a60f172e7",
+      "title": "发胖使我暴富",
+      "scale": 1
+    },
+    {
+      "src": "/media/bf110242-451e-404a-b2a7-286f455c19d6.png",
+      "width": 1000,
+      "height": 1774,
+      "name": "50cf47bc-08dd-408a-b546-20c30fb19551",
+      "title": "需求只改一次",
       "scale": 1
     }
   ]

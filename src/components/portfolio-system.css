@@ -4,8 +4,8 @@
   --project-reveal-gradient: radial-gradient(
     circle closest-side at 50% 50%,
     #000 0%, #000 4.59%, #003b6d 6.77%, #31beff 8.92%,
-    #8edaff 9.92%, #FFDFC4 10.92%, #E6B7E3 11.92%,
-    #fff0df 12.92%, #fff 14.25%, #fff 100%
+    #8edaff 9.92%,  #E6B7E3 11.92%,
+    #fff0df 12.92%, #FFFFFF 14.25%, #FFFFFF 100%
   );
   --home-primary-font-size: 7.5vw;
   --home-edge: calc(var(--home-primary-font-size) * .2);

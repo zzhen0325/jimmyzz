@@ -12,10 +12,11 @@
     "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
     "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy && npm run sync:content -- --publish",
     "prepare:video": "node scripts/prepare-video-transcoder.mjs",
-    "predev": "npm run prepare:video && npm run optimize:home-covers",
-    "prebuild": "npm run prepare:video && npm run optimize:home-covers",
+    "predev": "npm run prepare:video && npm run optimize:home-covers && npm run optimize:project-previews",
+    "prebuild": "npm run prepare:video && npm run optimize:home-covers && npm run optimize:project-previews",
     "check:cloudflare": "node scripts/check-cloudflare-versions.mjs",
     "sync:content": "node scripts/sync-cloudflare-content.mjs",
+    "optimize:project-previews": "node scripts/optimize-project-previews.mjs",
     "optimize:home-covers": "node scripts/optimize-home-covers.mjs"
   },
   "dependencies": {

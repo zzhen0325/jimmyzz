@@ -59,7 +59,9 @@
 .hero[data-view="transition"] .center p, .hero[data-view="work"] .center p { opacity: max(0, calc(1 - var(--work-progress) * 5)); pointer-events: none; }
 .hero[data-view="work"] .center { position: fixed; bottom: 24px; }
 .hero[data-view="transition"] .center { opacity: max(0, calc(1 - var(--work-progress) * 5)); pointer-events: none; }
-.homeLogo { display: none; position: absolute; z-index: 4; top: 15px; left: 50%; transform: translateX(-50%); width: 90px; height: 58px; border: 0; background: url("/assets/logo-black.svg") center / 72px 24px no-repeat; cursor: pointer; }
+/* Match Contact's visible glyph top: its 48px minimum button height, 1.2 line
+   height, and Apfel Grotezk ink ascent (.662em) / font metrics (.932 / .280). */
+.homeLogo { display: none; position: absolute; z-index: 4; font-size: var(--home-primary-font-size); top: calc(var(--home-edge) + max(24px, .6em) - .336em); left: 50%; transform: translateX(-50%); width: 90px; height: 58px; border: 0; background: url("/assets/logo-black.svg") center top / 72px 24px no-repeat; cursor: pointer; }
 .hero[data-view="work"] .homeLogo { display: block; }
 .hero[data-view="work"] .stage canvas { visibility: hidden; }
 .hero[data-view="work"] { background: transparent; pointer-events: none; }

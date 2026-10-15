@@ -15,21 +15,14 @@
 .ribbon-stage[data-pointer-dragging], .ribbon-stage[data-pointer-dragging] * { cursor: grabbing !important; }
 .is-animated .ribbon-card { position: absolute; top: 0; left: 0; width: min(28vw, 385px); will-change: transform; }
 .is-animated .ribbon-playhead { display: block; }
-.ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; }
-.ribbon-count { font: 20px var(--font-sans); }
-.ribbon-count small { font-size: 12px; color: #a4a39e; }
-.ribbon-title { text-align: center; }
-.ribbon-title > span { display: block; font-size: clamp(16px, 2vw, 26px); }
-.ribbon-title small { display: block; margin-top: 7px; color: #a4a39e; font-size: 11px; }
-.ribbon-actions { justify-self: end; display: flex; align-items: center; gap: 12px; font-size: 12px; }
-.ribbon-actions button { padding: 10px; cursor: pointer; }
-.ribbon-actions button:disabled { opacity: .25; cursor: default; }
-.ribbon-actions a { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
+.ribbon-footer { position: absolute; z-index: 110; bottom: 25px; left: 32px; right: 32px; display: flex; justify-content: center; pointer-events: none; }
+.ribbon-progress { position: relative; display: flex; align-items: center; justify-content: space-between; width: 180px; height: 32px; padding-inline: 8px; pointer-events: auto; }
+.ribbon-progress > span { display: block; width: 3px; height: 8px; background: currentColor; opacity: .18; pointer-events: none; }
+.ribbon-progress-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: none; }
+.ribbon-progress:has(.ribbon-progress-input:focus-visible) { outline: 1px solid currentColor; outline-offset: 4px; }
 @media (max-width: 809px) {
   .ribbon-stage { min-height: 520px; }
-  .ribbon-footer { left: 18px; right: 18px; bottom: 20px; gap: 14px; }
-  .ribbon-title { grid-column: 2; text-align: center; }
-  .ribbon-actions { grid-column: 1 / -1; width: 100%; justify-content: flex-end; }
+  .ribbon-footer { left: 18px; right: 18px; bottom: 20px; }
   .ribbon-images { grid-template-columns: repeat(2, 1fr); padding-inline: 18px; }
 }
 

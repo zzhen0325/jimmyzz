@@ -1,10 +1,7 @@
 "use client";
 
 import { playSound } from "@/lib/site-sound";
-import { ScrambleText } from "./scramble-text";
-
 import { useRef, useState, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { useContent } from "./content-provider";
 import { homeCoverSource } from "@/lib/home-cover";
@@ -16,7 +13,8 @@ export function CurveGallery() {
   const projectsBySlug = new Map(projects.map(project => [project.slug, project]));
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const jump = useRef<(index: number) => void>(() => {});
+  const progressInput = useRef<HTMLInputElement>(null);
+  const jump = useRef<(index: number, focusCard?: boolean) => void>(() => {});
   const current = useRef(0);
   const [active, setActive] = useState(0);
   const activeIndex = Math.min(active, Math.max(0, images.length - 1));
@@ -27,13 +25,24 @@ export function CurveGallery() {
       const root = stage.current;
       if (!root || !images.length) return;
       const cards = Array.from(root.querySelectorAll<HTMLElement>(".ribbon-card"));
+      const ticks = Array.from(root.querySelectorAll<HTMLElement>(".ribbon-progress > span"));
+      let seeking = false;
+      const updateProgress = (value: number) => {
+        if (!seeking && progressInput.current) progressInput.current.value = String(value);
+        const position = value / Math.max(1, images.length - 1) * (ticks.length - 1);
+        ticks.forEach((tick, index) => {
+          tick.style.opacity = String(.18 + .5 * Math.max(0, 1 - Math.abs(index - position) / 1.5));
+        });
+      };
       if (conditions?.reduced) {
         const videos = Array.from(root.querySelectorAll('video'));
         videos.forEach(video => { void video.play().catch(() => {}); });
-        jump.current = (index) => {
-          const clamped = Math.max(0, Math.min(images.length - 1, index));
+        jump.current = (index, focusCard = true) => {
+          const clamped = Math.round(Math.max(0, Math.min(images.length - 1, index)));
+          updateProgress(clamped);
           if (current.current !== clamped) playSound("step", { step: clamped % 6 });
-          current.current = clamped; setActive(clamped); cards[clamped]?.focus();
+          current.current = clamped; setActive(clamped);
+          if (focusCard) cards[clamped]?.focus();
         };
         return () => { videos.forEach(video => video.pause()); jump.current = () => {}; };
       }
@@ -62,7 +71,8 @@ export function CurveGallery() {
       };
       let bounds: { x: number; y: number; width: number; height: number }[] = [];
       const videos = cards.map((card) => card.querySelector("video"));
-      let playingVideo: HTMLVideoElement | null = null;
+      const playingVideos = new Set<HTMLVideoElement>();
+      let stageVisible = false;
       let stageWidth = 0;
       let stageHeight = 0;
       let size = 0;
@@ -71,8 +81,10 @@ export function CurveGallery() {
       const measure = () => {
         stageWidth = root.clientWidth;
         stageHeight = root.clientHeight;
-        focusHeight = stageHeight * .7;
-        focusWidth = stageWidth * (stageWidth <= 809 ? .84 : .56);
+        // Shrink the landed images without changing the stage or scroll distance.
+        const imageScale = .85;
+        focusHeight = stageHeight * .7 * imageScale;
+        focusWidth = stageWidth * (stageWidth <= 809 ? .84 : .56) * imageScale;
         size = stageWidth <= 809 ? Math.min(stageWidth * .7, 295) : Math.min(stageWidth * .28, 385);
         // Use the pin spacer's natural position while the stage is fixed.
         // Layout offsets exclude the grid's transient scroll-skew transforms.
@@ -92,9 +104,18 @@ export function CurveGallery() {
         return t * t * (3 - 2 * t);
       };
       const coverCount = sources.filter(Boolean).length;
+      let coverOrdinal = 0;
+      const coverOrdinals = sources.map(source => source ? coverOrdinal++ : -1);
+      // The first independent artwork takes the center when the covers land.
+      const firstIndependent = images.findIndex(image => !image.sourceProject);
+      const landingIndex = firstIndependent < 0 ? Math.max(0, images.length - 1) : firstIndependent;
+      const mergeScrollStart = .6;
+      const galleryPosition = () => landingIndex * smooth((entrance.value - mergeScrollStart) / (1 - mergeScrollStart)) + playhead.value;
       let entranceSoundStep = 0;
       let refreshingEntrance = false;
       const render = () => {
+        const position = galleryPosition();
+        updateProgress(position);
         const progress = entrance.value;
         const landing = progress >= .9999;
         root.classList.toggle("is-transferring", progress > 0 && !landing);
@@ -113,7 +134,7 @@ export function CurveGallery() {
         const gap = stageWidth <= 809 ? 8 : 12;
         let stripWidth = 0;
         const frames = images.map((image, i) => {
-          const d = i - playhead.value;
+          const d = i - position;
           const focus = Math.exp(-Math.pow(d / 1.6, 2));
           const scale = .13 + .87 * focus;
           const ratio = image.width / image.height;
@@ -127,10 +148,10 @@ export function CurveGallery() {
         });
         // Interpolate the anchor between neighboring centers for continuous scrolling.
         // Accumulated widths preserve the gap even while both cards change size.
-        const anchorIndex = Math.max(0, Math.min(frames.length - 1, Math.floor(playhead.value)));
+        const anchorIndex = Math.max(0, Math.min(frames.length - 1, Math.floor(position)));
         const nextAnchor = Math.min(frames.length - 1, anchorIndex + 1);
         const anchor = frames[anchorIndex].center
-          + (frames[nextAnchor].center - frames[anchorIndex].center) * (playhead.value - anchorIndex);
+          + (frames[nextAnchor].center - frames[anchorIndex].center) * (position - anchorIndex);
         cards.forEach((card, i) => {
           const { width: targetWidth, height: targetHeight, center, focus, ratio } = frames[i];
           const widthFactor = Math.min(1, ratio);
@@ -145,7 +166,7 @@ export function CurveGallery() {
             // Every cover uses the same entry point and ring, never a separate
             // radial destination. Only the pickup and final ribbon slot differ.
             const delay = .045;
-            const travel = gsap.utils.clamp(0, 1, progress * (1 + (coverCount - 1) * delay) - i * delay);
+            const travel = gsap.utils.clamp(0, 1, progress * (1 + (coverCount - 1) * delay) - coverOrdinals[i] * delay);
             const gather = smooth(travel / .22);
             const merge = smooth((travel - .8) / .2);
             const revolution = gsap.utils.clamp(0, 1, (travel - .22) / .58);
@@ -181,13 +202,19 @@ export function CurveGallery() {
           }
           card.style.zIndex = String(stackOrder);
         });
-        const index = Math.max(0, Math.min(images.length - 1, Math.round(playhead.value)));
-        const nextVideo = landing ? videos[index] : null;
-        if (nextVideo !== playingVideo) {
-          playingVideo?.pause();
-          playingVideo = nextVideo;
-          if (playingVideo) void playingVideo.play().catch(() => {});
-        }
+        const index = Math.max(0, Math.min(images.length - 1, Math.round(position)));
+        videos.forEach((video, videoIndex) => {
+          if (!video) return;
+          const shouldPlay = landing && stageVisible && !document.hidden
+            && cards[videoIndex].style.visibility === "visible";
+          if (shouldPlay && !playingVideos.has(video)) {
+            playingVideos.add(video);
+            void video.play().catch(() => { playingVideos.delete(video); });
+          } else if (!shouldPlay) {
+            playingVideos.delete(video);
+            video.pause();
+          }
+        });
         if (index !== current.current) {
           if (landing) playSound("step", { step: index % 6 });
           current.current = index; setActive(index);
@@ -228,12 +255,11 @@ export function CurveGallery() {
         opacity: 1, y: 0, duration: .2, ease: "power2.out",
       }, .8);
       const animation = gsap.to(playhead, {
-        value: images.length - 1, ease: "none", onUpdate: render,
+        value: images.length - 1 - landingIndex, ease: "none", onUpdate: render,
         scrollTrigger: {
-          // Overlap the landing, and use the viewport's spring smoothing throughout.
-          // A second scrub delay here made the strip appear to stop and restart.
-          id: "ribbon-gallery", trigger: root, start: () => transition.scrollTrigger!.end - window.innerHeight * .12,
-          end: () => `+=${Math.max(1200, images.length * 90) + window.innerHeight * .12}`, scrub: true,
+          // Continue from the landing position without replaying the project covers.
+          id: "ribbon-gallery", trigger: root, start: () => transition.scrollTrigger!.end,
+          end: () => `+=${Math.max(1200, (images.length - landingIndex) * 90)}`, scrub: true,
           invalidateOnRefresh: true, onRefresh: () => { measure(); render(); },
         },
       });
@@ -243,11 +269,32 @@ export function CurveGallery() {
         end: () => trigger.end, anticipatePin: 1,
         onRefresh: () => { measure(); render(); },
       });
+      const scrollPosition = { value: window.scrollY };
+      const seekTo = gsap.quickTo(scrollPosition, "value", {
+        duration: .24, ease: "power2.out",
+        onUpdate: () => {
+          window.scrollTo({ top: scrollPosition.value, behavior: "instant" });
+          ScrollTrigger.update();
+        },
+        onComplete: () => { seeking = false; updateProgress(galleryPosition()); },
+      });
+      const stopSeeking = () => { seekTo.tween.pause(); seeking = false; };
+      window.addEventListener("wheel", stopSeeking, { passive: true });
+      window.addEventListener("pointerdown", stopSeeking, { passive: true });
+      window.addEventListener("blur", stopSeeking);
+      ScrollTrigger.addEventListener("refreshInit", stopSeeking);
       jump.current = (index) => {
         const clamped = Math.max(0, Math.min(images.length - 1, index));
-        // Native scrolling also keeps the spring controller and pinned timeline in sync.
-        window.scrollTo({ top: trigger.start + (clamped / Math.max(1, images.length - 1)) * (trigger.end - trigger.start), behavior: "instant" });
-        ScrollTrigger.update();
+        const entranceTrigger = transition.scrollTrigger!;
+        // Invert smoothstep so earlier covers remain reachable on the progress bar.
+        const fraction = Math.min(1, clamped / Math.max(1, landingIndex));
+        const mergeProgress = .5 - Math.sin(Math.asin(1 - 2 * fraction) / 3);
+        const destination = clamped < landingIndex
+          ? entranceTrigger.start + (mergeScrollStart + (1 - mergeScrollStart) * mergeProgress) * (entranceTrigger.end - entranceTrigger.start)
+          : trigger.start + ((clamped - landingIndex) / Math.max(1, images.length - 1 - landingIndex)) * (trigger.end - trigger.start);
+        // Reuse one tween for rapid input; preserve native scroll / pin synchronization.
+        seeking = true;
+        seekTo(destination, window.scrollY);
       };
       let startX = 0;
       let startY = 0;
@@ -276,11 +323,19 @@ export function CurveGallery() {
         dragged = true;
         root.dataset.pointerDragging = "";
         if (!root.hasPointerCapture(event.pointerId)) root.setPointerCapture(event.pointerId);
-        window.scrollTo({ top: Math.max(trigger.start, Math.min(trigger.end, startScroll + delta * 3)), behavior: "instant" });
+        window.scrollTo({ top: Math.max(transition.scrollTrigger!.start + mergeScrollStart * (transition.scrollTrigger!.end - transition.scrollTrigger!.start), Math.min(trigger.end, startScroll + delta * 3)), behavior: "instant" });
       };
       const up = (event: PointerEvent) => { if (event.pointerId === pointerId) finish(); };
       const cancelPointer = (event: PointerEvent) => { if (event.pointerId === pointerId) cancel(); };
-      const visibility = () => { if (document.hidden) cancel(); };
+      const visibility = () => { if (document.hidden) cancel(); render(); };
+      const videoObserver = new IntersectionObserver(([entry]) => {
+        stageVisible = entry.isIntersecting;
+        render();
+      });
+      videoObserver.observe(root);
+      const retryPlayback = () => render();
+      root.addEventListener("pointerup", retryPlayback);
+      videos.forEach(video => video?.addEventListener("loadeddata", retryPlayback));
       const preventNativeDrag = (event: DragEvent) => event.preventDefault();
       const click = (event: MouseEvent) => {
         if (dragged) { event.preventDefault(); event.stopPropagation(); dragged = false; }
@@ -296,9 +351,20 @@ export function CurveGallery() {
       root.addEventListener("click", click, true);
       render();
       return () => {
+        seekTo.tween.kill();
+        window.removeEventListener("wheel", stopSeeking);
+        window.removeEventListener("pointerdown", stopSeeking);
+        window.removeEventListener("blur", stopSeeking);
+        ScrollTrigger.removeEventListener("refreshInit", stopSeeking);
         cancel();
         root.classList.remove("is-animated", "is-transferring");
-        playingVideo?.pause();
+        videoObserver.disconnect();
+        root.removeEventListener("pointerup", retryPlayback);
+        videos.forEach(video => {
+          video?.removeEventListener("loadeddata", retryPlayback);
+          video?.pause();
+        });
+        playingVideos.clear();
         sources.forEach((source) => { if (source) setTransferred(source, false); });
         root.removeEventListener("pointerdown", down);
         root.removeEventListener("pointermove", move);
@@ -316,7 +382,7 @@ export function CurveGallery() {
       };
     });
     return () => mm.revert();
-  }, { scope: section, dependencies: [images], revertOnUpdate: true });
+  }, { scope: section, dependencies: [images, projects], revertOnUpdate: true });
 
   if (!images.length) return null;
   return (
@@ -326,21 +392,40 @@ export function CurveGallery() {
         <div className="ribbon-playhead" aria-hidden="true"><i /> <i /></div>
         <div className="ribbon-images">
           {images.map((item, i) => {
-            const cover = homeCoverSource(item.src, projectsBySlug.get(item.sourceProject || ""));
+            const project = projectsBySlug.get(item.sourceProject || "");
+            const cover = homeCoverSource(item.src, project);
+            const isVideo = /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src);
+            const videoSrc = isVideo ? item.src : project?.hoverVideo;
             return (
             <div tabIndex={0} className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} data-hover-label={item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={item.title}>
-              <span className="motion-image">{ /\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.src)
-                ? <video src={item.src} preload="metadata" muted loop playsInline aria-label={item.title} />
-                : <Image unoptimized={cover !== item.src} src={cover} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 84vw, 56vw" draggable={false} />
+              <span className="motion-image">{ videoSrc
+                ? <video src={videoSrc} poster={isVideo ? undefined : cover} preload="metadata" muted loop playsInline aria-label={item.title} />
+                : <Image unoptimized={cover !== item.src} src={cover} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 72vw, 48vw" draggable={false} />
               }</span>
             </div>
           ); })}
         </div>
         <div className="ribbon-footer">
-          <span className="ribbon-count"><ScrambleText>{String(activeIndex + 1).padStart(2, "0")}</ScrambleText> <small><ScrambleText>/ </ScrambleText><ScrambleText>{String(images.length)}</ScrambleText></small></span>
-          <div className="ribbon-title" aria-live="polite"><span><ScrambleText>▸ </ScrambleText><ScrambleText>{images[activeIndex].title}</ScrambleText></span></div>
-          <div className="ribbon-actions"><button onClick={() => jump.current(activeIndex - 1)} disabled={activeIndex === 0} aria-label="上一张"><ArrowLeft size={18} /></button><button onClick={() => jump.current(activeIndex + 1)} disabled={activeIndex === images.length - 1} aria-label="下一张"><ArrowRight size={18} /></button></div>
+          <div className="ribbon-progress">
+            {Array.from({ length: 24 }, (_, index) => (
+              <span key={index} aria-hidden="true" />
+            ))}
+            <input ref={progressInput} className="ribbon-progress-input" type="range" min={0} max={Math.max(0, images.length - 1)}
+              step="any" defaultValue={0} disabled={images.length < 2} aria-label="拖动画廊进度"
+              aria-valuetext={`第 ${activeIndex + 1} 张，共 ${images.length} 张`}
+              onKeyDown={(event) => {
+                const direction = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[event.key];
+                if (direction !== undefined) {
+                  event.preventDefault();
+                  jump.current(Math.round(Number(event.currentTarget.value)) + direction, false);
+                }
+              }}
+              onChange={(event) => {
+                const index = Number(event.currentTarget.value);
+                jump.current(index, false);
+              }} />
+          </div>
         </div>
       </div>
     </section>

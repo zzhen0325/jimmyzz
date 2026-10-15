@@ -32,11 +32,25 @@ export function useContactDrawer(enabled = true) {
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") { setOpen(false); toggle.current?.focus(); }
     };
+    // Wheel intent also closes the drawer when the page cannot scroll further.
+    const wheel = (event: WheelEvent) => {
+      if (event.deltaY > 0 && !event.ctrlKey) setOpen(false);
+    };
+    let previousScrollY = window.scrollY;
+    const scroll = () => {
+      const nextScrollY = window.scrollY;
+      if (nextScrollY > previousScrollY) setOpen(false);
+      previousScrollY = nextScrollY;
+    };
     document.addEventListener("pointerdown", outside);
     document.addEventListener("keydown", escape);
+    window.addEventListener("wheel", wheel, { passive: true });
+    window.addEventListener("scroll", scroll, { passive: true });
     return () => {
       document.removeEventListener("pointerdown", outside);
       document.removeEventListener("keydown", escape);
+      window.removeEventListener("wheel", wheel);
+      window.removeEventListener("scroll", scroll);
     };
   }, [open]);
   return { open, setOpen, header, toggle, contact };
@@ -44,7 +58,7 @@ export function useContactDrawer(enabled = true) {
 
 export function ContactPanel({ open, panelRef, id }: { open: boolean; panelRef: RefObject<HTMLElement | null>; id: string }) {
   return (
-    <section ref={panelRef} id={id} role="region" aria-labelledby={`${id}-title`} aria-hidden={!open} inert={!open} className={styles.contactPanel} data-open={open}>
+    <section ref={panelRef} id={id} role="region" aria-labelledby={`${id}-title`} aria-hidden={!open} inert={!open} className={styles.contactPanel} data-open={open} data-native-cursor>
       <div className={styles.contactHeading}>
         <h2 id={`${id}-title`}><span>Something in mind?</span></h2>
         <p><span>Let’s create something meaningful together.</span></p>

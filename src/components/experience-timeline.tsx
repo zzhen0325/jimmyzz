@@ -1,7 +1,6 @@
 "use client";
 
 import { ScrambleText } from "./scramble-text";
-import { useState } from "react";
 
 import Image from "./content-image";
 import Link from "next/link";
@@ -28,14 +27,15 @@ const chronologicalEntries = [...entries].sort((a, b) =>
 
 function TimelineRow({ entry, cover, reveal = true }: { entry: TimelineEntry; cover?: string; reveal?: boolean }) {
   const interaction = useTextRollInteraction(Math.max(...[entry.company, entry.title, entry.category].map(textRollDuration)));
+  const preview = cover ?? projectCover(entry.slug ?? "");
   const content = <>
             <span className="timeline-date">{entry.date ? <time dateTime={entry.date}><ScrambleText>{entry.date}</ScrambleText></time> : <span aria-label="时间待补充"><ScrambleText>—</ScrambleText></span>}</span>
             <span className="timeline-company"><TextRoll>{entry.company}</TextRoll></span>
             <span className="timeline-project"><TextRoll reveal={reveal}>{entry.title}</TextRoll></span>
             <span className="timeline-category"><TextRoll reveal={reveal}>{entry.category}</TextRoll></span>
             {entry.slug ? <ArrowRight className="timeline-arrow" size={16} aria-hidden="true" /> : null}
-            {entry.slug ? <span className="timeline-preview" aria-hidden="true">
-              <Image src={cover ?? projectCover(entry.slug)} alt="" width={600} height={400} sizes="28vw" />
+            {entry.slug && preview ? <span className="timeline-preview" aria-hidden="true">
+              <Image src={preview} alt="" width={600} height={400} sizes="28vw" />
             </span> : null}
           </>;
   return <li>
@@ -46,20 +46,11 @@ function TimelineRow({ entry, cover, reveal = true }: { entry: TimelineEntry; co
 }
 
 export function RelatedProjectList({ entries }: { entries: (TimelineEntry & { cover: string })[] }) {
-  const [expanded, setExpanded] = useState(false);
-  const label = expanded ? "Less" : "More";
-  const interaction = useTextRollInteraction(textRollDuration(label));
-  const visible = expanded ? entries : entries.slice(0, 5);
   return (
     <section className="timeline-section case-project-list" aria-label="更多项目">
       <ul id="related-projects" className="timeline-list">
-        {visible.map((entry) => <TimelineRow key={entry.slug} entry={entry} cover={entry.cover} reveal={false} />)}
+        {entries.map((entry) => <TimelineRow key={entry.slug} entry={entry} cover={entry.cover} reveal={false} />)}
       </ul>
-      {entries.length > 5 && (
-        <button className="case-project-more" type="button" aria-label={label} aria-expanded={expanded} aria-controls="related-projects" {...interaction} onClick={() => setExpanded((value) => !value)}>
-          <TextRoll>{label}</TextRoll>
-        </button>
-      )}
     </section>
   );
 }

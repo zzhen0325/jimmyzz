@@ -1,4 +1,5 @@
 import "./project.css";
+import projectPreviews from "@/lib/project-preview-manifest.json";
 import { V1Experience } from "@/components/v1-experience";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -39,8 +40,8 @@ export default async function ProjectPage({
     title: item.title,
     category: item.kind,
     slug: item.slug,
-    date: null,
-    cover: item.thumbnail,
+    date: item.date || null,
+    cover: (projectPreviews as Record<string, string>)[item.thumbnail] ?? "",
   }));
   return (
     <ProjectEntrance key={slug} style={projectThemeStyle(project.detailTheme)}>

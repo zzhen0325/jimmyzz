@@ -2,19 +2,23 @@
 
 import { useEffect, useId, useRef, useState, type PointerEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
+import lensTracking from "@/data/portrait-lens-tracking.json";
 import styles from "./portrait-warp.module.css";
 
 type Point = { x: number; y: number };
 const portraitProps = [
   { name: "coffee", u: .06, v: .76, width: .225 },
-  { name: "laptop", u: .81, v: .74, width: .40 },
+  { name: "laptop", u: .926, v: .749, width: .324 },
 ] as const;
-// Default control points matched to the supplied pinched-in portrait reference.
+// Default mesh traced from the approved portrait reference (640px square).
 const initial: Point[] = [
-  { x: .14, y: .22 }, { x: .468, y: .312 }, { x: .80, y: .15 },
-  { x: .613, y: .513 }, { x: .87, y: .79 }, { x: .505, y: .697 },
-  { x: .134, y: .80 }, { x: .310, y: .521 },
+  { x: .119, y: .214 }, { x: .436, y: .122 }, { x: .779, y: .144 },
+  { x: .712, y: .441 }, { x: .944, y: .727 }, { x: .515, y: .930 },
+  { x: .113, y: .794 }, { x: .262, y: .530 },
 ];
+const ENTRANCE_DURATION = 700;
+const POSITION_KEY = "portrait-warp-position-v2";
+const collapsed = initial.map(() => ({ x: .5, y: .5 }));
 const names = ["左上", "上中", "右上", "右中", "右下", "下中", "左下", "左中"];
 const clamp = (n: number) => Math.max(.035, Math.min(.965, n));
 // Quadratic edges pass through each corner and edge midpoint.
@@ -89,7 +93,10 @@ const SHAKE_END = 44; // Source frame 72: return to front after the final head t
 
 export function PortraitWarp() {
   const labelPathId = useId();
-  const [points, setPoints] = useState(initial);
+  const [points, setPoints] = useState(collapsed);
+  const [reveal, setReveal] = useState(0);
+  const interacted = useRef(false);
+  const entranceFrame = useRef(0);
   const geometry = useRef(points);
   const lastDeformation = useRef(-Infinity);
   const [requestedOffset, setRequestedOffset] = useState<Point>({ x: 0, y: 0 });
@@ -129,6 +136,65 @@ export function PortraitWarp() {
     measure();
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    const target = area.current;
+    if (!target) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let visible = false;
+    let restored: { points: Point[]; offset: Point } | null = null;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(POSITION_KEY) ?? "null");
+      const finitePoint = (p: Point) => p && Number.isFinite(p.x) && Number.isFinite(p.y);
+      if (saved && Array.isArray(saved.points) && saved.points.length === initial.length
+        && saved.points.every((p: Point) => finitePoint(p) && p.x >= .035 && p.x <= .965 && p.y >= .035 && p.y <= .965)
+        && finitePoint(saved.offset)) restored = saved;
+    } catch { /* Storage can be unavailable in private browsing. */ }
+    if (restored) {
+      interacted.current = true;
+      entranceFrame.current = requestAnimationFrame(() => {
+        setPoints(restored.points);
+        setRequestedOffset(restored.offset);
+        setReveal(1);
+      });
+    }
+    const updateEntrance = () => {
+      if (interacted.current) return;
+      cancelAnimationFrame(entranceFrame.current);
+      let start: number | null = null;
+      const tick = (now: number) => {
+        if (interacted.current) return;
+        start ??= now;
+        const progress = reducedMotion.matches ? 1 : visible ? Math.min(1, (now - start) / ENTRANCE_DURATION) : 0;
+        const eased = 1 - Math.pow(1 - progress, 4);
+        setPoints(progress === 1 ? initial : initial.map(p => ({
+          x: .5 + (p.x - .5) * eased, y: .5 + (p.y - .5) * eased,
+        })));
+        setReveal(eased);
+        if (visible && progress < 1) entranceFrame.current = requestAnimationFrame(tick);
+      };
+      entranceFrame.current = requestAnimationFrame(tick);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      const inView = entry.isIntersecting && entry.intersectionRatio >= .01;
+      if (visible === inView) return;
+      visible = inView;
+      updateEntrance();
+    }, { threshold: [0, .01] });
+    observer.observe(target);
+    reducedMotion.addEventListener("change", updateEntrance);
+    updateEntrance();
+    return () => {
+      cancelAnimationFrame(entranceFrame.current);
+      observer.disconnect();
+      reducedMotion.removeEventListener("change", updateEntrance);
+    };
+  }, []);
+  useEffect(() => {
+    if (!interacted.current || reveal !== 1) return;
+    try {
+      sessionStorage.setItem(POSITION_KEY, JSON.stringify({ points, offset: requestedOffset }));
+    } catch { /* Keep in-memory interaction working if storage is unavailable. */ }
+  }, [points, requestedOffset, reveal]);
   useEffect(() => { geometry.current = points; }, [points]);
   const dragging = useRef<{ index: number; id: number; x: number; y: number; point: Point } | null>(null);
   useEffect(() => {
@@ -141,6 +207,8 @@ export function PortraitWarp() {
     if (!source) return;
     const poster = new window.Image();
     poster.decoding = "async";
+    const moneySymbol = new window.Image();
+    moneySymbol.decoding = "async";
     // Trimmed source video sampled at its native 24 fps.
     // A single frame is rendered at full opacity, including every transition.
     const sheets = Array.from({ length: 2 }, () => {
@@ -153,6 +221,7 @@ export function PortraitWarp() {
     const preload = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       poster.src = `${PORTRAIT_ASSETS}/poster.webp`;
+      moneySymbol.src = "/assets/images/portrait-props/money-symbol.png";
       preload.disconnect();
     }, { rootMargin: "300px" });
     preload.observe(output);
@@ -162,6 +231,7 @@ export function PortraitWarp() {
     let lastDraw = -Infinity;
     let renderedFrame = -2;
     let renderedPoints: Point[] | null = null;
+    let renderedSymbol = false;
     let meshPoints: Point[] | null = null;
     let triangles: (() => void)[] = [];
     let position = SMILE_FRAME;
@@ -262,9 +332,10 @@ export function PortraitWarp() {
       output.dataset.motion = state;
       // Follow display timing, but remap the mesh only for a new frame or shape.
       // A 24fps timer on a 60Hz display otherwise drops to uneven 20fps steps.
-      if (renderedFrame === frameIndex && renderedPoints === geometry.current) return;
+      const symbolReady = moneySymbol.complete && moneySymbol.naturalWidth > 0;
+      if (renderedFrame === frameIndex && renderedPoints === geometry.current && renderedSymbol === symbolReady) return;
       // The texture changes at video cadence; the mesh only changes on deformation.
-      if (renderedFrame !== frameIndex) {
+      if (renderedFrame !== frameIndex || renderedSymbol !== symbolReady) {
         if (frameIndex >= 0) {
           const tile = frameIndex % 32;
           const sheet = sheets[Math.floor(frameIndex / 32)];
@@ -274,6 +345,20 @@ export function PortraitWarp() {
         } else {
           source.drawImage(poster, 0, 0, 600, 600);
         }
+        // Place on the source lenses before mesh mapping so the symbols follow
+        // both the video frame's head turn and all eight deformation handles.
+        if (symbolReady) {
+          const lenses = lensTracking[frameIndex < 0 ? SMILE_FRAME : frameIndex];
+          const angle = Math.atan2(lenses[1][1] - lenses[0][1], lenses[1][0] - lenses[0][0]);
+          for (const [x, y] of lenses) {
+            source.save();
+            source.translate(x, y);
+            source.rotate(angle);
+            source.drawImage(moneySymbol, -15.5, -18, 31, 36);
+            source.restore();
+          }
+        }
+        renderedSymbol = symbolReady;
       }
       renderedFrame = frameIndex;
       renderedPoints = geometry.current;
@@ -300,6 +385,9 @@ export function PortraitWarp() {
     };
   }, []);
   const deform = (time: number) => {
+    interacted.current = true;
+    cancelAnimationFrame(entranceFrame.current);
+    setReveal(1);
     lastDeformation.current = time;
   };
   const release = () => {
@@ -311,7 +399,8 @@ export function PortraitWarp() {
     const dx = (event.clientX-drag.x)/rect.width, dy = (event.clientY-drag.y)/rect.height;
     drag.x = event.clientX;
     drag.y = event.clientY;
-    if (dx !== 0 || dy !== 0) deform(event.timeStamp);
+    if (dx === 0 && dy === 0) return;
+    deform(event.timeStamp);
     setPoints(p=>moveControlPoint(p, drag.index, dx, dy));
   };
   const keyboard = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -370,11 +459,11 @@ export function PortraitWarp() {
         onPointerUp={()=>{moving.current=null;}} onPointerCancel={()=>{moving.current=null;}} onLostPointerCapture={()=>{moving.current=null;}}
         onKeyDown={e=>{ const step=e.shiftKey?20:5; const delta: Record<string, Point>={ArrowLeft:{x:-step,y:0},ArrowRight:{x:step,y:0},ArrowUp:{x:0,y:-step},ArrowDown:{x:0,y:step}}; if(delta[e.key]) {e.preventDefault(); deform(e.timeStamp); const d=delta[e.key]; setOffset({x:offset.x+d.x,y:offset.y+d.y});} }} />
       {props.map(({ name, anchor, width }) => <Image key={name}
-        className={styles.prop} src={`/assets/images/portrait-props/${name === "laptop" ? "laptop" : "coffee-held"}.png`}
+        className={styles.prop} src={`/assets/images/portrait-props/${name === "laptop" ? "laptop" : "coffee-mug-held"}.png`}
         alt="" aria-hidden="true" width={1280} height={1280} unoptimized draggable={false}
-        style={{ left: `${anchor.x / 6}%`, top: `${anchor.y / 6}%`, width: `${width * 100}%` }} />)}
+        style={{ left: `${anchor.x / 6}%`, top: `${anchor.y / 6}%`, width: `${width * 100}%`, transform: `translate(-50%, -50%) scale(${reveal})` }} />)}
       <svg className={styles.outline} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
-      <svg className={styles.dragLabel} viewBox="0 0 100 100" aria-hidden="true">
+      <svg style={{ opacity: reveal }} className={styles.dragLabel} viewBox="0 0 100 100" aria-hidden="true">
         <defs><path id={labelPathId} d={labelPath} /></defs>
         <text style={{ fontSize: `${1400 / bounds.size}px` }}><textPath href={`#${labelPathId}`} startOffset="0%" textAnchor="start">Drag me</textPath></text>
       </svg>
