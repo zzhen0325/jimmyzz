@@ -40,7 +40,7 @@ function TimelineRow({ entry, cover, reveal = true }: { entry: TimelineEntry; co
           </>;
   return <li>
     {entry.slug
-      ? <Link href={`/work/${entry.slug}`} className="timeline-row" {...interaction}>{content}</Link>
+      ? <Link href={`/work/${entry.slug}`} prefetch={true} className="timeline-row" {...interaction}>{content}</Link>
       : <div className="timeline-row" {...interaction}>{content}</div>}
   </li>;
 }

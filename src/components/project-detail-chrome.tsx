@@ -7,7 +7,7 @@ import { ContactPanel, useContactDrawer } from "./contact-panel";
 
 function ProjectNavLink({ href, children, className, label }: { href: string; children: string; className?: string; label?: string }) {
   const interaction = useTextRollInteraction(textRollDuration(children));
-  return <Link href={href} className={className} aria-label={label ?? children} {...interaction}>
+  return <Link href={href} prefetch={true} className={className} aria-label={label ?? children} {...interaction}>
     <TextRoll>{children}</TextRoll>
   </Link>;
 }

@@ -1,5 +1,5 @@
-/* Keep the final output crop stable before, during, and after bending.
-   Restoring these pixels when the filter switches off causes a visible jump. */
-.root [data-work-skew] {
-  clip-path: inset(2px);
-}
+.root { overflow: visible; }
+/* Keep layout, hit targets, accessibility and the original media decoder alive.
+   The shared GPU surface takes over pixels only while a prepared mesh is moving. */
+.root [data-bend-gpu] { opacity: 0 !important; }
+.root [data-bend-fallback] { will-change: transform; }

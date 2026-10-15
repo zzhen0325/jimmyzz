@@ -7,6 +7,8 @@ import { ScrollBend } from "./scroll-bend";
 import Image from "./content-image";
 import { isVideoAsset } from "@/lib/media";
 import type { Asset } from "@/lib/site-data";
+import { caseImageQuality, caseImageSizes } from "@/lib/case-media";
+import { ViewportVideo } from "./viewport-video";
 
 export function CaseGallery({
   assets,
@@ -20,24 +22,22 @@ export function CaseGallery({
       {assets.map((asset, index) => (
         <section key={asset.name} id={asset.name} className="case-chapter">
           <div className="chapter-image" data-work-skew>
-            {getVideoLayers(asset).length > 0 ? <LayeredMedia asset={asset} alt={`${projectTitle} · ${index + 1}`} /> : isVideoAsset(asset.src) ? <video
+            {getVideoLayers(asset).length > 0 ? <LayeredMedia asset={asset} priority={index === 0} alt={`${projectTitle} · ${index + 1}`} /> : isVideoAsset(asset.src) ? <ViewportVideo
               src={asset.src}
               aria-label={`${projectTitle} · 视频 ${index + 1}`}
               width={asset.width}
               height={asset.height}
-              autoPlay
               muted
               loop
               playsInline
-              preload="metadata"
               style={asset.width && asset.height ? { aspectRatio: `${asset.width} / ${asset.height}` } : undefined}
             /> : asset.width && asset.height ? <Image
               src={asset.src}
               alt={`${projectTitle} · ${index + 1}`}
               width={asset.width}
               height={asset.height}
-              sizes="(max-width: 599px) calc(100vw - 32px), (max-width: 809px) calc(50vw - 26px), 58.333vw"
-              quality={90}
+              sizes={caseImageSizes}
+              quality={caseImageQuality}
               preload={index === 0}
               loading={index === 0 ? undefined : "lazy"}
             /> : <img

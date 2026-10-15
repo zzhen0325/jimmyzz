@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 /** Broad pixel spiral streams, projected onto a fixed tilted disk. */
-export function createPixelVortex(settings: { pixels: number; speed: number; arms: number }) {
+export function createPixelVortex(geometry: THREE.BufferGeometry, settings: { pixels: number; speed: number; arms: number }) {
   const green = new THREE.Color("#4FCD75");
   const yellow = new THREE.Color("#F0FFA7");
   // Blend in linear light so intermediate pigments retain the endpoint brightness.
@@ -97,7 +97,7 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
     // Draw as the scene's backdrop without occluding any released geometry.
     side: THREE.DoubleSide, depthTest: false, depthWrite: false, toneMapped: false,
   });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1), material);
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.name = "floating-pixel-vortex";
   mesh.renderOrder = -1000;
   return { mesh, update: (seconds: number, formation = 1) => { material.uniforms.time.value = seconds; material.uniforms.formation.value = formation; } };

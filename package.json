@@ -12,8 +12,9 @@
     "preview:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare preview",
     "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy && npm run sync:content -- --publish",
     "prepare:video": "node scripts/prepare-video-transcoder.mjs",
-    "predev": "npm run prepare:video && npm run optimize:home-covers",
-    "prebuild": "npm run prepare:video && npm run optimize:home-covers",
+    "prepare:home-geometry": "node scripts/prepare-home-geometry.mjs",
+    "predev": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers",
+    "prebuild": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers",
     "check:cloudflare": "node scripts/check-cloudflare-versions.mjs",
     "sync:content": "node scripts/sync-cloudflare-content.mjs",
     "optimize:home-covers": "node scripts/optimize-home-covers.mjs"

@@ -11,6 +11,7 @@ import { useContent } from "./content-provider";
 import styles from "./selected-work.module.css";
 import { ProjectCoverReveal } from "./project-cover-reveal";
 import { HoverCoverVideo } from "./hover-cover-video";
+import { ViewportVideo } from "./viewport-video";
 
 export function SelectedWork() {
   const { projects, selectedWork, sizes } = useContent();
@@ -27,12 +28,12 @@ export function SelectedWork() {
           return (
             <article key={project.slug} id={`project-${project.slug}`} className={styles.project} data-project={project.slug} data-size={isCompact ? "compact" : "large"} data-portrait={isPortrait || undefined} data-admin-size={sizes[project.slug]}
               style={{ "--work-row": Math.floor(index / 2) + 1 } as CSSProperties}>
-              <Link href={`/work/${project.slug}`} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
+              <Link href={`/work/${project.slug}`} prefetch={true} className={styles.projectLink} data-hover-label={project.title} aria-label={`查看项目：${project.title}`}>
                 <div className={styles.caption} data-work-caption><h3><ScrambleText>{project.title}</ScrambleText></h3><span><ScrambleText>{String(index + 1).padStart(2, "0")}</ScrambleText><ScrambleText>.</ScrambleText></span></div>
                 <ProjectCoverReveal className={styles.image} style={{ aspectRatio: `${project.coverWidth ?? 16} / ${project.coverHeight ?? 9}` }}>
                   {isVideo ? (
-                    <video src={cover} poster={project.thumbnail}
-                      muted loop playsInline preload="none"
+                    <ViewportVideo src={cover} poster={project.thumbnail}
+                      muted loop playsInline
                       aria-label={`${project.title}项目视频`} />
                   ) : (
                     <Image unoptimized={cover !== project.selectedWorkCover} src={cover} alt={`${project.title}项目视觉`} fill

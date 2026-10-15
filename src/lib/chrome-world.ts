@@ -5,12 +5,12 @@ import { createPixelVortex } from "./pixel-vortex";
 import * as THREE from "three";
 import { home3DConfig as config, type FloatingModelConfig, type ModelMaterialConfig } from "./home-3d-config";
 import * as CANNON from "cannon-es";
-import { createLogoTriangle } from "./chrome-logo-geometry";
+import { logoTriangles } from "./chrome-logo-shape";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
-import { createJimmyWordmarkGeometry } from "./jimmy-wordmark-geometry";
 import { createChromePortalGun } from "./chrome-portal-gun";
 import { mergeRigidMeshes } from "./merge-rigid-meshes";
 import { createBakedPropMaterials } from "./baked-prop-materials";
@@ -19,7 +19,6 @@ import { createFloatingPlasterMaterials } from "./floating-plaster-materials";
 import { applyVinylMaterial } from "./vinyl-material";
 import { createFloatingGlass } from "./floating-glass";
 import { createSkyClouds } from "./sky-clouds";
-import { createGoodLuckCylinder, createEatSculpture } from "./home-reference-sculptures";
 import { createHomeGlow } from "./home-glow";
 import { createGlassComposite } from "./glass-composite";
 import { createAdaptiveResolution, homeAntialiasSamples } from "./adaptive-resolution";
@@ -283,28 +282,12 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if (age > 6) { logoReturn = null; logoReturnOffset.set(0, 0, 0); }
   };
   const logo = new THREE.Group(); logo.name = "fixed-silver-ZZ"; scene.add(logo);
-  // User-directed silver adaptation. A real curved surface reflects the panorama;
-  // this replaces the old sinusoidal fragment-normal trick and fabricated softboxes.
-  // Exact path vertices from public/assets/logo.svg (600 × 200).
-  // Convert SVG's downward Y axis to scene coordinates, keeping the existing
-  // width, center, curved silver surface, and all interaction transforms.
-  const triangles = [
-    [[0, 0], [300, 0], [0, 100]],
-    [[600.001, 200], [299.998, 200], [599.998, 100]],
-    [[300, 0], [600, 0], [300, 100]],
-    [[299.997, 200], [0, 200], [300, 100]],
-  ].map((vertices) => vertices.map(([x, y]) => [Math.min(600, x) / 10, 25 - y / 10]));
-  for (const vertices of triangles) {
-    const geometry = createLogoTriangle(vertices);
-    geometries.add(geometry);
-    logo.add(new THREE.Mesh(geometry, chrome));
-  }
-
+  // The curved silver shell comes from zz-logo.glb; its collider uses the same SVG vertices.
   // Four separate prisms preserve the negative space between the logo triangles.
   const logoBody = new CANNON.Body({ type: CANNON.Body.KINEMATIC,
     collisionFilterGroup: collisionGroup.logo,
     collisionFilterMask: collisionGroup.prop | collisionGroup.portalGun });
-  const logoShapes = triangles.map(vertices => {
+  const logoShapes = logoTriangles.map(vertices => {
     const points = vertices.map(([x, y]) => [(x - 30) * .05, (y - 15) * .05]);
     const [a, b, c] = points;
     if ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) < 0) [points[1], points[2]] = [points[2], points[1]];
@@ -1228,6 +1211,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // substeps preserve collision stability without slowing down at the handoff.
     const delta=Math.min(frameMs/1000,referencePhysics.step * referencePhysics.maxSubSteps);previous=time;
     if(disposed||!visible||document.hidden||contextLost){resolution.reset();return;}
+    // Shader compilation runs asynchronously before the first complete frame.
+    // Drawing the incomplete scene here would synchronously wait for it again.
+    if (!ready) return;
     // A monitor/DPR change need not resize the CSS viewport. Update buffers only,
     // never restart physics, the entrance, or pointer coordinates for resolution.
     if (nativeDpr !== window.devicePixelRatio) {
@@ -1303,7 +1289,43 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
   frame=requestAnimationFrame(render);
-  const loader=new GLTFLoader(homeAssetManager);
+  const loader=new GLTFLoader(homeAssetManager).setMeshoptDecoder(MeshoptDecoder);
+  const loadPrepared = (name: string) =>
+    loader.loadAsync(`/assets/models/home-prepared/${name}.glb`).then(async gltf => {
+      const model = gltf.scene.children[0];
+      model.traverse(child => {
+        if (!(child instanceof THREE.Mesh)) return;
+        for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+          if (typeof material.userData.side === "number") material.side = material.userData.side;
+          if (typeof material.userData.toneMapped === "boolean") material.toneMapped = material.userData.toneMapped;
+          if (typeof material.userData.forceSinglePass === "boolean") material.forceSinglePass = material.userData.forceSinglePass;
+          if (material instanceof THREE.MeshStandardMaterial && typeof material.userData.environmentIntensity === "number") {
+            material.envMapIntensity = material.userData.environmentIntensity;
+          }
+        }
+      });
+      const height = gltf.parser.json.extras?.glassHeight;
+      if (height) {
+        const data = await gltf.parser.getDependency("bufferView", height.bufferView);
+        model.userData.glassHeight = { data: new Uint16Array(data), width: height.width, height: height.height };
+      }
+      track(model);
+      if (disposed) {
+        model.traverse(child => {
+          if (!(child instanceof THREE.Mesh)) return;
+          child.geometry.dispose();
+          for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+            for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
+            material.dispose();
+          }
+        });
+      }
+      return model;
+    });
+  const preparedModels = Promise.all(["eat", "wordmark", "zz-logo", "good-luck", "pixel-vortex"].map(loadPrepared));
+  const glassModels = Promise.all(config.glass.items.map(setting => loadPrepared(`glass-${setting.name}`)));
+  const cutoutModels = Promise.all(config.cutouts.map(setting => loadPrepared(`cutout-${setting.file}`)));
+  const skaterModel = config.skater.visible ? loadPrepared("skater") : Promise.resolve(null);
   const filenames=config.plaques.items.map(item => item.file);
   const loadedObjects:THREE.Object3D[]=[];
   const characterModels = Promise.all(config.characters.items.map(({file}) =>
@@ -1312,20 +1334,6 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       track(gltf.scene);
       if (disposed) { geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); }
       return gltf.scene;
-    })
-  ));
-  const skaterTexture = config.skater.visible ? new THREE.TextureLoader(homeAssetManager).loadAsync(config.skater.image).then(texture => {
-    resources.add(texture);
-    if (disposed) texture.dispose();
-    texture.colorSpace = THREE.SRGBColorSpace;
-    return texture;
-  }) : Promise.resolve(null);
-  const cutoutTextures = Promise.all(config.cutouts.map(({ file }) =>
-    new THREE.TextureLoader(homeAssetManager).loadAsync(`/assets/images/floating/${file}.png`).then(texture => {
-      resources.add(texture);
-      if (disposed) texture.dispose();
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return texture;
     })
   ));
   const portalGunModel = createChromePortalGun().then(animation => {
@@ -1386,15 +1394,19 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       return model;
     })
   ));
-  const loaded = Promise.all([skaterTexture, characterModels, cutoutTextures, portalGunModel, sculptedModels, celestialModels, Promise.all([
+  const loaded = Promise.all([preparedModels, skaterModel, characterModels, cutoutModels, glassModels, portalGunModel, sculptedModels, celestialModels, Promise.all([
     (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader(homeAssetManager) : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader(homeAssetManager) : new THREE.TextureLoader(homeAssetManager)).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loader.loadAsync(`/assets/models/home-optimized/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
-  ])]).then(async ([cutout, characters, floatingTextures, portalGun, sculptures, celestial, [environment,...models]])=>{
+  ])]).then(async ([[eat, wordmark, logoModel, goodLuck, vortex], skater, characters, cutouts, glasses, portalGun, sculptures, celestial, [environment,...models]])=>{
     await skyReady;
     if(disposed)return;
     const env=environment as THREE.Texture;env.mapping=THREE.EquirectangularReflectionMapping;
     // Decode display-encoded images; HDR/EXR loaders already provide linear data.
     if (/\.(jpe?g|png|webp)$/i.test(config.lighting.environment)) env.colorSpace = THREE.SRGBColorSpace;
+    for (const child of [...logoModel.children]) {
+      if (child instanceof THREE.Mesh) child.material = chrome;
+      logo.add(child);
+    }
     scene.environment=env;
     scene.environmentIntensity=config.lighting.environmentIntensity;
     for(const [index,model] of models.entries()) {
@@ -1416,7 +1428,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       add(model as THREE.Object3D,config.plaques.items[index].size,index);
     }
     add(portalGun,config.portalGun.size,items.length);
-    const wordmark = new THREE.Mesh(createJimmyWordmarkGeometry(), new THREE.MeshPhysicalMaterial(config.wordmark.material));
+    wordmark.traverse(child => { if (child instanceof THREE.Mesh) child.material = new THREE.MeshPhysicalMaterial(config.wordmark.material); });
     wordmark.name = "floating-jimmy-wordmark";
     add(wordmark, config.wordmark.size, items.length);
     characters.forEach((model, index) => {
@@ -1434,45 +1446,34 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     });
     add(celestial[0], config.celestial.planet.size, items.length);
     add(celestial[1], config.celestial.cloud.size, items.length);
-    if (cutout) {
-      const image = cutout.image as { width: number; height: number };
-      const skater = new THREE.Mesh(
-        new THREE.PlaneGeometry(image.width / image.height, 1),
-        // A flat cutout has no back/front layers to sort; one double-sided pass
-        // produces the same pixels in the camera and reflection probe.
-        new THREE.MeshBasicMaterial({ ...config.skater.material, map: cutout, forceSinglePass: true }),
-      );
-      skater.name = "skater-billboard";
-      add(skater, config.skater.size, items.length, true);
-    }
-    floatingTextures.forEach((texture, index) => {
-      const setting = config.cutouts[index];
-      const image = texture.image as { width: number; height: number };
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(image.width / image.height, 1),
-        new THREE.MeshBasicMaterial({ ...config.skater.material, map: texture, forceSinglePass: true }),
-      );
-      mesh.name = `floating-cutout-${setting.file}`;
-      add(mesh, setting.size, items.length, true);
-    });
+    const prepareCutout = (model: THREE.Object3D) => {
+      model.traverse(child => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const source = child.material as THREE.MeshBasicMaterial;
+        child.material = new THREE.MeshBasicMaterial({ ...config.skater.material, map: source.map, forceSinglePass: true });
+      });
+      return model;
+    };
+    if (skater) add(prepareCutout(skater), config.skater.size, items.length, true);
+    cutouts.forEach((model, index) => add(prepareCutout(model), config.cutouts[index].size, items.length, true));
     sculptures.forEach((model, index) => add(model, config.sculptedProps[index].size, items.length));
-    add(createGoodLuckCylinder(config.referenceSculptures.goodLuck), config.referenceSculptures.goodLuck.size, items.length);
-    add(createEatSculpture(config.referenceSculptures.eat.inflation), config.referenceSculptures.eat.size, items.length);
+    add(goodLuck, config.referenceSculptures.goodLuck.size, items.length);
+    add(eat, config.referenceSculptures.eat.size, items.length);
     canvas.dataset.sculptedProps = String(sculptures.length + 2);
-    config.glass.items.forEach(setting => {
-      add(createFloatingGlass(setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length);
+    config.glass.items.forEach((setting, index) => {
+      add(createFloatingGlass(glasses[index], setting, config.glass.finish, glassComposite.uniforms), setting.size, items.length);
       glassComposite.register(items[items.length - 1].object);
     });
     canvas.dataset.glassProps = String(config.glass.items.length);
-    vortexAnimation = createPixelVortex(config.vortex);
+    vortexAnimation = createPixelVortex((vortex as THREE.Mesh).geometry, config.vortex);
     add(vortexAnimation.mesh, config.vortex.size, items.length, true);
     vortexAnimation.mesh.parent!.parent!.visible = false;
     // A hidden effect must not collide with the floating toys.
     const portalBody = items[items.length - 1].body;
     portalBody.collisionFilterMask = 0;
     portalBody.collisionResponse = false;
-    canvas.dataset.billboards = String((cutout ? 1 : 0) + floatingTextures.length);
-    canvas.dataset.cutouts = String(floatingTextures.length);
+    canvas.dataset.billboards = String((skater ? 1 : 0) + cutouts.length);
+    canvas.dataset.cutouts = String(cutouts.length);
     canvas.dataset.characters = String(characters.length);
     bakedMaterials = createBakedPropMaterials(renderer, scene);
     // Retain the plaques' embossed highlights and all metallic reflections.
@@ -1485,7 +1486,34 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       if (index >= models.length) return;
       plasterMaterials.apply(item.object, true);
     });
-    resize();reset();ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
+    resize();reset();
+    // compileAsync prepares programs, but Three uploads image pixels only on
+    // first use. Props hidden by their entrance otherwise stall the first scroll.
+    // Upload their full-resolution maps while the opening loader is still shown.
+    const initialTextures = new Set<THREE.Texture>();
+    const collectTexture = (value: unknown) => {
+      if (value instanceof THREE.Texture && !value.isRenderTargetTexture) initialTextures.add(value);
+    };
+    scene.traverse(object => {
+      if (!(object instanceof THREE.Mesh)) return;
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        Object.values(material).forEach(collectTexture);
+        if (material instanceof THREE.ShaderMaterial) Object.values(material.uniforms).forEach(uniform => collectTexture(uniform.value));
+      }
+    });
+    let uploadStarted = performance.now();
+    for (const texture of initialTextures) {
+      if (disposed) return;
+      renderer.initTexture(texture);
+      if (performance.now() - uploadStarted >= 8) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        uploadStarted = performance.now();
+      }
+    }
+    scene.updateMatrixWorld(true);
+    await renderer.compileAsync(scene, camera);
+    if (disposed) return;
+    ready=true;canvas.dataset.plaques=String(models.length);canvas.dataset.environment=config.lighting.environment;
     canvas.dataset.phase=reduced?'static':'entrance';
   }).catch(error=>{if(!disposed){canvas.dataset.assetError='true';options.onError?.(error);}});
   const exportFigmaLayers = () => {

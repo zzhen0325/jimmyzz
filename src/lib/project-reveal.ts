@@ -10,7 +10,7 @@ export function projectRevealFrame(width: number, height: number, revealed: bool
   };
 }
 
-export const projectRevealTiming = { start: .08, duration: 1.7 };
+export const projectRevealTiming = { cover: .32, start: .02, duration: .85 };
 
 /** Progress where the blue band of the expanding gradient reaches a point. */
 export function projectRevealArrival(x: number, y: number, width: number, height: number) {

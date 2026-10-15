@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { getVideoLayers } from './video-layers';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -7,7 +8,9 @@ import { initialContent, syncGallery, type Content } from './content';
 import { cloudflareStorage } from './cloudflare-storage';
 import { defaultProjectTheme, isThemeColor } from './project-theme';
 export const contentDirectory = process.env.CONTENT_DIR || path.join(process.cwd(), 'data');
-export async function readContent(): Promise<Content> {
+// Metadata and the page share one read within a render. A new request (including
+// an editor refresh) still reads the latest content from disk or R2.
+export const readContent = cache(async (): Promise<Content> => {
   const storage = cloudflareStorage();
   if (storage) {
     const object = await storage.CONTENT_BUCKET.get('content.json');
@@ -15,7 +18,7 @@ export async function readContent(): Promise<Content> {
   }
   try { return syncGallery(JSON.parse(await readFile(path.join(contentDirectory, 'content.json'), 'utf8'))); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return syncGallery(initialContent); throw error; }
-}
+});
 export async function writeContent(content: Content) {
   const storage = cloudflareStorage();
   if (storage) {

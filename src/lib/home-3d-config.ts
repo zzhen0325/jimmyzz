@@ -22,11 +22,13 @@ const silver: MeshPhysicalMaterialParameters = {
 export const home3DConfig = {
   // HDR 高光阈值、柔光强度、四向星芒强度与长度（CSS 像素）。
   glow: { threshold: .85, strength: .1, starStrength: .6, starLength: 20 },
-  // 相对原生分辨率：从 70% 起步，最低 70%，最高 100%；DPR 2 对应 1.4～2。
+  // 从原生分辨率起步；持续高负载时在 60%～100% 调整，但不低于每 CSS 像素 1 个渲染像素。
   // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
   resolution: { min: .6, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
+  // 模型、图片平面和玻璃高度图由 prepare:home-geometry 预制为 GLB。
+  // 开发时改动几何/材质/贴图后运行 npm run prepare:home-geometry，再刷新页面。
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
   sizing: { desktop: .35, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
@@ -85,6 +87,8 @@ export const home3DConfig = {
       } satisfies Record<string, MeshPhysicalMaterialParameters>,
       labelColors: { background: "#eeeae3", ink: "#c82b33" },
     },
+    // Geometry is prepared by predev/prebuild; after editing inflation during dev,
+    // run npm run prepare:home-geometry and reload to regenerate the exact mesh.
     eat: { size: 1.5, inflation: .12 },
   },
   // 仅显示三角玻璃，其余配置保留以便恢复。

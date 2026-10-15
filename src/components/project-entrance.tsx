@@ -45,13 +45,13 @@ export function ProjectEntrance({ children, style }: { children: ReactNode; styl
         const tween = gsap.to(timeline ? arrivals.map(item => item.element) : elements, {
           opacity: 1,
           y: 0,
-          duration: .6,
+          duration: timeline ? .4 : .6,
           stagger: timeline
             ? (index: number) => {
               const wave = spread > 0 ? (arrivals[index].progress - first) / spread : 0;
               const order = arrivals.length > 1 ? index / (arrivals.length - 1) : 0;
               // Spread neighboring elements apart while retaining the wave's order.
-              return .12 + .95 * (wave * .5 + order * .5);
+              return .06 + .36 * (wave * .5 + order * .5);
             }
             : { amount: Math.min(.9, (elements.length - 1) * .12) },
           ease: "power2.out",

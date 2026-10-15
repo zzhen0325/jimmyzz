@@ -1,38 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ScrollTrigger, useGSAP } from "@/lib/gsap";
 import type { FloatingMode } from "@/lib/chrome-world";
 import styles from "./chrome-home.module.css";
 import { FloatingNav } from "./floating-nav";
+import { HomeLoader } from "./home-loader";
+import { shouldShowHomeLoader } from "@/lib/home-loading";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
+  const [loading, setLoading] = useState(shouldShowHomeLoader);
+  const finishLoading = useCallback(() => setLoading(false), []);
   const [floatingMode, setFloatingMode] = useState<FloatingMode>("flow-rings");
   const [motionMenu, setMotionMenu] = useState(false);
   const hero = useRef<HTMLElement>(null);
-  const [loadScene, setLoadScene] = useState(false);
-  useEffect(() => {
-    // Paint the destination first. Model downloads and scene readiness must not
-    // gate navigation, scrolling, or the rest of the homepage.
-    let idle: number | undefined;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        if (typeof window.requestIdleCallback === "function") {
-          idle = window.requestIdleCallback(() => setLoadScene(true), { timeout: 1500 });
-        } else {
-          timer = setTimeout(() => setLoadScene(true), 100);
-        }
-      });
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-      if (idle !== undefined) window.cancelIdleCallback(idle);
-      clearTimeout(timer);
-    };
-  }, []);
   const workProgress = useRef(0);
   const [view, setView] = useState<"intro" | "transition" | "work">("intro");
   useGSAP(() => {
@@ -60,10 +43,11 @@ export function ChromeHero() {
 
   return (
     <>
-    <FloatingNav ready />
-    <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
+    <FloatingNav ready={!loading} />
+    {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
+    <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏" inert={loading}>
       <div className={styles.stage}>
-        {loadScene && <ChromeScene weather="sunny" floatingMode={floatingMode} workProgress={workProgress} interactive={view === "intro"} />}
+        <ChromeScene paused={loading} weather="sunny" floatingMode={floatingMode} workProgress={workProgress} interactive={!loading && view === "intro"} />
         {view === "intro" && <div className={styles.motionControl} onKeyDown={event => { if (event.key === "Escape") { setMotionMenu(false); event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus(); } }}>
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>
           {motionMenu && <div id="floating-motion-options" className={styles.motionMenu} role="group" aria-label="漂浮效果">
