@@ -1,9 +1,12 @@
 .root { display: inline; }
 .word { position: relative; display: inline-block; vertical-align: baseline; }
 .copy { display: none; position: absolute; inset: 0; overflow: clip; white-space: nowrap; pointer-events: none; }
-.root[data-running] .original { opacity: 0; }
-.root[data-running] .copy { display: block; }
+.root[data-running] .original { animation: restoreOriginal 850ms steps(1, end) forwards; }
+.root[data-running] .copy { display: block; animation: finishScramble 850ms steps(1, end) forwards; }
+/* Opacity animations finish on the compositor even if a main-thread callback is late. */
+@keyframes restoreOriginal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes finishScramble { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .root[data-running] .original { opacity: 1; }
-  .root[data-running] .copy { display: none; }
+  .root[data-running] .original { animation: none; opacity: 1; }
+  .root[data-running] .copy { animation: none; display: none; }
 }

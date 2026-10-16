@@ -34,6 +34,8 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
           filter,
           map: filter.querySelector("feImage")!,
           displacement: filter.querySelector("feDisplacementMap")!,
+          outline: filter.querySelector<SVGFEImageElement>("[data-bend-outline]")!,
+          width: 0,
           active: false,
           height: 0,
           regionY: 0,
@@ -60,6 +62,7 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
       };
       const measure = (image: HTMLElement, width: number, height: number) => {
         const entry = filters.get(image)!;
+        entry.width = width;
         entry.height = height;
         for (const element of [entry.filter, entry.map]) {
           element.setAttribute("x", String(-edgePadding));
@@ -116,15 +119,32 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
         const lift = -Math.abs(rendered.bend) * .32;
         regions.forEach(({ image, y, height }) => {
           const entry = filters.get(image)!;
+          const regionChanged = entry.regionY !== y || entry.regionHeight !== height;
           setRegion(image, y, height);
           // Region tracking remains live on skipped bend frames, avoiding gaps
           // during fast scrolling without increasing curvature updates.
-          if (!updateBend && entry.active) return;
+          if (!updateBend && entry.active && !regionChanged) return;
           if (!entry.active) {
             image.style.filter = `url("#${entry.filter.id}")`;
             entry.active = true;
           }
           entry.displacement.setAttribute("scale", bend);
+          // The displacement texture is quantized by the browser. Build the
+          // silhouette from the continuous quadratic instead of its stepped alpha.
+          const w = entry.width;
+          const h = entry.height;
+          const t0 = edgePadding / (w + 2 * edgePadding);
+          const span = w / (w + 2 * edgePadding);
+          const b = Number(bend);
+          const y0 = -b * (.3 - .9 * t0 + .45 * t0 * t0);
+          const yc = y0 + b * .9 * (1 - t0) * span / 2;
+          const y1 = -b * (.3 - .9 * (t0 + span) + .45 * (t0 + span) ** 2);
+          const outline = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${height}" viewBox="0 ${y} ${w} ${height}"><path fill="white" d="M0 ${y0} Q${w / 2} ${yc} ${w} ${y1} L${w} ${h + y1} Q${w / 2} ${h + yc} 0 ${h + y0}Z"/></svg>`;
+          entry.outline.setAttribute("x", "0");
+          entry.outline.setAttribute("y", String(y));
+          entry.outline.setAttribute("width", String(w));
+          entry.outline.setAttribute("height", String(height));
+          entry.outline.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(outline)}`);
           image.style.translate = `0 ${lift}px`;
         });
       };
@@ -211,7 +231,16 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
             <feImage href="/assets/work-curve-map.svg" x="0%" y="-50%" width="100%" height="200%" preserveAspectRatio="none" result="curve" />
             {/* Exact neutral red prevents horizontal drift from 8-bit rounding. */}
             <feColorMatrix in="curve" type="matrix" values="0 0 0 0 0.5  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1" result="verticalCurve" />
-            <feDisplacementMap in="SourceGraphic" in2="verticalCurve" scale="0" xChannelSelector="R" yChannelSelector="G" />
+            <feDisplacementMap in="SourceGraphic" in2="verticalCurve" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent" />
+            {/* Extend edge colors across the subpixel displacement error, then
+                cut the result with a vector curve rasterized with antialiasing. */}
+            <feMorphology in="bent" operator="dilate" radius="1" result="edgeColors" />
+            <feMerge result="filledBend">
+              <feMergeNode in="edgeColors" />
+              <feMergeNode in="bent" />
+            </feMerge>
+            <feImage data-bend-outline="" preserveAspectRatio="none" result="outline" />
+            <feComposite in="filledBend" in2="outline" operator="in" />
           </filter>
         </defs>
       </svg>

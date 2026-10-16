@@ -1,4 +1,5 @@
-import { createChromeWorld, type ChromeWorldOptions } from "./chrome-world";
+import type { createChromeWorld, ChromeWorldOptions } from "./chrome-world";
+import { createWorkerChromeWorld } from "./home-scene-worker-client";
 import { setHomeSceneReady } from "./home-loading";
 
 type CachedScene = {
@@ -36,7 +37,7 @@ export function attachHomeScene(parent: HTMLElement, options: ChromeWorldOptions
     parent.append(host);
     const current = { host, canvas, target, options, failed: false } as CachedScene;
     try {
-      current.world = createChromeWorld(canvas, {
+      current.world = createWorkerChromeWorld(canvas, {
         ...options,
         vortexTarget: target,
         workProgress: { get current() { return current.options.workProgress?.current ?? 0; } },

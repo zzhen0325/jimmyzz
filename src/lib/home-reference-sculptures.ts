@@ -92,7 +92,7 @@ export function createGoodLuckCylinder(config: GoodLuckCylinderConfig) {
   mesh(collarPanel(-1.75, true), blue).name = "open-rear-protective-collar";
   mesh(collarPanel(.15, false), blue).name = "slotted-front-protective-collar";
 
-  const label = document.createElement("canvas");
+  const label = typeof document === "undefined" ? new OffscreenCanvas(1024, 768) : document.createElement("canvas");
   label.width = 1024; label.height = 768;
   const context = label.getContext("2d")!;
   context.fillStyle = config.labelColors.background; context.fillRect(0, 0, label.width, label.height);

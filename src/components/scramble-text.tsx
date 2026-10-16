@@ -17,8 +17,10 @@ export function ScrambleText({ children, enabled = true }: { children: string; e
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const copies = Array.from(element.querySelectorAll<HTMLElement>("[data-scramble-copy]"));
     let frame = 0;
+    let deadline: ReturnType<typeof setTimeout> | undefined;
     let visible = false;
     const stop = () => {
+      clearTimeout(deadline);
       cancelAnimationFrame(frame);
       frame = 0;
       delete element.dataset.running;
@@ -28,6 +30,8 @@ export function ScrambleText({ children, enabled = true }: { children: string; e
       stop();
       if (reduced.matches || document.hidden || !visible) return;
       const start = performance.now();
+      element.dataset.running = "true";
+      deadline = setTimeout(stop, 850);
       let last = -1;
       const tick = (now: number) => {
         const elapsed = now - start;
@@ -35,7 +39,6 @@ export function ScrambleText({ children, enabled = true }: { children: string; e
         const step = Math.floor(elapsed / 45);
         if (step !== last) {
           last = step;
-          element.dataset.running = "true";
           copies.forEach((copy, index) => {
             const original = Array.from(copy.dataset.scrambleCopy ?? "");
             const progress = Math.max(0, (elapsed - Math.min(index * 18, 140)) / 650);
@@ -51,6 +54,7 @@ export function ScrambleText({ children, enabled = true }: { children: string; e
       frame = requestAnimationFrame(tick);
     };
     const observer = new IntersectionObserver(([entry]) => {
+      if (visible === entry.isIntersecting) return;
       visible = entry.isIntersecting;
       if (visible) play(); else stop();
     }, { threshold: 0, rootMargin: "0px 0px -4% 0px" });

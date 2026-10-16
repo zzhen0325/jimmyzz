@@ -1,6 +1,7 @@
 .section {
   position: relative;
   padding: 24px var(--page-pad) var(--section-space, 96px);
+  padding-left: var(--profile-text-inset, var(--page-pad));
   color: var(--home-foreground);
   scroll-margin-top: 100px;
   outline: none;

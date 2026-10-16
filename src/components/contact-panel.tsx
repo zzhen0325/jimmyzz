@@ -60,13 +60,13 @@ export function ContactPanel({ open, panelRef, id }: { open: boolean; panelRef: 
   return (
     <section ref={panelRef} id={id} role="region" aria-labelledby={`${id}-title`} aria-hidden={!open} inert={!open} className={styles.contactPanel} data-open={open} data-native-cursor>
       <div className={styles.contactHeading}>
-        <h2 id={`${id}-title`}><span>Something in mind?</span></h2>
+        <h2 id={`${id}-title`}><span>LET&apos;S MAKE SOMETHING.</span></h2>
         <p><span>Let’s create something meaningful together.</span></p>
       </div>
       <div className={styles.contactLinks}>
         <a href={`mailto:${profile.email}`}><span>{profile.email}</span><span aria-hidden="true">↗</span></a>
       </div>
-      <p className={styles.contactNote}>Visual design & creative technology.<br />For project enquiries, just say hello.</p>
+      <p className={styles.contactNote}>Visual design, creative coding &amp; everything in between.</p>
     </section>
   );
 }

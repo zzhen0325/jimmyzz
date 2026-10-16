@@ -241,30 +241,31 @@ html:has(.home-page), body:has(.home-page) { background: rgb(247 247 247); }
 
 .home-page { position: relative; isolation: isolate; --line: rgb(32 33 30 / 10%); --profile-text-inset: calc(var(--home-primary-font-size) * .2); --profile-heading-top: 12px; }
 .home-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-/* Two-column introduction: biography on the left, portrait on the right. */
+/* Merge the first two columns into a text panel; portrait occupies the right third. */
 .home-page section.profile-introduction {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: auto;
-  min-height: clamp(420px, 32vw, 640px);
+  --profile-body-size: max(16px, calc(var(--home-primary-font-size) * .527));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 25vw;
   gap: 0;
   margin-inline: 0;
   padding: 0;
   border: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background-image: linear-gradient(to right, transparent calc(50% - .5px), var(--line) calc(50% - .5px), var(--line) calc(50% + .5px), transparent calc(50% + .5px));
+  border-block: 1px solid var(--line);
+  background-image: none;
   align-items: start;
 }
-.home-page .profile-identity { grid-column: 1; grid-row: 1; width: 100%; align-self: stretch; display: flex; flex-direction: column; padding: var(--profile-heading-top) var(--profile-text-inset) 24px; }
-.home-page .profile-statement { width: 100%; max-width: none; margin-top: auto; padding-top: 64px; }
-.home-page .profile-year { margin-top: 24px; font-size: 14px; line-height: 1.4; }
+.home-page .profile-identity { position: relative; grid-column: 1; grid-row: 1; width: 100%; padding: var(--profile-heading-top) var(--profile-text-inset) 0; }
+.home-page .profile-statement { grid-column: 1; grid-row: 2; width: 78%; max-width: none; align-self: end; padding: max(40px, 5vw) var(--profile-text-inset) max(16px, 1.25vw); }
 .home-page .profile-identity h2, .home-page .profile-identity h3 { margin: 0; font-size: var(--home-primary-font-size); line-height: 1.05; font-weight: 500; letter-spacing: -.045em; text-transform: uppercase; }
-.home-page .profile-statement .profile-language > p { margin-top: 12px; color: var(--home-foreground); font-size: calc(var(--home-primary-font-size) * .5); line-height: 1.4; font-weight: 400; letter-spacing: -.025em; }
-.home-page .profile-statement .profile-language > p:first-child { margin-top: 0; }
+.home-page .profile-statement .profile-language > p { margin: 0; color: #ADADAD; font-size: var(--profile-body-size); line-height: 1.35; font-weight: 400; letter-spacing: -.025em; }
+.home-page .profile-year { position: absolute; top: calc(var(--profile-heading-top) + 6px); right: max(18px, 1.4vw); color: #ADADAD; font-size: var(--profile-body-size); line-height: 1.35; letter-spacing: -.025em; }
 @media (max-width: 759px) {
-  .home-page section.profile-introduction { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; min-height: 0; row-gap: 40px; background-image: none; }
+  .home-page section.profile-introduction { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; min-height: 0; row-gap: 24px; }
   .home-page .profile-identity { grid-column: 1; grid-row: 1; }
-  .home-page .profile-statement .profile-language > p { margin-top: 24px; }
+  .home-page .profile-year { right: 8px; font-size: 13px; }
+  .home-page .profile-statement { grid-column: 1; grid-row: 2; width: 100%; padding-top: 16px; }
+  .home-page .profile-statement .profile-language > p { font-size: 17px; }
 }
 @media (min-width: 760px) {
   .home-page { --home-primary-font-size: 3vw; }

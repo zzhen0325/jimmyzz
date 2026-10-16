@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ArrowUp, Code2, Eye, Heart, Sparkles } from "lucide-react";
 import styles from "./dissolve-footer.module.css";
 
 // The transparent outer halo reveals the same background as the page.
@@ -61,7 +62,17 @@ export function DissolveFooter() {
       const ratio = Math.min(devicePixelRatio, 1.5, 1200 / Math.max(1, rect.width));
       canvas.width = mask.width = halo.width = Math.max(1, Math.round(rect.width * ratio));
       canvas.height = mask.height = halo.height = Math.max(1, Math.round(rect.height * ratio));
-      const scale = Math.min(canvas.width * .9 / viewBox[2], canvas.height * .58 / viewBox[3]);
+      const desktop = rect.width >= 810;
+      // Fit the entire animated silhouette: echoes, vertical travel, stroke,
+      // and three blur radii must all stay inside the canvas bitmap.
+      const haloPerSide = .038 / 2 + 3 * .012;
+      const verticalRoom = Math.max(1, canvas.height * (1 - copies * .01 - 2 * .025) - 6);
+      const maxMarkHeight = verticalRoom / (1 + 2 * haloPerSide);
+      const scale = Math.min(
+        canvas.width * (desktop ? .7 : .96) / viewBox[2],
+        maxMarkHeight / viewBox[3],
+        Math.max(1, canvas.width - 6) / (viewBox[2] + viewBox[3] * 2 * haloPerSide),
+      );
       markWidth = viewBox[2] * scale;
       markHeight = viewBox[3] * scale;
       dirty = true;
@@ -73,8 +84,8 @@ export function DissolveFooter() {
       maskContext.clearRect(0, 0, w, h);
       if (!paths.length) return;
       const scale = markWidth / viewBox[2];
-      const spacing = Math.min(h * .015, markHeight * .025);
-      const amplitude = Math.min(h * .035, markHeight * .12);
+      const spacing = Math.min(h * .01, markHeight * .025);
+      const amplitude = Math.min(h * .025, markHeight * .12);
       const baseY = (h - markHeight - copies * spacing) / 2;
       for (let echo = copies; echo >= 0; echo--) {
         const fade = Math.pow(1 - echo / copies, 1.5);
@@ -184,6 +195,23 @@ export function DissolveFooter() {
         <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
         <span className={styles.fallback} aria-hidden="true" />
         <span className={styles.srOnly}>Jimmyzz</span>
+      </div>
+      <div className={styles.signature} lang="en">
+        <p>Made with curiosity<br /><span>100% CARE</span></p>
+        <div className={styles.careSymbols} aria-hidden="true">
+          <Eye /><Heart /><Sparkles /><Code2 />
+        </div>
+        <p>Designed &amp; built by<br /><span>JIMMYZZ</span><br />Always exploring.</p>
+      </div>
+      <div className={styles.bottom} lang="en">
+        <p>Visual design &amp; creative code</p>
+        <p>©2026 Jimmyzz. All rights reserved.</p>
+        <a className={styles.backToTop} href="#top" data-native-cursor aria-label="Back to top / 返回顶部" onClick={(event) => {
+          event.preventDefault();
+          window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+        }}>
+          Back to top <ArrowUp aria-hidden="true" />
+        </a>
       </div>
     </footer>
   );

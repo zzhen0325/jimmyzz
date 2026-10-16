@@ -1,5 +1,5 @@
-/* Keep the final output crop stable before, during, and after bending.
-   Restoring these pixels when the filter switches off causes a visible jump. */
+/* The SVG filter includes padding for the curved edges. A clip-path here
+   clips the final filtered output back to a rectangle, cutting off the bend. */
 .root [data-work-skew] {
-  clip-path: inset(2px);
+  clip-path: none;
 }

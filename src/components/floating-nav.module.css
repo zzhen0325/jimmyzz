@@ -64,7 +64,7 @@
 .contactLinks a { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 48px; padding-block: 10px; border-block: 1px solid #ccc; font-size: clamp(18px, 1.7vw, 28px); overflow-wrap: anywhere; }
 .contactLinks a span:last-child { transition: transform 220ms ease; }
 .contactLinks a:hover span:last-child { transform: translate(3px, -3px); }
-.contactNote { margin: 0; align-self: end; font-size: clamp(13px, 1.1vw, 18px); line-height: 1.3; }
+.contactNote { margin: 0; align-self: end; text-align: right; font-size: clamp(13px, 1.1vw, 18px); line-height: 1.3; }
 .contactLinks, .contactNote { opacity: 0; transform: translateY(16px); transition: opacity 350ms ease, transform 500ms ease; }
 .contactPanel[data-open="true"] :is(.contactLinks, .contactNote) { opacity: 1; transform: translateY(0); transition-delay: 520ms; }
 .contactPanel a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }

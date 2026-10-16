@@ -1,3 +1,7 @@
+.sceneHost { position: absolute; inset: 0; }
+.sceneHost canvas { opacity: 0; transition: opacity 240ms ease; }
+.sceneHost canvas[data-ready="true"] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .sceneHost canvas { transition: none; } }
 .exportControl { position: absolute; z-index: 8; right: 74px; bottom: 78px; display: none; gap: 8px; }
 .rotateSurface { position: absolute; inset: 0; z-index: 4; cursor: grab; touch-action: none; }
 .rotateSurface:active { cursor: grabbing; }

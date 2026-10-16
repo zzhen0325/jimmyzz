@@ -5,7 +5,6 @@ import { homeAssetUrl } from "@/lib/home-asset-url";
 import styles from "./home-loader.module.css";
 
 const frames = Array.from({ length: 11 }, (_, i) => homeAssetUrl(`/assets/loading/frame-${String(i + 1).padStart(2, "0")}.png`));
-const frameDuration = 100;
 
 export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement | null>; onComplete: () => void }) {
   const sequence = useRef<HTMLDivElement>(null);
@@ -14,7 +13,6 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
   useEffect(() => {
     let cancelled = false;
     let finishing = false;
-    let interval: ReturnType<typeof setInterval> | undefined;
     let exitTimer: ReturnType<typeof setTimeout> | undefined;
     let removeTimer: ReturnType<typeof setTimeout> | undefined;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -24,7 +22,6 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
       observer.disconnect();
       // Cached scenes can be ready before the animation has even decoded.
       exitTimer = setTimeout(() => {
-        clearInterval(interval);
         setLeaving(true);
         removeTimer = setTimeout(onComplete, reduced ? 0 : 240);
       }, 0);
@@ -37,31 +34,24 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
     const observer = new MutationObserver(checkScene);
     if (scope.current) observer.observe(scope.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-ready", "data-asset-error"] });
     checkScene();
-    const deadline = setTimeout(() => finish(), 12000);
     Promise.all(frames.map(async (src) => {
       const img = new Image();
       img.src = src;
       await img.decode();
     })).then(() => {
       if (cancelled || finishing) return;
-      let index = 0;
-      if (!reduced) interval = setInterval(() => {
-        index = (index + 1) % frames.length;
-        sequence.current?.style.setProperty("--frame", String(index));
-      }, frameDuration);
+      sequence.current?.setAttribute("data-playing", "true");
       checkScene();
-    }).catch(() => finish());
+    }).catch(() => { /* Keep the first frame until the scene is ready if a frame fails. */ });
     return () => {
       cancelled = true;
       observer.disconnect();
-      clearInterval(interval);
-      clearTimeout(deadline);
       clearTimeout(exitTimer);
       clearTimeout(removeTimer);
     };
   }, [scope, onComplete]);
 
-  return <div className={styles.overlay} data-leaving={leaving} role="status" aria-label="首页加载中">
+  return <div className={styles.overlay} data-home-loader data-leaving={leaving} role="status" aria-label="首页加载中">
     <div className={styles.viewport} aria-hidden="true">
       <div ref={sequence} className={styles.sequence}>
         {/* Native images preserve the exact same canvas and are decoded before playback. */}

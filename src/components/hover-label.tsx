@@ -48,8 +48,9 @@ export function HoverLabel() {
     };
     const updateTarget = (hit: Element | null) => {
       const labeledSurface = hit?.closest<HTMLElement>("[data-hover-label]") ?? null;
-      const control = hit?.closest("a, button, input, textarea, select, [role='button']");
-      const hiddenControl = hit?.closest("button, [role='button'], input, textarea, select");
+      const control = hit?.closest("a, [role='link'], button, input, textarea, select, [role='button']");
+      // Ordinary links use the native pointer; labeled project links keep their title sticker.
+      const hiddenControl = hit?.closest("a:not([data-hover-label]), [role='link']:not([data-hover-label]), button, [role='button'], input, textarea, select");
       const allowsLabel = hiddenControl === labeledSurface && labeledSurface?.hasAttribute("data-hover-label-on-control");
       if (!hit || !finePointer.matches || hit.closest("[data-native-cursor], [data-pointer-dragging], canvas:active, [contenteditable]:not([contenteditable='false']), summary, video[controls]") || (hiddenControl && !allowsLabel)) {
         hide();

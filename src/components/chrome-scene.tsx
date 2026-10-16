@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { HomeWeather } from "@/lib/home-rain";
-import { isFlowMode } from "@/lib/floating-flow";
-import { createChromeWorld, defaultExportLayout, type ExportLayout, type FloatingMode } from "@/lib/chrome-world";
+import type { createChromeWorld, ExportLayout, FloatingMode } from "@/lib/chrome-world";
+import { defaultExportLayout } from "@/lib/chrome-world-layout";
 import { attachHomeScene } from "@/lib/home-scene-cache";
 import styles from "./chrome-scene.module.css";
 
 export default function ChromeScene({ workProgress, interactive, paused = false, weather = "sunny", floatingMode = "physics" }: { workProgress: RefObject<number>; interactive: boolean; paused?: boolean; weather?: HomeWeather; floatingMode?: FloatingMode }) {
-  const guided = isFlowMode(floatingMode);
+  const guided = floatingMode.startsWith("flow-");
   const usesPhysics = floatingMode === "gravity" || guided || floatingMode === "physics" || floatingMode === "physics-wave";
   const initialPaused = useRef(paused);
   const initialWeather = useRef(weather);
@@ -121,7 +121,7 @@ export default function ChromeScene({ workProgress, interactive, paused = false,
       </button>
       {exportError && <p role="alert">{exportError}</p>}
     </div>}
-    <div ref={sceneHost} style={{ position: "absolute", inset: 0 }} />
+    <div ref={sceneHost} className={styles.sceneHost} />
     {failed && <p data-scene-error="true" role="status" style={{ position: "absolute", top: "72%", left: 0, right: 0, textAlign: "center", fontSize: 12, color: "#aaa" }}>三维场景加载失败，请刷新重试。</p>}
   </>;
 }

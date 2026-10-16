@@ -10,14 +10,13 @@ const portraitProps = [
   { name: "coffee", u: .06, v: .76, width: .225 },
   { name: "laptop", u: .926, v: .749, width: .324 },
 ] as const;
-// Default mesh traced from the approved portrait reference (640px square).
+// Default mesh traced from the curved reference, normalized to the square canvas.
 const initial: Point[] = [
-  { x: .119, y: .214 }, { x: .436, y: .122 }, { x: .779, y: .144 },
-  { x: .712, y: .441 }, { x: .944, y: .727 }, { x: .515, y: .930 },
-  { x: .113, y: .794 }, { x: .262, y: .530 },
+  { x: .054, y: .186 }, { x: .498, y: .111 }, { x: .901, y: .167 },
+  { x: .800, y: .490 }, { x: .896, y: .789 }, { x: .450, y: .904 },
+  { x: .048, y: .767 }, { x: .268, y: .498 },
 ];
 const ENTRANCE_DURATION = 700;
-const POSITION_KEY = "portrait-warp-position-v2";
 const collapsed = initial.map(() => ({ x: .5, y: .5 }));
 const names = ["左上", "上中", "右上", "右中", "右下", "下中", "左下", "左中"];
 const clamp = (n: number) => Math.max(.035, Math.min(.965, n));
@@ -35,7 +34,19 @@ function surface(p: Point[], u: number, v: number): Point {
   return { x: coord("x") * 600, y: coord("y") * 600 };
 }
 
-const MESH_SEGMENTS = 24;
+// Share the exact silhouette between SVG outlines and the canvas clipping mask.
+function boundaryPath(points: Point[], scale: number): string {
+  return `M ${points[0].x * scale},${points[0].y * scale} ` +
+    [0, 2, 4, 6].map(index => {
+      const a = points[index], m = points[index + 1], b = points[(index + 2) % 8];
+      const cx = 2 * m.x - (a.x + b.x) / 2;
+      const cy = 2 * m.y - (a.y + b.y) / 2;
+      return `Q ${cx * scale},${cy * scale} ${b.x * scale},${b.y * scale}`;
+    }).join(" ") + " Z";
+}
+
+const MESH_SEGMENTS = 40;
+const CANVAS_RESOLUTION = 1200;
 const DEFORMATION_STRENGTH = 1.35;
 // Allow local mesh compression; only stop a crossed or inverted outer contour.
 function isValidBoundary(points: Point[]): boolean {
@@ -141,22 +152,6 @@ export function PortraitWarp() {
     if (!target) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let visible = false;
-    let restored: { points: Point[]; offset: Point } | null = null;
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(POSITION_KEY) ?? "null");
-      const finitePoint = (p: Point) => p && Number.isFinite(p.x) && Number.isFinite(p.y);
-      if (saved && Array.isArray(saved.points) && saved.points.length === initial.length
-        && saved.points.every((p: Point) => finitePoint(p) && p.x >= .035 && p.x <= .965 && p.y >= .035 && p.y <= .965)
-        && finitePoint(saved.offset)) restored = saved;
-    } catch { /* Storage can be unavailable in private browsing. */ }
-    if (restored) {
-      interacted.current = true;
-      entranceFrame.current = requestAnimationFrame(() => {
-        setPoints(restored.points);
-        setRequestedOffset(restored.offset);
-        setReveal(1);
-      });
-    }
     const updateEntrance = () => {
       if (interacted.current) return;
       cancelAnimationFrame(entranceFrame.current);
@@ -189,18 +184,16 @@ export function PortraitWarp() {
       reducedMotion.removeEventListener("change", updateEntrance);
     };
   }, []);
-  useEffect(() => {
-    if (!interacted.current || reveal !== 1) return;
-    try {
-      sessionStorage.setItem(POSITION_KEY, JSON.stringify({ points, offset: requestedOffset }));
-    } catch { /* Keep in-memory interaction working if storage is unavailable. */ }
-  }, [points, requestedOffset, reveal]);
   useEffect(() => { geometry.current = points; }, [points]);
   const dragging = useRef<{ index: number; id: number; x: number; y: number; point: Point } | null>(null);
   useEffect(() => {
     const output = canvas.current;
     const ctx = output?.getContext("2d");
     if (!ctx || !output) return;
+    // Supersample the output while keeping mesh and pointer coordinates in 600-unit space.
+    ctx.setTransform(CANVAS_RESOLUTION / 600, 0, 0, CANVAS_RESOLUTION / 600, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     const texture = document.createElement("canvas");
     texture.width = texture.height = 600;
     const source = texture.getContext("2d");
@@ -234,6 +227,7 @@ export function PortraitWarp() {
     let renderedSymbol = false;
     let meshPoints: Point[] | null = null;
     let triangles: (() => void)[] = [];
+    let silhouette = new Path2D();
     let position = SMILE_FRAME;
     let direction = 1;
     let state: "smile" | "struggle" | "returning" = "smile";
@@ -270,8 +264,20 @@ export function PortraitWarp() {
       const yx = ((e.y-d.y)*(c.y-a.y)-(f.y-d.y)*(b.y-a.y))/det;
       const yy = ((f.y-d.y)*(b.x-a.x)-(e.y-d.y)*(c.x-a.x))/det;
       const tx = d.x-xx*a.x-xy*a.y, ty = d.y-yx*a.x-yy*a.y;
+      // Expand the clip (not the texture mapping) by 0.65 logical pixels.
+      // Shared antialiased triangle edges otherwise leave partially transparent seams.
+      const lengths = [Math.hypot(e.x-f.x, e.y-f.y), Math.hypot(f.x-d.x, f.y-d.y), Math.hypot(d.x-e.x, d.y-e.y)];
+      const perimeter = lengths.reduce((sum, length) => sum + length, 0);
+      const area2 = Math.abs((e.x-d.x)*(f.y-d.y)-(e.y-d.y)*(f.x-d.x));
+      if (perimeter < 1e-6 || area2 < 1e-6) return () => {};
+      const center = {
+        x: (d.x*lengths[0]+e.x*lengths[1]+f.x*lengths[2])/perimeter,
+        y: (d.y*lengths[0]+e.y*lengths[1]+f.y*lengths[2])/perimeter,
+      };
+      const expansion = 1 + Math.min(.65 * perimeter / area2, 2);
+      const [cd, ce, cf] = dst.map(p => ({ x: center.x+(p.x-center.x)*expansion, y: center.y+(p.y-center.y)*expansion }));
       return () => {
-        ctx.save(); ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(e.x,e.y); ctx.lineTo(f.x,f.y); ctx.closePath(); ctx.clip();
+        ctx.save(); ctx.beginPath(); ctx.moveTo(cd.x,cd.y); ctx.lineTo(ce.x,ce.y); ctx.lineTo(cf.x,cf.y); ctx.closePath(); ctx.clip();
         ctx.transform(xx,yx,xy,yy,tx,ty);
         ctx.drawImage(texture,0,0,600,600); ctx.restore();
       };
@@ -365,6 +371,7 @@ export function PortraitWarp() {
       ctx.clearRect(0, 0, 600, 600);
       if (meshPoints !== geometry.current) {
         meshPoints = geometry.current;
+        silhouette = new Path2D(boundaryPath(meshPoints, 600));
         triangles = [];
         const n = MESH_SEGMENTS;
         for (let y=0;y<n;y++) for(let x=0;x<n;x++) {
@@ -375,7 +382,10 @@ export function PortraitWarp() {
           triangles.push(prepareTriangle([src[0],src[2],src[3]],[dst[0],dst[2],dst[3]]));
         }
       }
+      ctx.save();
+      ctx.clip(silhouette);
       for (const triangle of triangles) triangle();
+      ctx.restore();
     };
     return () => {
       cancelAnimationFrame(frame);
@@ -412,12 +422,7 @@ export function PortraitWarp() {
     deform(event.timeStamp);
     setPoints(p=>moveControlPoint(p, index, offset.x, offset.y));
   };
-  const boundary = Array.from({ length: 64 }, (_, i) => {
-    const side = Math.floor(i / 16), t = (i % 16) / 16;
-    const uv = side === 0 ? [t, 0] : side === 1 ? [1, t] : side === 2 ? [1-t, 1] : [0, 1-t];
-    const p = surface(points, uv[0], uv[1]);
-    return `${p.x / 6},${p.y / 6}`;
-  }).join(" ");
+  const boundary = boundaryPath(points, 100);
   // Follow the top edge outward, starting beside the upper-left control point.
   const labelPath = Array.from({ length: 65 }, (_, i) => {
     const t = i / 64;
@@ -452,17 +457,17 @@ export function PortraitWarp() {
       })}
     </svg>
     <div ref={area} className={styles.area} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} data-native-cursor>
-      <svg className={styles.background} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
-      <canvas ref={canvas} width={600} height={600} role="img" tabIndex={0} aria-label="可拖动的 ZZ 头像，拖动移动位置，方向键微调"
+      <svg className={styles.background} viewBox="0 0 100 100" aria-hidden="true"><path d={boundary} /></svg>
+      <canvas ref={canvas} width={CANVAS_RESOLUTION} height={CANVAS_RESOLUTION} role="img" tabIndex={0} aria-label="可拖动的 ZZ 头像，拖动移动位置，方向键微调"
         onPointerDown={e=>{ e.preventDefault(); e.currentTarget.focus({preventScroll:true}); e.currentTarget.setPointerCapture(e.pointerId); moving.current={id:e.pointerId,x:e.clientX,y:e.clientY,origin:offset}; }}
         onPointerMove={e=>{ const drag=moving.current; if (drag && drag.id===e.pointerId) { const next={x:drag.origin.x+e.clientX-drag.x,y:drag.origin.y+e.clientY-drag.y}; if(next.x!==offset.x || next.y!==offset.y) deform(e.timeStamp); setOffset(next); } }}
         onPointerUp={()=>{moving.current=null;}} onPointerCancel={()=>{moving.current=null;}} onLostPointerCapture={()=>{moving.current=null;}}
         onKeyDown={e=>{ const step=e.shiftKey?20:5; const delta: Record<string, Point>={ArrowLeft:{x:-step,y:0},ArrowRight:{x:step,y:0},ArrowUp:{x:0,y:-step},ArrowDown:{x:0,y:step}}; if(delta[e.key]) {e.preventDefault(); deform(e.timeStamp); const d=delta[e.key]; setOffset({x:offset.x+d.x,y:offset.y+d.y});} }} />
       {props.map(({ name, anchor, width }) => <Image key={name}
-        className={styles.prop} src={`/assets/images/portrait-props/${name === "laptop" ? "laptop" : "coffee-mug-held"}.png`}
+        className={styles.prop} src={`/assets/images/portrait-props/${name === "laptop" ? "laptop" : "coffee-held"}.png`}
         alt="" aria-hidden="true" width={1280} height={1280} unoptimized draggable={false}
         style={{ left: `${anchor.x / 6}%`, top: `${anchor.y / 6}%`, width: `${width * 100}%`, transform: `translate(-50%, -50%) scale(${reveal})` }} />)}
-      <svg className={styles.outline} viewBox="0 0 100 100" aria-hidden="true"><polygon points={boundary} /></svg>
+      <svg className={styles.outline} viewBox="0 0 100 100" aria-hidden="true"><path d={boundary} /></svg>
       <svg style={{ opacity: reveal }} className={styles.dragLabel} viewBox="0 0 100 100" aria-hidden="true">
         <defs><path id={labelPathId} d={labelPath} /></defs>
         <text style={{ fontSize: `${1400 / bounds.size}px` }}><textPath href={`#${labelPathId}`} startOffset="0%" textAnchor="start">Drag me</textPath></text>
