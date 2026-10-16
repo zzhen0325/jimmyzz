@@ -25,14 +25,14 @@ const chronologicalEntries = [...entries].sort((a, b) =>
   (b.date ?? "").localeCompare(a.date ?? ""),
 );
 
-function TimelineRow({ entry, cover, reveal = true }: { entry: TimelineEntry; cover?: string; reveal?: boolean }) {
+function TimelineRow({ entry, cover, reveal = true, scramble = true }: { entry: TimelineEntry; cover?: string; reveal?: boolean; scramble?: boolean }) {
   const interaction = useTextRollInteraction(Math.max(...[entry.company, entry.title, entry.category].map(textRollDuration)));
   const preview = cover ?? projectCover(entry.slug ?? "");
   const content = <>
-            <span className="timeline-date">{entry.date ? <time dateTime={entry.date}><ScrambleText>{entry.date}</ScrambleText></time> : <span aria-label="时间待补充"><ScrambleText>—</ScrambleText></span>}</span>
-            <span className="timeline-company"><TextRoll>{entry.company}</TextRoll></span>
-            <span className="timeline-project"><TextRoll reveal={reveal}>{entry.title}</TextRoll></span>
-            <span className="timeline-category"><TextRoll reveal={reveal}>{entry.category}</TextRoll></span>
+            <span className="timeline-date">{entry.date ? <time dateTime={entry.date}><ScrambleText enabled={scramble}>{entry.date}</ScrambleText></time> : <span aria-label="时间待补充"><ScrambleText enabled={scramble}>—</ScrambleText></span>}</span>
+            <span className="timeline-company"><TextRoll enabled={scramble}>{entry.company}</TextRoll></span>
+            <span className="timeline-project"><TextRoll enabled={scramble} reveal={reveal}>{entry.title}</TextRoll></span>
+            <span className="timeline-category"><TextRoll enabled={scramble} reveal={reveal}>{entry.category}</TextRoll></span>
             {entry.slug ? <ArrowRight className="timeline-arrow" size={16} aria-hidden="true" /> : null}
             {entry.slug && preview ? <span className="timeline-preview" aria-hidden="true">
               <Image src={preview} alt="" width={600} height={400} sizes="28vw" />
@@ -49,7 +49,7 @@ export function RelatedProjectList({ entries }: { entries: (TimelineEntry & { co
   return (
     <section className="timeline-section case-project-list" aria-label="更多项目">
       <ul id="related-projects" className="timeline-list">
-        {entries.map((entry) => <TimelineRow key={entry.slug} entry={entry} cover={entry.cover} reveal={false} />)}
+        {entries.map((entry) => <TimelineRow key={entry.slug} entry={entry} cover={entry.cover} reveal={false} scramble={false} />)}
       </ul>
     </section>
   );

@@ -106,15 +106,15 @@ html:has(.case-page), body:has(.case-page) { background: #f7f7f7; }
 .case-visuals .chapter-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: default; }
 .case-visuals .chapter-image :is(img, video) { display: block; width: 100%; height: auto; max-width: none; max-height: none; }
 .case-copy .case-editorial-section:last-child p:last-child { margin-bottom: 0; }
-.case-page .case-project-list { margin-top: 0; padding-bottom: 64px; }
+.case-page .case-project-list { margin-top: 0; padding-bottom: 0; overflow: clip; }
 .case-project-list .timeline-list { border-top: 1px solid var(--line); }
 .case-project-list .timeline-row,
 .case-project-list .timeline-row > :is(.timeline-date, .timeline-company, .timeline-project, .timeline-category) {
   font-size: 14px;
-  color: #0b0b0b;
+  color: var(--home-foreground);
 }
 .case-project-list .timeline-row { min-height: 40px; padding-block: 10px; }
-.case-project-list .timeline-row:is([data-active="true"], :focus-visible) .timeline-date { color: #0b0b0b; }
+.case-project-list .timeline-row:is([data-active="true"], :focus-visible) .timeline-date { color: var(--home-foreground); }
 .case-project-list .timeline-date { white-space: nowrap; }
 /* Keep both TextRoll layers readable when a project name exceeds its track. */
 .case-project-list :is(.timeline-company, .timeline-project) > span > span {

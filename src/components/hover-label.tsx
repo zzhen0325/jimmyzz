@@ -60,6 +60,7 @@ export function HoverLabel() {
         ? labeledSurface
         : document.documentElement;
       const customText = surface.dataset.hoverLabel?.trim();
+      element.dataset.portal = String(customText === "Open The Portal");
       usesDefaultLabel = !customText;
       element.dataset.projectCover = String(surface.matches('a[href^="/work/"]'));
       element.style.fontFamily = usesDefaultLabel ? "var(--font-mono)" : "";

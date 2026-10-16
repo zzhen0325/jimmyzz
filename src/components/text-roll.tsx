@@ -48,7 +48,7 @@ export function TextRoll({ children, enabled = true, reveal = false }: { childre
     {[0, 1].map((layer) => <span key={layer} aria-hidden="true" className={layer ? styles.copy : styles.line}>
       {characters.map((character, index) => <span key={index} style={{
         "--roll-delay": `${Math.abs(index - (characters.length - 1) / 2) * 35}ms`,
-      } as CSSProperties}><ScrambleText enabled={enabled}>{character === " " ? "\u00a0" : character}</ScrambleText></span>)}
+      } as CSSProperties}>{enabled ? <ScrambleText>{character === " " ? "\u00a0" : character}</ScrambleText> : character === " " ? "\u00a0" : character}</span>)}
     </span>)}
   </span>;
 }

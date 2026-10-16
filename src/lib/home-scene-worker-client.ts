@@ -31,6 +31,8 @@ export function createWorkerChromeWorld(canvas: HTMLCanvasElement, options: Chro
   };
   const fail = (error: Error) => {
     canvas.dataset.assetError = "true";
+    canvas.dataset.sceneError = error.message;
+    console.error("[Home scene]", error);
     rejectLoaded(error);
     pending.forEach(request => request.reject(error)); pending.clear();
     options.onError?.(error);

@@ -87,10 +87,6 @@ export function ProjectEntrance({ children, style }: { children: ReactNode; styl
         });
       });
       context.register();
-      // More/Less inserts fresh rows; existing rows never replay.
-      const mutations = new MutationObserver(() => context.register());
-      const list = page.querySelector(".case-project-list");
-      if (list) mutations.observe(list, { childList: true, subtree: true });
       const onTransition = (event: Event) => {
         waiting = (event as CustomEvent<boolean>).detail;
         flush();
@@ -115,7 +111,6 @@ export function ProjectEntrance({ children, style }: { children: ReactNode; styl
       window.addEventListener("project-transition-reveal", onReveal);
       return () => {
         observer.disconnect();
-        mutations.disconnect();
         window.removeEventListener("project-transition", onTransition);
         window.removeEventListener("project-transition-reveal", onReveal);
       };

@@ -49,10 +49,12 @@ function initialize(surface: OffscreenCanvas, state: SceneViewport, options: Chr
     set(object, key: string, value: string) { if (object[key] !== value) { object[key] = value; dirty = true; } return true; },
   });
   const host = { get clientWidth() { return viewport.width; }, get clientHeight() { return viewport.height; },
-    isConnected: true, getBoundingClientRect: rect };
+    // The scene host contains only the canvas and its hit target, no DOM props.
+    isConnected: true, getBoundingClientRect: rect, querySelectorAll: () => [] };
   const captures = new Set<number>();
   Object.assign(canvas, {
     parentElement: host, style: {}, dataset: stats,
+    getBoundingClientRect: rect,
     setAttribute: () => {},
     focus: () => send({ type: "focus" }),
     setPointerCapture: (id: number) => { captures.add(id); send({ type: "capture", id }); },

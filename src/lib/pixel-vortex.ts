@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 /** Broad pixel spiral streams, projected onto a fixed tilted disk. */
 export function createPixelVortex(settings: { pixels: number; speed: number; arms: number }) {
-  const green = new THREE.Color("#4FCD75");
-  const yellow = new THREE.Color("#F0FFA7");
+  const green = new THREE.Color("#28DE5D");
+  const yellow = new THREE.Color("#E6FF65");
   // Blend in linear light so intermediate pigments retain the endpoint brightness.
   const lime = green.clone().lerp(yellow, .45);
   const material = new THREE.ShaderMaterial({
@@ -13,7 +13,7 @@ export function createPixelVortex(settings: { pixels: number; speed: number; arm
       green: { value: green },
       lime: { value: lime },
       yellow: { value: yellow },
-      highlight: { value: new THREE.Color("#F0FFA7") },
+      highlight: { value: yellow.clone() },
     },
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,

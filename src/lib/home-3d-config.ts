@@ -210,7 +210,7 @@ export const home3DConfig = {
   // 金属外观也受环境与灯光影响。
   lighting: {
    
-    exposure: 1, environment: "/assets/environments/bg.jpg", environmentIntensity: 1,
+    exposure: 1.15, environment: "/assets/environments/bg.jpg", environmentIntensity: 1,
     // 环境沿水平方向匀速旋转，单位为弧度/秒。
     environmentRotationSpeed: .1,
     // Logo 的局部反射独立于 environmentIntensity，需保留足够的棚拍亮部。

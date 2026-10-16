@@ -1111,11 +1111,31 @@ button {
 }
 .hover-label[data-visible="true"] { opacity: 1; }
 .hover-label-character { display: inline-block; }
+.hover-label[data-portal="true"] {
+  overflow: hidden;
+  isolation: isolate;
+}
+.hover-label[data-portal="true"][data-visible="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -50% 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 24%, rgb(255 255 255 / 30%) 40%, rgb(255 255 255 / 78%) 50%, rgb(255 255 255 / 30%) 60%, transparent 76%);
+  animation: portal-label-sheen 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes portal-label-sheen {
+  0% { transform: translateX(-100%); opacity: 0; }
+  4% { opacity: 1; }
+  48% { transform: translateX(100%); opacity: 1; }
+  49%, 100% { transform: translateX(100%); opacity: 0; }
+}
 @media (hover: hover) and (pointer: fine) {
   [data-hover-label-active], [data-hover-label-active] * { cursor: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hover-label { transition: none; }
+  .hover-label[data-portal="true"]::before { animation: none; content: none; }
 }
 @media (hover: none), (pointer: coarse) {
   .hover-label { display: none; }
