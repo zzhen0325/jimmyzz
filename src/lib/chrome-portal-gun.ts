@@ -1,6 +1,5 @@
-import { homeAssetManager } from "./home-asset-manager";
 import { FrontSide, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector3, type Material, type Object3D } from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import type { GLTF } from "three/addons/loaders/GLTFLoader.js";
 
 const bubbleGlow = { base: .15, amplitude: 6, period: 1.6 };
 
@@ -11,8 +10,8 @@ const housingMaterials: Record<string, { color: string; roughness: number; metal
 };
 
 /** Blender-authored Portal Gun Jr.; retain its molded surfaces and printed colors. */
-export async function createChromePortalGun() {
-  const { scene } = await new GLTFLoader(homeAssetManager).loadAsync("/assets/models/home-optimized/portal-gun/portal-gun-jr.glb?v=5");
+export async function createChromePortalGun(loadModel: (path: string) => Promise<GLTF>) {
+  const { scene } = await loadModel("/assets/models/home-optimized/portal-gun/portal-gun-jr.glb?v=5");
   scene.name = "floating-green-portal-gun";
   const bubbles: Object3D[] = [];
   const glowMaterials: { material: MeshStandardMaterial; phase: number }[] = [];

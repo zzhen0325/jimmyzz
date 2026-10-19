@@ -1,3 +1,5 @@
+import { createDownloadProgress } from "./home-download-progress";
+import { retryHomeAsset } from "./retry-home-asset";
 import type { ScenePlatform } from "./home-scene-platform";
 import { homeAssetManager } from "./home-asset-manager";
 import { createHomeRain, type HomeWeather } from "./home-rain";
@@ -1320,26 +1322,46 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
     } else { measuredFrames = measuredMs = measuredCpu = measuredReflection = measuredDraw = 0; }
     renderedWorkProgress = ready ? workProgress() : -1;
-    if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
+    if(ready){canvas.dataset.loadProgress=paused?'99':'100';canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
   frame=requestAnimationFrame(render);
+  const preparedNames = ["eat", "wordmark", "zz-logo", "good-luck", "pixel-vortex"];
+  const assetPaths = [
+    ...preparedNames.map(name => `/assets/models/home-prepared/${name}.glb`),
+    ...config.glass.items.map(item => `/assets/models/home-prepared/glass-${item.name}.glb`),
+    ...config.cutouts.map(item => `/assets/models/home-prepared/cutout-${item.file}.glb`),
+    ...(config.skater.visible ? ["/assets/models/home-prepared/skater.glb"] : []),
+    ...config.characters.items.map(item => `/assets/models/home-optimized/emotions/${item.file}.glb`),
+    ...config.plaques.items.map(item => `/assets/models/home-optimized/plaques/${item.file}.glb`),
+    ...config.sculptedProps.map(item => item.path),
+    config.celestial.planet.path, config.celestial.cloud.path,
+    "/assets/models/home-optimized/portal-gun/portal-gun-jr.glb", config.lighting.environment,
+  ];
+  canvas.dataset.loadProgress = "0";
+  const downloads = createDownloadProgress(assetPaths, JSON.parse(process.env.NEXT_PUBLIC_HOME_ASSET_SIZES || "{}"), percent => {
+    if (!disposed) canvas.dataset.loadProgress = String(percent);
+  });
+  const modelFiles = new THREE.FileLoader(homeAssetManager).setResponseType("arraybuffer");
+  const loadBytes = async (path: string) => {
+    const bytes = await retryHomeAsset(() => modelFiles.loadAsync(path, event => downloads.update(path, event.loaded)), () => disposed) as ArrayBuffer;
+    downloads.update(path, bytes.byteLength);
+    return bytes;
+  };
   const loader=new GLTFLoader(homeAssetManager).setMeshoptDecoder(MeshoptDecoder);
   const loadTexture = async (url: string) => {
-    if (!options.platform) return new THREE.TextureLoader(homeAssetManager).loadAsync(url);
-    const bitmap = await new THREE.ImageBitmapLoader(homeAssetManager)
-      .setOptions({ imageOrientation: "flipY", premultiplyAlpha: "none" }).loadAsync(url);
+    const bytes = await loadBytes(url);
+    const bitmap = await createImageBitmap(new Blob([bytes]), { imageOrientation: "flipY", premultiplyAlpha: "none" });
     const texture = new THREE.Texture(bitmap);
     texture.flipY = false;
     texture.needsUpdate = true;
     texture.addEventListener("dispose", () => bitmap.close());
     return texture;
   };
-  const modelFiles = new THREE.FileLoader(homeAssetManager).setResponseType("arraybuffer");
   let parseQueue: Promise<unknown> = Promise.resolve();
   const loadModel = async (path: string) => {
     // Network caching is independent from expensive parsing. Parse one model at a
     // time inside the worker, including while the visitor is below the hero.
-    const bytes = await modelFiles.loadAsync(path);
+    const bytes = await loadBytes(path);
     const parsed = parseQueue.then(async () => {
       await yieldStartup();
       if (disposed) throw new Error("Home scene disposed before model parsing");
@@ -1380,7 +1402,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       }
       return model;
     });
-  const preparedModels = Promise.all(["eat", "wordmark", "zz-logo", "good-luck", "pixel-vortex"].map(loadPrepared));
+  const preparedModels = Promise.all(preparedNames.map(loadPrepared));
   const glassModels = Promise.all(config.glass.items.map(setting => loadPrepared(`glass-${setting.name}`)));
   const cutoutModels = Promise.all(config.cutouts.map(setting => loadPrepared(`cutout-${setting.file}`)));
   const skaterModel = config.skater.visible ? loadPrepared("skater") : Promise.resolve(null);
@@ -1394,7 +1416,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       return gltf.scene;
     })
   ));
-  const portalGunModel = createChromePortalGun().then(animation => {
+  const portalGunModel = createChromePortalGun(loadModel).then(animation => {
     portalGunAnimation = animation;
     const model = animation.scene;
     track(model);
@@ -1453,7 +1475,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     })
   ));
   const loaded = Promise.all([preparedModels, skaterModel, characterModels, cutoutModels, glassModels, portalGunModel, sculptedModels, celestialModels, Promise.all([
-    (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader(homeAssetManager) : /\.hdr$/i.test(config.lighting.environment) ? new HDRLoader(homeAssetManager) : { loadAsync: loadTexture }).loadAsync(config.lighting.environment).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
+    (/\.(exr|hdr)$/i.test(config.lighting.environment)
+      ? retryHomeAsset<THREE.Texture>(() => (/\.exr$/i.test(config.lighting.environment) ? new EXRLoader(homeAssetManager) : new HDRLoader(homeAssetManager)).loadAsync(config.lighting.environment, event => downloads.update(config.lighting.environment, event.loaded)), () => disposed).then(texture => { downloads.complete(config.lighting.environment); return texture; })
+      : loadTexture(config.lighting.environment)).then(texture=>{resources.add(texture);if(disposed)texture.dispose();return texture;}),
     ...filenames.map(file=>loadModel(`/assets/models/home-optimized/plaques/${file}.glb`).then(gltf=>{gltf.scene.name=file;track(gltf.scene);loadedObjects.push(gltf.scene);if(disposed){track(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}return gltf.scene;})),
   ])]).then(async ([[eat, wordmark, logoModel, goodLuck, vortex], skater, characters, cutouts, glasses, portalGun, sculptures, celestial, [environment,...models]])=>{
     await skyReady;

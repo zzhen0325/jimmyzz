@@ -17,5 +17,13 @@
 .sequence[data-playing="true"] { animation: logoFrames var(--sequence-duration) steps(var(--frame-count), end) infinite; }
 @keyframes logoFrames { to { transform: translateX(var(--sequence-offset)); } }
 /* Frames share a centered canvas and preserve the supplied logo proportions. */
-.sequence img { display: block; flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.logoFrame { flex: 0 0 100%; width: 100%; height: 100%; background-size: 2100% 100%; background-repeat: no-repeat; }
 @media (prefers-reduced-motion: reduce) { .overlay, .viewport { transition: none; } .overlay[data-leaving="true"] .viewport { transform: none; } .sequence[data-playing="true"] { animation: none; } }
+
+.loadingContent { display: contents; }
+
+.loadingStatus { position: absolute; top: max(var(--home-edge, 24px), env(safe-area-inset-top)); left: 0; right: 0; text-align: center; line-height: 1; }
+.percentage { font-family: "Apfel Grotezk", sans-serif; font-size: clamp(12px, .625vw, 16px); font-weight: 400; font-variant-numeric: tabular-nums; transition: color 180ms linear; }
+.overlay[data-leaving="true"] .loadingStatus { opacity: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) { .percentage { transition: none; } }

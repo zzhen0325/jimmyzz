@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import { homeAssetUrl } from "@/lib/home-asset-url";
 import styles from "./home-loader.module.css";
 
-const frames = Array.from({ length: 21 }, (_, i) => homeAssetUrl(`/assets/loading/frame-${String(i + 1).padStart(2, "0")}.png`));
+const frames = Array.from({ length: 21 }, (_, i) => i);
+const sequenceUrl = homeAssetUrl("/assets/loading/sequence.webp");
 const sequenceDurationMs = frames.length * 100;
 const finalFrameHoldMs = 200;
 const shrinkDurationMs = 160;
@@ -21,11 +22,12 @@ const sequenceStyle = {
   "--sequence-duration": `${sequenceDurationMs}ms`,
   "--sequence-offset": `${-100 * frames.length}%`,
 } as CSSProperties;
-const loadingTimeoutMs = 30_000;
+const slowLoadingMs = 8_000;
 
 export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { scope: RefObject<HTMLElement | null>; onReveal: () => void; onComplete: () => void; compact?: boolean }) {
   const sequence = useRef<HTMLDivElement>(null);
   const shuffled = useRef(false);
+  const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
@@ -39,7 +41,7 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
         [order[i], order[j]] = [order[j], order[i]];
       }
       Array.from(sequence.current.children).forEach((frame, i) => {
-        (frame as HTMLImageElement).style.order = String(order[i]);
+        (frame as HTMLDivElement).style.order = String(order[i]);
       });
       shuffled.current = true;
     }
@@ -47,8 +49,7 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
     let finishing = false;
     let awaitingPresentation = false;
     let presentationComplete = false;
-    let animationStarted = 0;
-    let framesReady = false;
+    let animationStarted = performance.now();
     let sceneReady = false;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -57,7 +58,7 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
     let removeTimer: ReturnType<typeof setTimeout> | undefined;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const finish = () => {
-      if (finishing || cancelled || !sceneReady || !framesReady) return;
+      if (finishing || cancelled || !sceneReady) return;
       finishing = true;
       // A retained scene only needs a short bridge while its canvas reattaches.
       const minimumPlaybackMs = compact ? 300 : sequenceDurationMs;
@@ -84,8 +85,11 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
     };
     const checkScene = () => {
       const canvas = scope.current?.querySelector("canvas");
+      const reported = Number(canvas?.dataset.loadProgress ?? 0);
+      if (Number.isFinite(reported)) setProgress(previous => Math.max(previous, Math.min(99, Math.max(0, reported))));
       if (awaitingPresentation && !presentationComplete && canvas?.dataset.presentation === "scene") {
         presentationComplete = true;
+        setProgress(100);
         clearTimeout(deadline);
         observer.disconnect();
         setRevealed(true);
@@ -99,25 +103,20 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
       else if (canvas?.dataset.ready === "true") { sceneReady = true; finish(); }
     };
     const observer = new MutationObserver(checkScene);
-    if (scope.current) observer.observe(scope.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-ready", "data-presentation", "data-asset-error", "data-scene-error"] });
-    // Bound the wait even when a request, worker, or dynamic import never settles.
-    // Keep observing so a late successful scene can replace the fallback.
-    const deadline = setTimeout(showFallback, loadingTimeoutMs);
+    if (scope.current) observer.observe(scope.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-ready", "data-presentation", "data-asset-error", "data-scene-error", "data-load-progress"] });
+    // Slow downloads keep loading; only a reported error shows the failure UI.
+    const deadline = setTimeout(() => {
+      if (cancelled || presentationComplete) return;
+      document.body.style.overflow = previousOverflow;
+    }, slowLoadingMs);
     checkScene();
-    Promise.all(frames.map(async (src) => {
-      const img = new Image();
-      img.src = src;
-      await img.decode();
-    })).then(() => {
+    const image = new Image();
+    image.src = sequenceUrl;
+    void image.decode().then(() => {
       if (cancelled || finishing) return;
-      framesReady = true;
       animationStarted = performance.now();
       if (!reduced) sequence.current?.setAttribute("data-playing", "true");
-      checkScene();
-    }).catch(() => {
-      framesReady = true;
-      checkScene();
-    });
+    }).catch(() => { /* The progress remains usable without the logo. */ });
     return () => {
       cancelled = true;
       document.body.style.overflow = previousOverflow;
@@ -129,6 +128,8 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
     };
   }, [scope, onReveal, onComplete, compact]);
 
+  const progressShade = Math.round(190 * (1 - progress / 100));
+
   return <div className={styles.overlay} style={overlayStyle} data-home-loader data-compact={compact} data-fallback={unavailable} data-leaving={leaving} data-revealed={revealed} role="status" aria-label={unavailable ? "首页场景暂未加载" : "首页加载中"}>
     {unavailable ? <div className={styles.fallback}>
       <p>场景暂时未能加载</p>
@@ -137,12 +138,15 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
         <a href="#selected-work">浏览作品</a>
         <button type="button" onClick={() => window.location.reload()}>重新加载</button>
       </div>
-    </div> : <div className={styles.viewport} aria-hidden="true">
+    </div> : <div className={styles.loadingContent}>
+    <div className={styles.viewport} aria-hidden="true">
       <div ref={sequence} className={styles.sequence} style={sequenceStyle}>
-        {/* Native images preserve the exact same canvas and are decoded before playback. */}
-        {/* eslint-disable @next/next/no-img-element */}
-        {frames.map((src, i) => <img key={src} src={src} alt="" width={600} height={600} loading="eager" fetchPriority={i === 0 ? "high" : "auto"} />)}
+        {frames.map(i => <div key={i} className={styles.logoFrame} style={{ backgroundImage: `url("${sequenceUrl}")`, backgroundPosition: `${i * 100 / (frames.length - 1)}% center` }} />)}
       </div>
+    </div>
+    <div className={styles.loadingStatus}>
+      <span className={styles.percentage} style={{ color: `rgb(${progressShade}, ${progressShade}, ${progressShade})` }} role="progressbar" aria-label="场景加载进度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>{progress}%</span>
+    </div>
     </div>}
   </div>;
 }
