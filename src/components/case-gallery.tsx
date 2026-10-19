@@ -2,6 +2,7 @@
 /* Export dimensions reserve space; CSS keeps the original aspect ratio. */
 /* eslint-disable @next/next/no-img-element */
 import { getVideoLayers } from '@/lib/video-layers';
+import { ViewportVideo } from "./viewport-video";
 import { LayeredMedia } from "./layered-media";
 import { ScrollBend } from "./scroll-bend";
 import Image from "./content-image";
@@ -20,16 +21,11 @@ export function CaseGallery({
       {assets.map((asset, index) => (
         <section key={asset.name} id={asset.name} className="case-chapter">
           <div className="chapter-image" data-work-skew>
-            {getVideoLayers(asset).length > 0 ? <LayeredMedia asset={asset} alt={`${projectTitle} · ${index + 1}`} /> : isVideoAsset(asset.src) ? <video
+            {getVideoLayers(asset).length > 0 ? <LayeredMedia asset={asset} alt={`${projectTitle} · ${index + 1}`} /> : isVideoAsset(asset.src) ? <ViewportVideo
               src={asset.src}
               aria-label={`${projectTitle} · 视频 ${index + 1}`}
               width={asset.width}
               height={asset.height}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
               style={asset.width && asset.height ? { aspectRatio: `${asset.width} / ${asset.height}` } : undefined}
             /> : asset.width && asset.height ? <Image
               src={asset.src}

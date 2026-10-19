@@ -4,12 +4,17 @@ import { playSound } from "@/lib/site-sound";
 import { useRef, useState, type CSSProperties } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
 import { useContent } from "./content-provider";
+import { mediaImageUrl } from "@/lib/media-image";
 import { homeCoverSource } from "@/lib/home-cover";
 import Image from "./content-image";
 import "./ribbon-gallery.css";
 
 export function CurveGallery() {
   const { gallery: images, projects } = useContent();
+  // Server refreshes deserialize new arrays even when the content is unchanged.
+  // Rebuilding the pin for those references briefly removes its scroll space,
+  // so the browser clamps visitors in the ribbon back to the preceding section.
+  const animationContent = JSON.stringify([images, projects]);
   const projectsBySlug = new Map(projects.map(project => [project.slug, project]));
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -36,7 +41,14 @@ export function CurveGallery() {
       };
       if (conditions?.reduced) {
         const videos = Array.from(root.querySelectorAll('video'));
-        videos.forEach(video => { void video.play().catch(() => {}); });
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(({ target, isIntersecting }) => {
+            const video = target as HTMLVideoElement;
+            if (isIntersecting && !video.getAttribute("src")) { video.src = video.dataset.src!; video.preload = "metadata"; }
+            if (!isIntersecting) video.pause();
+          });
+        });
+        videos.forEach(video => { video.controls = true; observer.observe(video); });
         jump.current = (index, focusCard = true) => {
           const clamped = Math.round(Math.max(0, Math.min(images.length - 1, index)));
           updateProgress(clamped);
@@ -44,7 +56,7 @@ export function CurveGallery() {
           current.current = clamped; setActive(clamped);
           if (focusCard) cards[clamped]?.focus();
         };
-        return () => { videos.forEach(video => video.pause()); jump.current = () => {}; };
+        return () => { observer.disconnect(); videos.forEach(video => { video.pause(); video.controls = false; }); jump.current = () => {}; };
       }
       root.classList.add("is-animated");
       const playhead = { value: 0 };
@@ -208,6 +220,7 @@ export function CurveGallery() {
           const shouldPlay = landing && stageVisible && !document.hidden
             && cards[videoIndex].style.visibility === "visible";
           if (shouldPlay && !playingVideos.has(video)) {
+            if (!video.getAttribute("src")) video.src = video.dataset.src!;
             playingVideos.add(video);
             void video.play().catch(() => { playingVideos.delete(video); });
           } else if (!shouldPlay) {
@@ -382,7 +395,7 @@ export function CurveGallery() {
       };
     });
     return () => mm.revert();
-  }, { scope: section, dependencies: [images, projects], revertOnUpdate: true });
+  }, { scope: section, dependencies: [animationContent], revertOnUpdate: true });
 
   if (!images.length) return null;
   return (
@@ -400,7 +413,7 @@ export function CurveGallery() {
             <div tabIndex={0} className="ribbon-card" style={{ "--cover-ratio": `${item.width} / ${item.height}` } as CSSProperties} key={item.name} data-hover-label={item.title}
               onFocus={(event) => { if (event.currentTarget.matches(":focus-visible")) jump.current(i); }} draggable={false} aria-label={item.title}>
               <span className="motion-image">{ videoSrc
-                ? <video src={videoSrc} poster={isVideo ? undefined : cover} preload="metadata" muted loop playsInline aria-label={item.title} />
+                ? <video data-src={videoSrc} poster={isVideo ? undefined : mediaImageUrl(cover, 1080)} preload="none" muted loop playsInline aria-label={item.title} />
                 : <Image unoptimized={cover !== item.src} src={cover} alt={item.title} width={item.width} height={item.height} sizes="(max-width: 809px) 72vw, 48vw" draggable={false} />
               }</span>
             </div>

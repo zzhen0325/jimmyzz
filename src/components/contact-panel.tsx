@@ -61,7 +61,6 @@ export function ContactPanel({ open, panelRef, id }: { open: boolean; panelRef: 
     <section ref={panelRef} id={id} role="region" aria-labelledby={`${id}-title`} aria-hidden={!open} inert={!open} className={styles.contactPanel} data-open={open} data-native-cursor>
       <div className={styles.contactHeading}>
         <h2 id={`${id}-title`}><span>LET&apos;S MAKE SOMETHING.</span></h2>
-        <p><span>Let’s create something meaningful together.</span></p>
       </div>
       <div className={styles.contactLinks}>
         <a href={`mailto:${profile.email}`}><span>{profile.email}</span><span aria-hidden="true">↗</span></a>

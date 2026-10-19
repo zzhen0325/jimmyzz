@@ -1,4 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from './content-image';
+import { ViewportVideo } from './viewport-video';
 import { getVideoLayers } from '@/lib/video-layers';
 import type { ReactNode } from 'react';
 import type { Asset, VideoLayer } from '@/lib/projects-config';
@@ -11,10 +12,10 @@ export function layerStyle(layer: VideoLayer) {
 export function LayeredMedia({ asset, alt, children }: { asset: Asset; alt: string; children?: ReactNode }) {
   const layers = getVideoLayers(asset);
   return <div style={{ position: 'relative', isolation: 'isolate', width: '100%', overflow: 'hidden' }}>
-    <img src={asset.src} alt={alt} width={asset.width} height={asset.height} loading="lazy" draggable={false}
+    <Image src={asset.src} alt={alt} width={asset.width || 960} height={asset.height || 540} sizes="(max-width: 599px) calc(100vw - 32px), 58.333vw" loading="lazy" draggable={false}
       style={{ display: 'block', position: 'relative', zIndex: 1, width: '100%', height: 'auto', margin: 0, background: 'transparent' }} />
     {layers.map((layer, index) => <div key={index} style={{ ...layerStyle(layer), borderRadius: `${layer.radius}% / ${layer.radius * layer.width * (asset.width || 1) / (layer.height * (asset.height || 1))}%` }}>
-      <video src={layer.src} aria-label={`${alt} · 叠层视频`} autoPlay muted loop playsInline preload="metadata"
+      <ViewportVideo src={layer.src} controls={false} aria-label={`${alt} · 叠层视频`}
         style={{ display: 'block', width: '100%', height: layer.fit === 'cover' ? 'auto' : '100%', objectFit: layer.fit === 'center-crop' ? 'cover' : layer.fit, objectPosition: layer.fit === 'center-crop' ? 'center center' : 'center top', maxWidth: 'none' }} />
     </div>)}
     {children}

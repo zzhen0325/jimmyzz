@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-const SMILEYS = ["(＾▽＾)", "(◕‿◕)", "(^‿^)", "(≧◡≦)"];
+const SMILEYS = ["(0.0)", "(O_o)", "(z_z)", "＠_＠;", "\\(>∇<)/", "=(^.^)="];
 
 /** One viewport-space owner keeps the sticker independent of scrolling transforms. */
 export function HoverLabel() {
@@ -63,7 +63,7 @@ export function HoverLabel() {
       element.dataset.portal = String(customText === "Open The Portal");
       usesDefaultLabel = !customText;
       element.dataset.projectCover = String(surface.matches('a[href^="/work/"]'));
-      element.style.fontFamily = usesDefaultLabel ? "var(--font-mono)" : "";
+      element.style.fontFamily = usesDefaultLabel ? "var(--font-sans)" : "";
       const text = customText || SMILEYS[smileyIndex];
       if (active !== surface || activeText !== text) {
         if (active !== surface) {
