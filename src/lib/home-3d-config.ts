@@ -50,6 +50,9 @@ export const home3DConfig = {
   },
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
+    // 用户导入的「资源 2 / 3」，保留原始材质。
+    { visible: true, file: "resource-2", path: "/assets/models/imported-props/resource-2.glb?v=rounded-2", size: 1.5 },
+    { visible: true, file: "resource-3", path: "/assets/models/imported-props/resource-3.glb?v=rounded-2", size: 1.4 },
     // Blender 原始材质：03 粉黄程序纹理已烘焙进 GLB，06 保留蓝色清漆。
     { visible: true, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb?v=padded-uv-1", size: 1.6 },
     { visible: true, file: "knotted-veil", path: "/assets/models/soft-accretion/knotted-veil.glb", size: 1.7,
