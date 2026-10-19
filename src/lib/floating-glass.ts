@@ -15,8 +15,9 @@ function createGlassMaterial(color: string, finish: GlassFinishConfig, heightMap
       glassEdgeColor: { value: new THREE.Color(color).convertLinearToSRGB() },
       glassRefraction: { value: finish.refraction }, glassDispersion: { value: finish.dispersion },
       glassGlow: { value: finish.glow },
+      toneMappingExposure: { value: 1 },
     },
-    transparent: true, depthWrite: false,
+    transparent: true, depthWrite: false, blending: THREE.NoBlending, toneMapped: false,
     vertexShader: `
       attribute float glassEdge;
       varying vec2 vUv;
@@ -33,6 +34,7 @@ function createGlassMaterial(color: string, finish: GlassFinishConfig, heightMap
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `
+      ${THREE.ShaderChunk.tonemapping_pars_fragment}
       uniform sampler2D glassBackground, glassDepth, glassHeight;
       uniform vec2 glassResolution;
       uniform vec4 glassCapture;
@@ -61,24 +63,31 @@ function createGlassMaterial(color: string, finish: GlassFinishConfig, heightMap
         vec4 background = texture2D(glassBackground, captureUv(refractedUv));
         background.r = texture2D(glassBackground, captureUv(clamp(refractedUv - offset * glassDispersion, vec2(0.001), vec2(0.999)))).r;
         background.b = texture2D(glassBackground, captureUv(clamp(refractedUv + offset * glassDispersion, vec2(0.001), vec2(0.999)))).b;
-        gl_FragColor = vec4(background.rgb / max(background.a, 0.0001), 1.0);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
+        float displayColor = clamp(background.a - 1.0, 0.0, 1.0);
+        background.a = min(background.a, 1.0);
+        vec3 captured = background.rgb / max(background.a, 0.0001);
+        captured = mix(ACESFilmicToneMapping(captured), captured, displayColor);
+        gl_FragColor = sRGBTransferOETF(vec4(captured, 1.0));
         // Match the page's CSS backdrop where the scene capture is transparent.
         float sky = clamp(1.0 - (1.0 - refractedUv.y) * glassViewportHeight / 150.0, 0.0, 1.0);
-        vec3 backdrop = mix(vec3(0.96863), vec3(0.19216, 0.74510, 1.0), sky);
+        vec3 backdrop = mix(vec3(0.96863), vec3(0.90588, 0.94510, 0.96863), sky);
         vec3 color = mix(backdrop, gl_FragColor.rgb, background.a);
         float fresnel = pow(1.0 - abs(normal.z), 3.0);
         float edge = max(pow(1.0 - h, 1.6), pow(vGlassEdge, 9.0));
         float rim = clamp(edge * 0.8 + fresnel * 0.3, 0.0, 1.0);
         color *= 1.0 - rim * 0.1;
-        color = mix(color, glassEdgeColor, rim * glassGlow);
+        color = mix(color, glassEdgeColor, 0.12 + rim * glassGlow);
         float highlight = pow(max(0.0, dot(normal, normalize(vec3(-0.45, 0.65, 0.8)))), 22.0);
         color += vec3(highlight * 0.22 + fresnel * 0.13);
-        gl_FragColor = vec4(color, 1.0);
+        // Store linear display color; the final composite skips a second ACES pass.
+        gl_FragColor = vec4(sRGBTransferEOTF(vec4(clamp(color, 0.0, 1.0), 1.0)).rgb, 2.0);
+        #include <colorspace_fragment>
       }`,
   });
   material.name = `height-map-glass-${color}`;
+  material.onBeforeRender = renderer => {
+    material.uniforms.toneMappingExposure.value = renderer.toneMappingExposure;
+  };
   material.userData.heightMap = heightMap;
   return material;
 }

@@ -24,7 +24,7 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
       const threshold = .5 / (.62 * Math.max(1, devicePixelRatio));
       let renderer: ReturnType<typeof createScrollBendRenderer> = null;
       let disposed = false, unavailable = false, transitioning = false, ticking = false;
-      let target = 0, bend = 0, idle = 0, idleIsTimeout = false, refresh = 0, lastWarm = 0, lastScroll = -Infinity;
+      let target = 0, bend = 0, idle = 0, idleIsTimeout = false, refresh = 0, lastWarm = 0;
       const restore = (host: HTMLElement) => {
         delete host.dataset.bendGpu;
         if (host.hasAttribute('data-bend-fallback')) {
@@ -38,15 +38,15 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
         hosts.forEach(restore); renderer?.hide();
         schedule();
       };
-      const busy = () => ticking || transitioning || performance.now() - lastScroll < 200;
-      const schedule = () => {
+      const schedule = (expires = performance.now() + 250) => {
         if (idle || disposed || !renderer || unavailable || !queue.size || document.hidden) return;
         const work = (deadline?: IdleDeadline) => {
           idle = 0;
           if (disposed || !renderer || unavailable || document.hidden) return;
-          // A timed-out idle callback can run in the middle of a scroll frame.
-          // Keep new texture allocation out of the gesture, even on slow devices.
-          if (busy() || (deadline && deadline.timeRemaining() < 8)) { schedule(); return; }
+          // Prefer idle time, but do not starve newly visible covers during a
+          // continuous scroll. Each callback uploads at most one decoded texture.
+          if (transitioning) return;
+          if (deadline && !deadline.didTimeout && deadline.timeRemaining() < 8 && performance.now() < expires) { schedule(expires); return; }
           const media = queue.values().next().value;
           if (media) {
             queue.delete(media);
@@ -55,8 +55,8 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
           }
           schedule();
         };
-        idleIsTimeout = busy() || !window.requestIdleCallback;
-        idle = idleIsTimeout ? window.setTimeout(work, 200) : window.requestIdleCallback(work);
+        idleIsTimeout = !window.requestIdleCallback;
+        idle = idleIsTimeout ? window.setTimeout(work, 32) : window.requestIdleCallback(work, { timeout: Math.max(1, expires - performance.now()) });
       };
       const warm = (host: HTMLElement) => {
         if (!renderer || unavailable || disposed) return;
@@ -132,11 +132,9 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
       element.addEventListener('loadeddata', loaded, true);
       const visibility = () => { if (document.hidden) stop(); else schedule(); };
       const transition = (event: Event) => { transitioning = (event as CustomEvent<boolean>).detail; if (transitioning) stop(); else schedule(); };
-      const scrolled = () => { lastScroll = performance.now(); };
       const resized = () => { stop(); renderer?.resize(); near.forEach(warm); };
       document.addEventListener('visibilitychange', visibility);
       window.addEventListener('project-transition', transition);
-      window.addEventListener('scroll', scrolled, { passive: true });
       window.addEventListener('resize', resized);
       void import('@/lib/scroll-bend-renderer').then(({ createScrollBendRenderer }) => {
         if (disposed) return;
@@ -169,7 +167,6 @@ export function ScrollBend({ children, className }: { children: ReactNode; class
         element.removeEventListener('loadeddata', loaded, true);
         document.removeEventListener('visibilitychange', visibility);
         window.removeEventListener('project-transition', transition);
-        window.removeEventListener('scroll', scrolled);
         window.removeEventListener('resize', resized);
         renderer?.dispose(); queue.clear();
       };

@@ -11,7 +11,11 @@ import { shouldShowHomeLoader } from "@/lib/home-loading";
 
 const ChromeScene = dynamic(() => import("./chrome-scene"), { ssr: false });
 export function ChromeHero() {
-  const [loading, setLoading] = useState(shouldShowHomeLoader);
+  const [compactLoader] = useState(() => !shouldShowHomeLoader());
+  const [loading, setLoading] = useState(true);
+  const [revealing, setRevealing] = useState(false);
+  const chromeReady = compactLoader || revealing || !loading;
+  const revealScene = useCallback(() => setRevealing(true), []);
   const finishLoading = useCallback(() => setLoading(false), []);
   const [floatingMode, setFloatingMode] = useState<FloatingMode>("flow-rings");
   const [motionMenu, setMotionMenu] = useState(false);
@@ -43,11 +47,11 @@ export function ChromeHero() {
 
   return (
     <>
-    <FloatingNav ready={!loading} />
+    <FloatingNav ready={chromeReady} />
     <section ref={hero} data-view={view} className={`${styles.page} ${styles.hero}`} aria-label="ZZ 黑色银铬互动首屏">
       <div className={styles.stage}>
-        {loading && <HomeLoader scope={hero} onComplete={finishLoading} />}
-        <ChromeScene paused={loading} weather="sunny" floatingMode={floatingMode} workProgress={workProgress} interactive={!loading && view === "intro"} />
+        {loading && <HomeLoader scope={hero} onReveal={revealScene} onComplete={finishLoading} compact={compactLoader} />}
+        <ChromeScene paused={loading && !revealing} weather="sunny" floatingMode={floatingMode} workProgress={workProgress} interactive={!loading && view === "intro"} />
         {view === "intro" && <div className={styles.motionControl} onKeyDown={event => { if (event.key === "Escape") { setMotionMenu(false); event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus(); } }}>
           <button type="button" className={styles.motionTrigger} aria-label="切换漂浮效果" aria-expanded={motionMenu} aria-controls="floating-motion-options" onClick={() => setMotionMenu(open => !open)}>◌</button>
           {motionMenu && <div id="floating-motion-options" className={styles.motionMenu} role="group" aria-label="漂浮效果">
@@ -58,8 +62,8 @@ export function ChromeHero() {
             <button type="button" onClick={() => setMotionMenu(false)}>收起 ×</button>
           </div>}
         </div>}
-        <p className={styles.skyTagline}>THE WORLD<br />INSIDE<br />MY HEAD</p>
-        <p className={styles.skyYear}>@2026</p>
+        <p className={styles.skyTagline} data-ready={chromeReady}>THE WORLD<br />INSIDE<br />MY HEAD</p>
+        <p className={styles.skyYear} data-ready={chromeReady}>@2026</p>
         <button className={styles.homeLogo} onClick={showIntro} aria-label="返回首页" tabIndex={view === "work" ? 0 : -1} />
         <div className={styles.center}>
           <h1 className={styles.srOnly}>Jimmy ZZ — Visual design & creative technology</h1>

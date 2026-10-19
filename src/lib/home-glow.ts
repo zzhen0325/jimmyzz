@@ -18,7 +18,9 @@ export function createHomeGlow(renderer: THREE.WebGLRenderer, settings: HomeGlow
     new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms, depthTest: false, depthWrite: false, toneMapped: false });
   const extract = makeMaterial(`varying vec2 vUv; uniform sampler2D source; uniform float threshold;
     void main() {
-      vec3 color = texture2D(source, vUv).rgb;
+      vec4 sampleColor = texture2D(source, vUv);
+      // Only the vortex and tinted glass use the opaque display-color marker.
+      vec3 color = sampleColor.rgb * (1. - clamp(sampleColor.a - 1., 0., 1.));
       float peak = max(max(color.r, color.g), color.b);
       float weight = smoothstep(threshold, threshold + .65, peak);
       gl_FragColor = vec4(min(color, vec3(8.)) * weight, 1.);
@@ -55,10 +57,14 @@ export function createHomeGlow(renderer: THREE.WebGLRenderer, settings: HomeGlow
     uniform float strength; uniform float starStrength;
     void main() {
       vec4 base = texture2D(source, vUv);
+      float displayColor = clamp(base.a - 1., 0., 1.);
+      base.a = min(base.a, 1.);
       vec3 glow = texture2D(halo, vUv).rgb * strength + texture2D(stars, vUv).rgb * starStrength;
       float alpha = max(base.a, clamp(max(max(glow.r, glow.g), glow.b), 0., 1.));
       gl_FragColor = vec4((base.rgb + glow) / max(alpha, .00001), alpha);
       #include <tonemapping_fragment>
+      // Preserve the two authored palettes; all unmarked scene pixels retain ACES.
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, base.rgb / max(base.a, .00001), displayColor);
       #include <colorspace_fragment>
     }`, {
     source: { value: sceneTarget.texture }, halo: { value: halo.texture }, stars: { value: stars.texture },

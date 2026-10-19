@@ -1,4 +1,4 @@
-// A fresh document loads normally; only a successfully retained scene skips it.
+// A fresh document uses the full loader; a retained scene uses its compact variant.
 let sceneReady = false;
 
 export function setHomeSceneReady(ready: boolean) {

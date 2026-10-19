@@ -40,10 +40,13 @@ def cyl(name,pos,r,depth,m,axis='Z'):
 body=box('Continuous housing',(0,0,.22),(2.4,1.22,.65),shell,.095)
 shoulders=[sphere('Eye shoulder',(.84,y,.54),(.34,.255,.36),shell) for y in [-.37,.37]]
 root=sphere('Blended grip root',(-.35,0,-.19),(.39,.36,.27),shell)
+# Closed trigger ring shares the casting, with its upper arc buried in the body.
+bpy.ops.mesh.primitive_torus_add(major_segments=96,minor_segments=24,location=(.19,0,-.24),rotation=(math.pi/2,0,0),major_radius=.215,minor_radius=.055)
+trigger_ring=finish(bpy.context.object,'Integrated silver trigger ring',shell)
 bpy.ops.object.select_all(action='DESELECT')
-for o in [body,*shoulders,root]:o.select_set(True)
+for o in [body,*shoulders,root,trigger_ring]:o.select_set(True)
 bpy.context.view_layer.objects.active=body;bpy.ops.object.join()
-for o in [*shoulders,root]:parts.remove(o)
+for o in [*shoulders,root,trigger_ring]:parts.remove(o)
 mod=body.modifiers.new('Unified casting','REMESH');mod.mode='VOXEL';mod.voxel_size=.022;bpy.ops.object.modifier_apply(modifier=mod.name)
 mod=body.modifiers.new('Relax casting transitions','SMOOTH');mod.factor=.65;mod.iterations=5;bpy.ops.object.modifier_apply(modifier=mod.name)
 mod=body.modifiers.new('Reduce casting mesh','DECIMATE');mod.ratio=.35;bpy.ops.object.modifier_apply(modifier=mod.name)
@@ -111,7 +114,6 @@ for f in me.polygons:f.use_smooth=True
 sphere('Blue rounded pommel',(-.23,0,-1.17),(.247,.248,.19),blue)
 def cubic(a,b,c,d,t):
  return tuple((1-t)**3*a[i]+3*(1-t)**2*t*b[i]+3*(1-t)*t*t*c[i]+t**3*d[i] for i in range(3))
-line('Trigger',[cubic((.115,0,-.15),(.29,0,-.28),(.22,0,-.405),(.055,0,-.425),i/96) for i in range(97)],.042,dark)
 # Original user-supplied RGBA artwork, packed into both Blender and GLB.
 sticker=mat('Portal Gun Jr original transparent sticker',(1,1,1),.66)
 sticker.surface_render_method='DITHERED'

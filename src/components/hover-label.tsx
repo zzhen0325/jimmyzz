@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const subscribeToBody = () => () => {};
+const getBody = () => document.body;
+const getServerBody = () => null;
 
 const SMILEYS = ["(0.0)", "(O_o)", "(z_z)", "＠_＠;", "\\(>∇<)/", "=(^.^)="];
 
 /** One viewport-space owner keeps the sticker independent of scrolling transforms. */
 export function HoverLabel() {
   const label = useRef<HTMLDivElement>(null);
+  const portalTarget = useSyncExternalStore(subscribeToBody, getBody, getServerBody);
 
   useEffect(() => {
     const element = label.current;
@@ -195,7 +201,10 @@ export function HoverLabel() {
       document.documentElement.removeEventListener("pointerleave", leave);
       finePointer.removeEventListener("change", hide);
     };
-  }, []);
+  }, [portalTarget]);
 
-  return <div ref={label} className="hover-label" data-visible="false" aria-hidden="true" />;
+  return portalTarget ? createPortal(
+    <div ref={label} className="hover-label" data-visible="false" aria-hidden="true" />,
+    portalTarget,
+  ) : null;
 }

@@ -1,4 +1,5 @@
-// Bake exact scene geometry and textures at build time. No decimation or quantization.
+// Bake scene geometry and textures at build time; simplify the dense eat prop
+// within a bounded error before lossless mesh compression.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
@@ -9,6 +10,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { MeshoptEncoder } from 'meshoptimizer/encoder';
+import { MeshoptSimplifier } from 'meshoptimizer';
 
 const root = new URL('../', import.meta.url);
 const output = new URL('public/assets/models/home-prepared/', root);
@@ -46,6 +48,7 @@ globalThis.FileReader = class {
   readAsArrayBuffer(blob) { blob.arrayBuffer().then(result => { this.result = result; this.onloadend?.(); }); }
 };
 await MeshoptEncoder.ready;
+await MeshoptSimplifier.ready;
 function packGlb(gltf, bin) {
   const json = Buffer.from(JSON.stringify(gltf));
   const padded = Buffer.concat([json, Buffer.alloc((4 - json.length % 4) % 4, 32)]);
@@ -125,6 +128,20 @@ for (const { name } of cutouts) {
 }
 await mkdir(output, { recursive: true });
 for (const { name, model, texture, textureMesh, heightMap } of models) {
+  // The small inflated illustration starts with over one million triangles.
+  // Simplify after inflation, retaining authored normals and all contour borders.
+  // Source geometry remains untouched; only this runtime GLB is reduced.
+  if (name === 'eat') model.traverse(child => {
+    if (!child.isMesh || !child.geometry.index) return;
+    const geometry = child.geometry;
+    const indices = new Uint32Array(geometry.index.array);
+    const [simplified, error] = MeshoptSimplifier.simplifyWithAttributes(
+      indices, geometry.attributes.position.array, 3, geometry.attributes.normal.array, 3,
+      [.05, .05, .05], null, Math.floor(indices.length * .12 / 3) * 3, .001, ['LockBorder']);
+    assert(error <= .00101 && simplified.length <= indices.length);
+    geometry.setIndex(new THREE.BufferAttribute(simplified, 1));
+    console.log(`eat mesh: ${indices.length / 3} → ${simplified.length / 3} triangles (error ${error})`);
+  });
   const originals = [];
   model.traverse(child => {
     if (!child.isMesh) return;

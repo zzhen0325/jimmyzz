@@ -139,7 +139,8 @@
         "muted": "#adadad"
       },
       "infoProjectName": "Cucumber Canvas  WIP",
-      "date": "2026.08"
+      "date": "2026.08",
+      "hoverVideo": "/media/2503c99e-2981-4882-84bb-be0df7e4e856.webm"
     },
     {
       "slug": "welcome-lemon8",
@@ -278,7 +279,7 @@
       "thumbnail": "/assets/portfolio/covers/lemo-ai.png",
       "coverWidth": 1920,
       "coverHeight": 1080,
-      "hoverVideo": "/assets/videos/lemo.mp4",
+      "hoverVideo": "/media/6d22c65b-6654-4f63-a28b-1e982bcf59ed.webm",
       "assets": [
         {
           "name": "69ca474b-3a2f-4634-8c82-a940b4c765ac",

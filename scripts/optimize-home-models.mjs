@@ -44,6 +44,12 @@ for (const file of files) {
     if (primitive.indices === undefined || seen.has(primitive.indices)) continue;
     seen.add(primitive.indices);
     const indices = read(primitive.indices, 1), positions = read(primitive.attributes.POSITION, 3);
+    // The reflective casting needs its authored topology: long simplified
+    // triangles interpolate bevel normals across the broad underside.
+    if (file === 'portal-gun/portal-gun-jr.glb' && gltf.materials[primitive.material]?.name === 'Warm grey molded housing') {
+      before += indices.length / 3; after += indices.length / 3;
+      continue;
+    }
     const target = Math.floor(indices.length * .35 / 3) * 3;
     // Bound relative geometric error to 0.1%; retain borders and weight normals
     // so lettering seams and rounded silhouettes survive simplification.

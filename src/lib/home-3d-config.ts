@@ -22,21 +22,22 @@ const silver: MeshPhysicalMaterialParameters = {
 export const home3DConfig = {
   // HDR 高光阈值、柔光强度、四向星芒强度与长度（CSS 像素）。
   glow: { threshold: .85, strength: .1, starStrength: .6, starLength: 20 },
-  // 从原生分辨率起步；持续高负载时在 60%～100% 调整，但不低于每 CSS 像素 1 个渲染像素。
-  // 稳定约 60fps 时逐步提高清晰度，低于约 50fps 时回退；两档间至少等 2 秒。
-  resolution: { min: .6, max: 1, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
+  // 从原生分辨率的 70% 起步；根据帧率在 60%～70% 调整，但不低于每 CSS 像素 1 个渲染像素。
+  // 大屏优先流畅：不自动升到 80% 以上；低于约 50fps 时回退，降档后至少 15 秒再尝试恢复。
+  resolution: { initial: .7, min: .6, max: .7, step: .1, sampleFrames: 60, cooldownMs: 2000, decreaseAboveMs: 20, increaseBelowMs: 17.5 },
   // 白色石膏只用于漂浮物；后景按镜头相对深度平滑切换，Logo 保持银铬。
   plaster: { color: "#eeede8", grain: .035, transitionStart: -.12, transitionEnd: .75 },
   // 模型、图片平面和玻璃高度图由 prepare:home-geometry 预制为 GLB。
   // 开发时改动几何/材质/贴图后运行 npm run prepare:home-geometry，再刷新页面。
   // 全部漂浮物的倍率；Logo 单独调整。手机断点为 700px。
-  sizing: { desktop: .35, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
+  sizing: { desktop: .55, mobile: .42, mobileBreakpoint: 700, referenceAspect: 1116 / 626 },
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
   depthSizing: { farScale: .82, range: .35 },
-  entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.15, endSpeed: .18 },
+  // 轨道初期使用 0.35 倍率，结束前 1.2 秒开始，用 1.6 秒平滑恢复常规尺寸。
+  entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.4, endSpeed: .18, size: .35, sizeRestoreLead: 2.4, sizeRestoreDuration: 1.6 },
   magnet: { hoverRadius: .45, attractRadius: .85, repelStrength: 2.8, attractStrength: 60.5, burstSpeed: 5.1, burstRecovery: .9 },
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
-  floatingBounds: { desktop: 1.5, mobile: 1.2 },
+  floatingBounds: { desktop: 1.2, mobile: 1.2 },
   logo: {
     scale: 1.2, // 正常尺寸上限
     maxViewportWidth: .4, // 天空首屏：中央 Logo 占约五分之一屏宽。
@@ -53,34 +54,31 @@ export const home3DConfig = {
   // 独立实体模型，与原有漂浮物共用碰撞和材质景深。
   sculptedProps: [
     // 用户导入的「资源 2 / 3」，保留原始材质。
-    { visible: true, file: "resource-2", path: "/assets/models/imported-props/resource-2.glb?v=rounded-2", size: 1.5 },
-    { visible: true, file: "resource-3", path: "/assets/models/imported-props/resource-3.glb?v=rounded-2", size: 1.4 },
+    { visible: true, file: "resource-2", path: "/assets/models/imported-props/resource-2.glb?v=rounded-2", size: 1.5,
+       material: { color: "#F7F7F7", metalness: 0.8, roughness: .6, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
+     },
+    { visible: true, file: "resource-3", path: "/assets/models/imported-props/resource-3.glb?v=rounded-2", size: 1.4,
+       material: { color: "#75B1FF", metalness: 0.2, roughness: .6, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
+     },
     // Blender 原始材质：03 粉黄程序纹理已烘焙进 GLB，06 保留蓝色清漆。
-    { visible: true, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb?v=padded-uv-1", size: 1.6 },
+    { visible: false, file: "soft-accretion", path: "/assets/models/soft-accretion/soft-accretion.glb?v=padded-uv-1", size: 1.6 },
     { visible: true, file: "knotted-veil", path: "/assets/models/soft-accretion/knotted-veil.glb", size: 1.7,
-        material: { color: "#4de6ff", metalness: 0.2, roughness: .6, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
+        material: { color: "#FFFFFF", metalness: 1, roughness: .4, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 }
      },
     { visible: true, file: "sculpted-branches", path: "/assets/models/sculpted-branches/sculpted-branches.glb", size: 2.2,
       // 绿色植物：保留 Blender 原始绿色与哑光质感。
       material: { color: "#f1f1ef", metalness: 0.7, roughness: .2, specularIntensity: .6, clearcoat: 0, envMapIntensity: 1 } },
-    { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: 1.4,
+    { visible: true, file: "crimson-cell", path: "/assets/models/crimson-cell/crimson-cell.glb", size: .6,
         material: { color: "#FFC1FC", metalness: 1, roughness: .22, clearcoat: 0, envMapIntensity: .65 } 
      },
-    { visible: true, file: "arrow", path: "/assets/models/arrow/arrow.glb", size: 1 },
-    { visible: true, file: "c-mark", path: "/assets/models/figma-symbols/c-mark.glb", size: 1.2 ,
+    { visible: false, file: "arrow", path: "/assets/models/arrow/arrow.glb", size: 1 },
+    { visible: true, file: "c-mark", path: "/assets/models/figma-symbols/c-mark.glb", size: .6 ,
        material: { color: "#f1f1ef", metalness: 0, roughness: .32, envMapIntensity: .4 } 
     },
-    { visible: false, file: "vinyl", path: "/assets/models/figma-symbols/vinyl.glb", size: 1.1 },
-    { visible: false, file: "twomuch-vr-shape", path: "/assets/models/twomuch/vr-shape.glb", size: 1.4,
-      material: { color: "#f1f1ef", metalness: 0, roughness: .32, envMapIntensity: .4 } },
-    { visible: false, file: "twomuch-chrome-spool", path: "/assets/models/twomuch/chrome-spool.glb", size: 1.25,
-      material: { color: "#ffffff", metalness: 1, roughness: .2, envMapIntensity: 1 } },
-    { visible: false, file: "twomuch-blocky-teapot", path: "/assets/models/twomuch/blocky-teapot.glb", size: 1.3,
-      material: { color: "#ffffff", metalness: 1, roughness: .2, envMapIntensity: 1 } },
   ].filter(item => item.visible),
   referenceSculptures: {
     goodLuck: {
-      size: 1.6,
+      size: 1,
       // 煤气罐：罐身与护圈、黄铜阀门、阀孔、纸标分别调整。
       materials: {
         body: { color: "#C8EDFF", metalness: 1, roughness: .28, envMapIntensity: .35, ior: 1.42, clearcoat: .14, clearcoatRoughness: .42 },
@@ -92,7 +90,7 @@ export const home3DConfig = {
     },
     // Geometry is prepared by predev/prebuild; after editing inflation during dev,
     // run npm run prepare:home-geometry and reload to regenerate the exact mesh.
-    eat: { size: 1.5, inflation: .12 },
+    eat: { size: 1, inflation: .12 },
   },
   // 仅显示三角玻璃，其余配置保留以便恢复。
   glass: {
@@ -102,12 +100,12 @@ export const home3DConfig = {
       { name: "pink-circle", shape: "circle", color: "#ff79f3", size: .88 },
       { name: "cyan-hexagon", shape: "hexagon", color: "#4de6ff", size: .91 },
       { name: "green-rosette", shape: "rosette", color: "#32d46d", size: .85 },
-      { name: "lime-triangle", shape: "triangle", color: "#dfff58", size: 1.3 },
+      { name: "lime-triangle", shape: "triangle", color: "#DFFF58", size: 1.3 },
       { name: "coral-double-pill", shape: "double-pill", color: "#ff8987", size: .90 },
     ] satisfies GlassShapeConfig[]).filter(item => item.shape === "triangle"),
     finish: {
       depth: .09, bevel: .17, dome: .009, refraction: .32,
-      dispersion: .025, glow: .32,
+      dispersion: .025, glow: .52,
     },
   },
   // 黑胶：同心沟槽沿径向拉长高光，中心纸标单独保留原图。
@@ -146,8 +144,8 @@ export const home3DConfig = {
     ] satisfies FloatingModelConfig[]).filter(item => item.file !== "07_smiley_keycap" && item.file !== "06_blue_zz"),
   },
   celestial: {
-    planet: { path: "/assets/models/celestial/planet.glb?v=35289f38", size: 1.2, material: { color: "#ded9ce", metalness: 1, roughness: .4, envMapIntensity: 1.15 }, ringMaterial: { color: "#a6d3d5", metalness: .95, roughness: .23, envMapIntensity: 1.1 } },
-    cloud: { path: "/assets/models/celestial/rain-cloud.glb?v=4a2e0064", size: 1.2, material: { color: "#e2e9f0", metalness: 1, roughness: .4, envMapIntensity: 1.2, clearcoat: .35, clearcoatRoughness: .12 } },
+    planet: { path: "/assets/models/celestial/planet.glb?v=35289f38", size: .8, material: { color: "#ECECEC", metalness: 1, roughness: .4, envMapIntensity: 1.15 }, ringMaterial: { color: "#a6d3d5", metalness: .95, roughness: .23, envMapIntensity: 1.1 } },
+    cloud: { path: "/assets/models/celestial/rain-cloud.glb?v=4a2e0064", size: .8, material: { color: "#85A7C9", metalness: 1, roughness: .4, envMapIntensity: 1.2, clearcoat: .35, clearcoatRoughness: .12 } },
   },
   skater: {
     visible: false,
@@ -158,20 +156,20 @@ export const home3DConfig = {
   // 按可见轮廓平衡视觉分量：细长、镂空物件略大，饱满物件略小。
   // 透明抠图始终朝向镜头，与现有物件共享漂浮和碰撞。
   cutouts: ([
-    { file: "blue-organic-table", size: 1.2 },
-    { file: "blue-pierced-star", size: 1.25 },
-    { file: "yellow-smiley-loop", size: .8 },
-    { file: "flat-apple", size: 1.3 },
+    { file: "blue-organic-table", size: .6 },
+    { file: "blue-pierced-star", size: .6 },
+    { file: "yellow-smiley-loop", size: 0 },
+    { file: "flat-apple", size: .8 },
     { file: "tufted-flower", size: 1.4 },
     { file: "cape-horse", size: 2.5 },
     { file: "cupid", size: 1.25 },
     { file: "flying-pig", size: 1.25 },
-    { file: "goldfish-silver-headphones", size: 1.25 },
+    { file: "goldfish-silver-headphones", size: 0 },
     { file: "jimmyzz-vintage-car", size: 1.35 },
   ] satisfies { file: string; size: number }[]).filter(item => item.file !== "tufted-flower"),
   // 程序化开放旋臂；arms 控制数量，pixels 控制颗粒，speed 控制速度。
   vortex: {
-    size: 1.8, pixels: 80, speed: .65, arms: 5,
+    size: 1.2, pixels: 80, speed: .65, arms: 5,
   },
   portalGun: {
     size: 1.9,
@@ -180,17 +178,6 @@ export const home3DConfig = {
       trim: { color: "#FAFF66", metalness: .02, roughness: .25, clearcoat: .65 },
       buttons: { color: "#EDEDED", metalness: 1, roughness: .22, clearcoat: .35 },
     },
-  },
-  gamepad: {
-    size: 1.35,
-    materials: {
-      shell: { color: "#FFFF85", metalness: 0, roughness: .4, envMapIntensity: .65, clearcoat: .18, clearcoatRoughness: .32 },
-      edge: { color: "#44484d", metalness: 0, roughness: .52, envMapIntensity: .55 },
-      rubber: { color: "#202428", metalness: 0, roughness: .78, envMapIntensity: .45 },
-      buttons: { color: "#ff463a", metalness: 0, roughness: .27, clearcoat: .48, clearcoatRoughness: .18 },
-      screws: { color: "#dfe5e5", metalness: 1, roughness: .18 },
-    },
-    labels: { onRed: "#25292b", onDark: "#ff594b", material: { color: "#ffffff", opacity: 1, transparent: true, depthWrite: false } },
   },
   // 背景天空与云层：修改十六进制颜色后保存、刷新页面即可查看。
   // skyTop / skyBottom 控制天空上下渐变；设为相同颜色就是纯色天空。

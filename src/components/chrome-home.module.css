@@ -124,6 +124,13 @@
 .skyTagline { left: var(--home-edge); text-align: left; }
 .skyTagline, .skyYear { bottom: max(var(--home-edge), env(safe-area-inset-bottom)); }
 .skyYear { right: var(--home-edge); }
+/* Reveal with the navigation once the loader has finished. */
+.skyTagline[data-ready="false"], .skyYear[data-ready="false"] { visibility: hidden; opacity: 0; }
+.skyTagline[data-ready="true"], .skyYear[data-ready="true"] { animation: skyTextReveal 220ms ease; }
+@keyframes skyTextReveal { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .skyTagline[data-ready="true"], .skyYear[data-ready="true"] { animation: none; }
+}
 @media (max-width: 700px) {
   .skyTagline { font-size: 19px; }
 }

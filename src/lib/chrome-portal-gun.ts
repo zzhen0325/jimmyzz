@@ -1,5 +1,5 @@
 import { homeAssetManager } from "./home-asset-manager";
-import { FrontSide, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector3, type Material, type Object3D } from "three";
+import { FrontSide, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector3, type Material, type Object3D } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const bubbleGlow = { base: .15, amplitude: 6, period: 1.6 };
@@ -12,7 +12,7 @@ const housingMaterials: Record<string, { color: string; roughness: number; metal
 
 /** Blender-authored Portal Gun Jr.; retain its molded surfaces and printed colors. */
 export async function createChromePortalGun() {
-  const { scene } = await new GLTFLoader(homeAssetManager).loadAsync("/assets/models/home-optimized/portal-gun/portal-gun-jr.glb?v=3");
+  const { scene } = await new GLTFLoader(homeAssetManager).loadAsync("/assets/models/home-optimized/portal-gun/portal-gun-jr.glb?v=5");
   scene.name = "floating-green-portal-gun";
   const bubbles: Object3D[] = [];
   const glowMaterials: { material: MeshStandardMaterial; phase: number }[] = [];
@@ -27,22 +27,20 @@ export async function createChromePortalGun() {
     if (/^Suspended[ _]portal[ _]bubble/.test(child.name)) bubbles.push(child);
     if (!(child instanceof Mesh)) return;
     if (!Array.isArray(child.material) && child.material.name === "Warm grey molded housing") {
-      // The flat underside inherits slightly tilted bevel normals. Mirror-like
-      // materials expose their interpolation as triangular reflection patches.
-      // Split corners so correcting the plane does not flatten the rounded rim.
-      const geometry = child.geometry.index ? child.geometry.toNonIndexed() : child.geometry.clone();
+      // Blend by vertex normal, not face orientation: adjacent triangles must
+      // agree at shared corners to avoid sharp seams in mirror reflections.
+      const geometry = child.geometry.clone();
       const positions = geometry.getAttribute("position");
       const normals = geometry.getAttribute("normal");
-      const a = new Vector3(), b = new Vector3(), c = new Vector3();
-      const edge = new Vector3(), face = new Vector3();
+      const normal = new Vector3();
+      const underside = new Vector3(0, -1, 0);
       if (normals) {
-        for (let i = 0; i < positions.count; i += 3) {
-          a.fromBufferAttribute(positions, i);
-          b.fromBufferAttribute(positions, i + 1);
-          c.fromBufferAttribute(positions, i + 2);
-          face.subVectors(b, a).cross(edge.subVectors(c, a)).normalize();
-          if (Math.max(a.y, b.y, c.y) >= -.3 || face.y > -.9999) continue;
-          for (let corner = 0; corner < 3; corner++) normals.setXYZ(i + corner, 0, -1, 0);
+        for (let i = 0; i < positions.count; i++) {
+          normal.fromBufferAttribute(normals, i);
+          const blend = MathUtils.smootherstep(-normal.y, .96, .999)
+            * (1 - MathUtils.smootherstep(positions.getY(i), -.32, -.3));
+          normal.lerp(underside, blend).normalize();
+          normals.setXYZ(i, normal.x, normal.y, normal.z);
         }
         normals.needsUpdate = true;
       }

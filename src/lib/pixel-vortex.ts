@@ -2,10 +2,10 @@ import * as THREE from "three";
 
 /** Broad pixel spiral streams, projected onto a fixed tilted disk. */
 export function createPixelVortex(geometry: THREE.BufferGeometry, settings: { pixels: number; speed: number; arms: number }) {
-  const green = new THREE.Color("#28DE5D");
-  const yellow = new THREE.Color("#E6FF65");
-  // Blend in linear light so intermediate pigments retain the endpoint brightness.
-  const lime = green.clone().lerp(yellow, .45);
+  // Reference palette: fresh green, lime, bright yellow, and white accents.
+  const green = new THREE.Color("#6FD643");
+  const yellow = new THREE.Color("#FBFF77");
+  const lime = new THREE.Color("#C1EE63");
   const material = new THREE.ShaderMaterial({
     uniforms: {
       formation: { value: 1 }, time: { value: 0 }, pixels: { value: settings.pixels },
@@ -13,7 +13,7 @@ export function createPixelVortex(geometry: THREE.BufferGeometry, settings: { pi
       green: { value: green },
       lime: { value: lime },
       yellow: { value: yellow },
-      highlight: { value: yellow.clone() },
+      highlight: { value: new THREE.Color("#FFFFFF") },
     },
     vertexShader: `varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
@@ -63,7 +63,7 @@ export function createPixelVortex(geometry: THREE.BufferGeometry, settings: { pi
             + (patches - .5) * .72;
           if (pigment < .74) color = lime;
           if (pigment < .36 + (broad - .5) * .22) color = yellow;
-          // Broad green islands and yellow accents follow the same flow.
+          // Broad green islands and white accents follow the same flow.
           if (pigment < .22 && broad > .62 && patches > .60 && r > .58) color = highlight;
           if (patches < .42 && pigment > .20) color = green;
 
@@ -91,7 +91,8 @@ export function createPixelVortex(geometry: THREE.BufferGeometry, settings: { pi
           }
         }
         if (alpha < .5) discard;
-        gl_FragColor = vec4(color, alpha);
+        // Alpha 2 marks opaque display colors for the final HDR composite.
+        gl_FragColor = vec4(color, 2.0);
         #include <colorspace_fragment>
       }`,
     // Draw as the scene's backdrop without occluding any released geometry.

@@ -240,17 +240,26 @@ export function createSkyClouds(settings: SkyCloudSettings, renderScale = .5) {
   group.add(mesh);
   let disposed = false;
   let clock = 0;
+  let renderedTime = -Infinity;
+  let renderedRain = -1;
+  let renderedOpacity = -1;
 
   return {
     group,
     ready: Promise.resolve(),
-    prepare(renderer: THREE.WebGLRenderer) {
+    invalidate() { renderedTime = -Infinity; },
+    prepare(renderer: THREE.WebGLRenderer, force = false) {
       if (disposed || !group.visible) return;
       renderer.getDrawingBufferSize(drawingBuffer);
-      // Clouds are low-frequency shading: quarter the noise evaluations while
-      // retaining the original shader, animation rate, and full-size geometry.
-      const width = Math.max(1, Math.floor(drawingBuffer.x * renderScale));
-      const height = Math.max(1, Math.floor(drawingBuffer.y * renderScale));
+      // Bound expensive noise independently of the main scene on large displays.
+      // Export can request the original spatial and temporal quality.
+      const scale = force ? renderScale : Math.min(renderScale, 1280 / Math.max(drawingBuffer.x, drawingBuffer.y));
+      const width = Math.max(1, Math.floor(drawingBuffer.x * scale));
+      const height = Math.max(1, Math.floor(drawingBuffer.y * scale));
+      const invalidated = target.width !== width || target.height !== height
+        || renderedRain !== uniforms.rainAmount.value || renderedOpacity !== uniforms.skyOpacity.value;
+      // Slow cloud drift needs 30 updates/s; presentation still follows every frame.
+      if (!force && !invalidated && clock - renderedTime < 1 / 30 - .001) return;
       target.setSize(width, height);
       uniforms.iResolution.value.set(width, height, 1);
       const destination = renderer.getRenderTarget();
@@ -259,6 +268,9 @@ export function createSkyClouds(settings: SkyCloudSettings, renderScale = .5) {
         renderer.setRenderTarget(target);
         renderer.autoClear = true;
         renderer.render(source, sourceCamera);
+        renderedTime = clock;
+        renderedRain = uniforms.rainAmount.value;
+        renderedOpacity = uniforms.skyOpacity.value;
       } finally {
         renderer.setRenderTarget(destination);
         renderer.autoClear = autoClear;

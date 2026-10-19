@@ -62,10 +62,13 @@ export function ContactPanel({ open, panelRef, id }: { open: boolean; panelRef: 
       <div className={styles.contactHeading}>
         <h2 id={`${id}-title`}><span>LET&apos;S MAKE SOMETHING.</span></h2>
       </div>
+      <p className={styles.contactNote}>Visual design, creative coding &amp; everything in between.</p>
       <div className={styles.contactLinks}>
         <a href={`mailto:${profile.email}`}><span>{profile.email}</span><span aria-hidden="true">↗</span></a>
       </div>
-      <p className={styles.contactNote}>Visual design, creative coding &amp; everything in between.</p>
+      <div className={styles.contactLinks}>
+        <a href="https://effect-studio-zeta.vercel.app/" target="_blank" rel="noopener noreferrer"><span>Tool</span><span aria-hidden="true">↗</span></a>
+      </div>
     </section>
   );
 }

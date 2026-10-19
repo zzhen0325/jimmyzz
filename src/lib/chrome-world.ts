@@ -57,10 +57,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   const startupTime = performance.now();
   const yieldStartup = () => new Promise<void>(resolve => setTimeout(resolve, 0));
   const host = canvas.parentElement!;
-  const initialViewport = host.getBoundingClientRect();
-  // Default-framebuffer MSAA is immutable; avoid the extra multisampled buffer
-  // on large displays at startup. The scene target's MSAA adapts on every resize.
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: homeAntialiasSamples(initialViewport.width, initialViewport.height, window.devicePixelRatio) === 4, alpha: true });
+  // Geometry MSAA lives in the HDR scene target. The final fullscreen composite
+  // has no geometry edges to smooth, so avoid a second multisampled framebuffer.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
   const resolution = createAdaptiveResolution(config.resolution);
   let nativeDpr = window.devicePixelRatio;
   resolution.setDevicePixelRatio(nativeDpr);
@@ -98,13 +97,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     collisionFilterMask: 0,
   });
   const pointerTarget = new CANNON.Vec3();
-  const pointerCollisionStrength = .5;
+  const pointerCollisionStrength = .3;
   const pointerSpinImpulse = new CANNON.Vec3();
   world.addBody(pointerBody);
   world.addEventListener('preStep', () => {
     if (!pointerBody.collisionFilterMask) return;
     // The solver has applied contact impulses and damping at this point.
-    // Halve only the cursor contribution, preserving existing drift and contacts.
+    // Soften only the cursor contribution, preserving existing drift and contacts.
     for (const contact of world.contacts) {
       const pointerIsA = contact.bi === pointerBody;
       if (!pointerIsA && contact.bj !== pointerBody) continue;
@@ -138,6 +137,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let contextLost = false;
   let frame = 0;
   let previous = 0;
+  let measuredFrames = 0, measuredMs = 0, measuredCpu = 0, measuredReflection = 0, measuredDraw = 0;
   let elapsed = 0;
   let portalGunAnimation: Awaited<ReturnType<typeof createChromePortalGun>> | undefined;
   let entranceActive = false;
@@ -654,7 +654,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   window.addEventListener('keyup', keyUp);
   const preference=()=>{reduced=media.matches;pointerCancel();if(ready)reset();};
   const lost=(event:Event)=>{event.preventDefault();easterEgg.cancel();contextLost=true;canvas.dataset.ready='false';};
-  const restored=()=>{bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;resolution.reset();resizeRenderBuffers();};
+  const restored=()=>{sky.invalidate();bakedMaterials?.refresh();contextLost=false;reflectionDirty=true;resolution.reset();resizeRenderBuffers();};
   const resizeIfNeeded = () => {
     const rect = host.getBoundingClientRect();
     if (rect.width !== width || rect.height !== height) resize();
@@ -1087,7 +1087,8 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   // keep the logo centered while the surrounding objects accelerate in world space.
   const updateLogoPose = () => {
     const p = workProgress();
-    logo.visible = true;
+    // Loading keeps the sky visible while the DOM logo sequence owns the foreground.
+    logo.visible = !paused;
     // Returning to the hero keeps the live physics state instead of replaying the entrance.
     // Acceleration belongs to the shared timeline; local phases only remap its progress.
     const travel = THREE.MathUtils.clamp((p - .2) / .8, 0, 1);
@@ -1108,14 +1109,21 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     const vanish = THREE.MathUtils.clamp((p - .16) / .54, 0, 1);
     const depthRange = Math.min(viewWidth, viewHeight) * config.depthSizing.range;
     const cameraDistance = camera.position.length();
-    for (const { object, body, phase, billboard, entranceScale = 1 } of items) {
-      const itemEntranceScale = entranceActive ? entranceScale : 1;
+    const restingSize = width < config.sizing.mobileBreakpoint ? config.sizing.mobile : config.sizing.desktop;
+    const sizeRestoreStart = entrance.launch + entrance.orbit - config.entrance.sizeRestoreLead;
+    for (const [index, { object, body, phase, billboard, entranceScale = 1, entranceReleased }] of items.entries()) {
+      // Grow on each prop's own orbit clock, before its handoff to physics.
+      const age = elapsed - index * entrance.stagger;
+      const sizeRestore = THREE.MathUtils.smootherstep(age, sizeRestoreStart, sizeRestoreStart + config.entrance.sizeRestoreDuration);
+      const orbitSize = THREE.MathUtils.lerp(config.entrance.size / restingSize, 1, sizeRestore);
+      const hasEntrance = !reduced && usesPhysics() && floatingMode !== "gravity" && (entranceActive || entranceReleased);
+      const itemEntranceScale = (entranceActive ? entranceScale : 1) * (hasEntrance ? orbitSize : 1);
       // Signed depth relative to the logo plane, along the current camera axis.
       // This also follows the rotating camera in the original free-drift mode.
       const cameraDepth = object.position.dot(camera.position) / cameraDistance;
       const depthScale = floatingMode === "gravity" ? 1 : THREE.MathUtils.lerp(1, config.depthSizing.farScale,
         THREE.MathUtils.smoothstep(-cameraDepth, 0, depthRange));
-      object.visible = p < .7 && itemEntranceScale > 0 && object.name !== "floating-pixel-vortex";
+      object.visible = !paused && p < .7 && itemEntranceScale > 0 && object.name !== "floating-pixel-vortex";
       object.scale.setScalar(assetScale * depthScale * itemEntranceScale * (usesPhysics() ? 1 : floatingMode === "diagonal-drift" ? width < 700 ? .65 : .85 : floatingMode === "planet-belt" ? width < 700 ? .40 : 1 : width < 700 ? .58 : .60) * (1 - vanish));
       object.quaternion.copy(billboard ? camera.quaternion : body.quaternion);
       if (p > 0 && !reduced && !billboard) {
@@ -1219,6 +1227,9 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // substeps preserve collision stability without slowing down at the handoff.
     const delta=Math.min(frameMs/1000,referencePhysics.step * referencePhysics.maxSubSteps);previous=time;
     if(disposed||!visible||document.hidden||contextLost||!ready){resolution.reset();return;}
+    const cpuStarted = performance.now();
+    renderer.info.autoReset = false;
+    renderer.info.reset();
     // A monitor/DPR change need not resize the CSS viewport. Update buffers only,
     // never restart physics, the entrance, or pointer coordinates for resolution.
     if (nativeDpr !== window.devicePixelRatio) {
@@ -1238,7 +1249,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
       cameraFrame(); composeWork(); composeExport();
       if (reflectionDirty || exportLayout.playing) updateReflection();
       sky.update(camera, viewWidth, viewHeight, 0, 0, rainAmount);
-      sky.prepare(renderer); renderScene();
+      sky.prepare(renderer, true); renderScene();
       return;
     }
     // Once the hero becomes the stationary header logo, skip scene updates as
@@ -1282,14 +1293,32 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     rain.update(paused || reduced ? 0 : delta, rainAmount * (1 - workProgress()) * (ready && !paused ? 1 : 0), host.clientWidth, host.clientHeight);
     canvas.dataset.weather = weather;
     canvas.dataset.clouds = "shadertoy-4tdSWr";
+    const reflectionStarted = performance.now();
     // Capture one face per display frame and blend completed reflections between
     // captures. Initial/invalidation captures stay atomic, including static views.
     if (ready && (reflectionDirty || (!paused && !reduced && workProgress()<1))) {
       updateReflection();
     }
+    const reflectionEnded = performance.now();
     updateVortexTarget();
     sky.prepare(renderer);
     if (ready) renderScene(); else renderer.render(scene, camera);
+    // A loaded asset set is not proof that a foreground frame has been drawn.
+    canvas.dataset.presentation = paused ? "background" : "scene";
+    const cpuEnded = performance.now();
+    if (workProgress() === 0 && frameMs > 0 && frameMs < 250) {
+      measuredFrames++; measuredMs += frameMs; measuredCpu += cpuEnded - cpuStarted;
+      measuredReflection += reflectionEnded - reflectionStarted; measuredDraw += cpuEnded - reflectionEnded;
+      if (measuredMs >= 1000) {
+        canvas.dataset.sceneFps = (measuredFrames * 1000 / measuredMs).toFixed(1);
+        canvas.dataset.sceneCpuMs = (measuredCpu / measuredFrames).toFixed(2);
+        canvas.dataset.reflectionCpuMs = (measuredReflection / measuredFrames).toFixed(2);
+        canvas.dataset.drawCpuMs = (measuredDraw / measuredFrames).toFixed(2);
+        canvas.dataset.drawCalls = String(renderer.info.render.calls);
+        canvas.dataset.triangles = String(renderer.info.render.triangles);
+        measuredFrames = measuredMs = measuredCpu = measuredReflection = measuredDraw = 0;
+      }
+    } else { measuredFrames = measuredMs = measuredCpu = measuredReflection = measuredDraw = 0; }
     renderedWorkProgress = ready ? workProgress() : -1;
     if(ready){canvas.dataset.ready='true';if(time-snapshotTime>150){canvas.dataset.contacts=String(contacts);canvas.dataset.angle=String(angle);canvas.dataset.steps=String(world.stepnumber);snapshotTime=time;}}
   };
