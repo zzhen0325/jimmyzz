@@ -33,7 +33,13 @@ export function HoverCoverVideo({ src }: { src: string }) {
     const focus = () => { focused = link.matches(":focus-visible"); sync(); };
     const blur = () => { focused = false; sync(); };
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
+    const preload = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || reduced.matches) return;
+      video.preload = "auto";
+      preload.disconnect();
+    }, { rootMargin: "800px 0px" });
     observer.observe(link);
+    preload.observe(link);
     link.addEventListener("pointerenter", enter);
     link.addEventListener("pointerleave", leave);
     link.addEventListener("focus", focus);
@@ -43,6 +49,7 @@ export function HoverCoverVideo({ src }: { src: string }) {
     reduced.addEventListener("change", sync);
     return () => {
       observer.disconnect();
+      preload.disconnect();
       link.removeEventListener("pointerenter", enter);
       link.removeEventListener("pointerleave", leave);
       link.removeEventListener("focus", focus);

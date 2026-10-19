@@ -209,17 +209,32 @@ export function PortraitWarp() {
       image.decoding = "async";
       return image;
     });
-    // Warm the small poster near the viewport; keep the large sprite sheets
-    // out of the hero's loading path until the portrait is actually visible.
+    let disposed = false, assetsRequested = false, posterReady = false, sheetsReady = false;
+    let warmIdle = 0;
+    const warmIsTimeout = !window.requestIdleCallback;
+    const warmPoster = () => {
+      if (disposed || warmIdle) return;
+      const paint = () => { warmIdle = 0; if (!disposed && !document.hidden) draw(performance.now(), true); };
+      warmIdle = warmIsTimeout ? window.setTimeout(paint, 80) : window.requestIdleCallback(paint);
+    };
+    // Decode before drawImage and prepare the default mesh before it is visible.
+    // Otherwise first entry replays 1152 clipped draws during the scroll gesture.
     const preload = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
+      if (!entry.isIntersecting || assetsRequested) return;
+      assetsRequested = true;
+      poster.fetchPriority = 'low';
       poster.src = `${PORTRAIT_ASSETS}/poster.webp`;
       moneySymbol.src = "/assets/images/portrait-props/money-symbol.png";
+      void poster.decode().then(() => { if (!disposed) { posterReady = true; warmPoster(); } }).catch(() => {});
+      void Promise.all(sheets.map((image, index) => {
+        image.fetchPriority = 'low';
+        image.src = `${PORTRAIT_ASSETS}/sheet-${String(index + 1).padStart(2, "0")}.webp`;
+        return image.decode();
+      })).then(() => { if (!disposed) sheetsReady = true; }).catch(() => {});
       preload.disconnect();
-    }, { rootMargin: "300px" });
+    }, { rootMargin: "1600px" });
     preload.observe(output);
     let visible = false;
-    let sheetsRequested = false;
     let frame = 0;
     let lastDraw = -Infinity;
     let renderedFrame = -2;
@@ -237,12 +252,6 @@ export function PortraitWarp() {
     const syncPlayback = () => {
       lastDraw = -Infinity;
       if (visible && !document.hidden) {
-        if (!sheetsRequested) {
-          sheetsRequested = true;
-          sheets.forEach((image, index) => {
-            image.src = `${PORTRAIT_ASSETS}/sheet-${String(index + 1).padStart(2, "0")}.webp`;
-          });
-        }
         if (!frame) frame = requestAnimationFrame(draw);
       } else {
         cancelAnimationFrame(frame);
@@ -282,15 +291,16 @@ export function PortraitWarp() {
         ctx.drawImage(texture,0,0,600,600); ctx.restore();
       };
     };
-    const draw = (now: number) => {
-      frame = 0;
-      if (!visible || document.hidden) return;
-      frame = requestAnimationFrame(draw);
+    const draw = (now: number, warming = false) => {
+      if ((!visible && !warming) || document.hidden) { frame = 0; return; }
+      if (!warming) frame = requestAnimationFrame(draw);
       const dt = Number.isFinite(lastDraw) ? Math.min((now - lastDraw) / 1000, .08) : 0;
       lastDraw = now;
       const active = now - lastDeformation.current < 220;
       let frameIndex = -1;
-      const ready = sheets.every(image => image.complete && image.naturalWidth > 0);
+      // The poster already contains the settled smile. Do not redraw the same
+      // pose from a large sprite sheet until an actual deformation needs video.
+      const ready = sheetsReady && Number.isFinite(lastDeformation.current);
       if (ready) {
         // Keep brief drags queued until a rendered frame consumes them.
         const newDeformation = lastDeformation.current !== consumedDeformation;
@@ -333,7 +343,7 @@ export function PortraitWarp() {
         const index = Math.max(0, Math.min(SMILE_FRAME, Math.round(position)));
         frameIndex = index;
       } else {
-        if (!poster.complete || !poster.naturalWidth) return;
+        if (!posterReady) return;
       }
       output.dataset.motion = state;
       // Follow display timing, but remap the mesh only for a new frame or shape.
@@ -388,7 +398,9 @@ export function PortraitWarp() {
       ctx.restore();
     };
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
+      if (warmIsTimeout) clearTimeout(warmIdle); else window.cancelIdleCallback(warmIdle);
       observer.disconnect();
       preload.disconnect();
       document.removeEventListener("visibilitychange", syncPlayback);

@@ -15,6 +15,28 @@ export function useHomeReveals(scope: RefObject<HTMLElement | null>) {
       if (conditions?.reduced || !scope.current) return;
 
       const mobile = conditions?.mobile;
+      // Trigger each text column separately so the stacked mobile introduction
+      // does not finish revealing its paragraphs while they are still offscreen.
+      scope.current.querySelectorAll<HTMLElement>(
+        ".profile-identity, .profile-statement",
+      ).forEach((group) => {
+        const items = group.querySelectorAll(":scope > h2, :scope > h3, :scope > p");
+        if (!items.length) return;
+        gsap.fromTo(items, {
+          opacity: 0, y: mobile ? 20 : 32,
+        }, {
+          opacity: 1, y: 0,
+          duration: mobile ? 0.65 : 0.85,
+          stagger: mobile ? 0.12 : 0.16,
+          ease: "power3.out",
+          clearProps: "opacity,transform",
+          scrollTrigger: {
+            trigger: group,
+            start: "clamp(top 88%)",
+            once: true,
+          },
+        });
+      });
       const imageStrip = scope.current.querySelector(".intro-image-strip");
       const imageCards = scope.current.querySelectorAll(".intro-image-card");
       if (imageStrip && imageCards.length) {

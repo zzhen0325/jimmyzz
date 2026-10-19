@@ -5,5 +5,5 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", ".open-next/**", ".wrangler/**", "output/**"]),
+  globalIgnores([".next/**", ".open-next/**", ".wrangler/**", "output/**", "public/assets/video-transcoder/**"]),
 ]);

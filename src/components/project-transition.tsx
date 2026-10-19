@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 import { projectRevealFrame, projectRevealTiming } from "@/lib/project-reveal";
 import { playSound } from "@/lib/site-sound";
 import { gsap, useGSAP } from "@/lib/gsap";
@@ -44,14 +45,14 @@ export function ProjectTransition() {
       curtain.dataset.active = "true";
       window.dispatchEvent(new CustomEvent("project-transition", { detail: true }));
       const href = url.pathname + url.search + url.hash;
-      router.prefetch(href);
+      router.prefetch(href, { kind: PrefetchKind.FULL });
       animation.current?.kill();
       // Reverse the cover reveal until every pixel is white before navigating.
       gsap.set(curtain, projectRevealFrame(window.innerWidth, window.innerHeight, true));
       animation.current = gsap.timeline()
         .to(curtain, {
           ...projectRevealFrame(window.innerWidth, window.innerHeight, false),
-          duration: .8,
+          duration: projectRevealTiming.cover,
           ease: "power2.in",
         })
         .call(() => router.push(href));

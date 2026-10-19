@@ -2,7 +2,10 @@
 
 import { ScrambleText } from "./scramble-text";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
+import { useContent } from "./content-provider";
+import { PagePreload } from "./page-preload";
+import { projectPreloadRoutes } from "@/lib/case-media";
 import { useHomeReveals } from "./home-reveals";
 import { SelectedWork } from "./selected-work";
 import { CurveGallery } from "./curve-gallery";
@@ -46,10 +49,16 @@ function FeaturedProjects() {
 }
 
 export function HomePage() {
+  const { projects, selectedWork } = useContent();
+  const routes = useMemo(() => {
+    const order = new Map(selectedWork.order.map((slug, index) => [slug, index]));
+    return projectPreloadRoutes([...projects].sort((a, b) => (order.get(a.slug) ?? 999) - (order.get(b.slug) ?? 999)));
+  }, [projects, selectedWork]);
   const scope = useRef<HTMLElement>(null);
   useHomeReveals(scope);
   return (
     <main ref={scope} className="home-page" id="top">
+      <PagePreload routes={routes} home />
       <HoverLabel />
       <ChromeHero />
       <div className="home-content">

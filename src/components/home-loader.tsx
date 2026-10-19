@@ -15,30 +15,37 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
   useEffect(() => {
     let cancelled = false;
     let finishing = false;
+    let animationStarted = 0;
+    let framesReady = false;
+    let sceneReady = false;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     let exitTimer: ReturnType<typeof setTimeout> | undefined;
     let removeTimer: ReturnType<typeof setTimeout> | undefined;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const finish = () => {
-      if (finishing || cancelled) return;
+      if (finishing || cancelled || !sceneReady || !framesReady) return;
       finishing = true;
       clearTimeout(deadline);
       observer.disconnect();
       // Cached scenes can be ready before the animation has even decoded.
       exitTimer = setTimeout(() => {
+        document.body.style.overflow = previousOverflow;
         setLeaving(true);
         removeTimer = setTimeout(onComplete, reduced ? 0 : 240);
-      }, 0);
+      }, reduced ? 0 : Math.max(0, 1100 - (performance.now() - animationStarted)));
     };
     const showFallback = () => {
       if (cancelled || finishing) return;
       clearTimeout(deadline);
       sequence.current?.removeAttribute("data-playing");
+      document.body.style.overflow = previousOverflow;
       setUnavailable(true);
     };
     const checkScene = () => {
       const canvas = scope.current?.querySelector("canvas");
       if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("[data-scene-error='true']")) showFallback();
-      else if (canvas?.dataset.ready === "true") finish();
+      else if (canvas?.dataset.ready === "true") { sceneReady = true; finish(); }
     };
     const observer = new MutationObserver(checkScene);
     if (scope.current) observer.observe(scope.current, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-ready", "data-asset-error", "data-scene-error"] });
@@ -52,11 +59,17 @@ export function HomeLoader({ scope, onComplete }: { scope: RefObject<HTMLElement
       await img.decode();
     })).then(() => {
       if (cancelled || finishing) return;
-      sequence.current?.setAttribute("data-playing", "true");
+      framesReady = true;
+      animationStarted = performance.now();
+      if (!reduced) sequence.current?.setAttribute("data-playing", "true");
       checkScene();
-    }).catch(() => { /* Keep the first frame until the scene is ready if a frame fails. */ });
+    }).catch(() => {
+      framesReady = true;
+      checkScene();
+    });
     return () => {
       cancelled = true;
+      document.body.style.overflow = previousOverflow;
       observer.disconnect();
       clearTimeout(deadline);
       clearTimeout(exitTimer);

@@ -10,9 +10,10 @@ export type ResolutionSettings = {
 
 /** Quality is a fraction of native DPR; return absolute drawing-buffer DPR. */
 export function createAdaptiveResolution(settings: ResolutionSettings) {
-  let scale = settings.min;
+  // The first complete frame is sharp. Only sustained measured load may lower it.
+  let scale = settings.max;
   let nativeDpr = 1;
-  const pixelRatio = () => nativeDpr * scale;
+  const pixelRatio = () => Math.min(nativeDpr, Math.max(1, nativeDpr * scale));
   let previous: number | undefined;
   let changedAt = -Infinity;
   let count = 0;

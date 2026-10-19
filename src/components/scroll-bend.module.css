@@ -1,5 +1,5 @@
-/* The SVG filter includes padding for the curved edges. A clip-path here
-   clips the final filtered output back to a rectangle, cutting off the bend. */
-.root [data-work-skew] {
-  clip-path: none;
-}
+.root { overflow: visible; }
+/* Keep layout, hit targets, accessibility and the original media decoder alive.
+   The shared GPU surface takes over pixels only while a prepared mesh is moving. */
+.root [data-bend-gpu] { opacity: 0 !important; }
+.root [data-bend-fallback] { will-change: transform; }

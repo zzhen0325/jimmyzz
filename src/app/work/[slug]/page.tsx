@@ -1,6 +1,6 @@
 import "./project.css";
 import projectPreviews from "@/lib/project-preview-manifest.json";
-import { V1Experience } from "@/components/v1-experience";
+import { V1ExperienceLazy } from "@/components/v1-experience-lazy";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectHeader, ProjectCopy } from "@/components/project-detail-chrome";
@@ -10,6 +10,8 @@ import { readContent } from "@/lib/content-store";
 import { resolveCaseImageMetadata } from "@/lib/case-image-metadata";
 import { projectThemeStyle } from "@/lib/project-theme";
 import { ProjectEntrance } from "@/components/project-entrance";
+import { PagePreload } from "@/components/page-preload";
+import { projectPreloadRoutes } from "@/lib/case-media";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
@@ -32,7 +34,7 @@ export default async function ProjectPage({
   const { projects } = await readContent();
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
-  if (slug === "portfolio-v1") return <V1Experience />;
+  if (slug === "portfolio-v1") return <V1ExperienceLazy />;
   const assets = await resolveCaseImageMetadata(project.assets);
   const index = projects.indexOf(project);
   const relatedProjects = [...projects.slice(index + 1), ...projects.slice(0, index)].map((item) => ({
@@ -45,6 +47,7 @@ export default async function ProjectPage({
   }));
   return (
     <ProjectEntrance key={slug} style={projectThemeStyle(project.detailTheme)}>
+      <PagePreload routes={projectPreloadRoutes([...projects.slice(index + 1), ...projects.slice(0, index)])} />
       <ProjectHeader homeHref="/" />
       <article className="case-editorial mx-[var(--page-pad)] grid grid-cols-[var(--portfolio-grid)] items-start gap-x-[var(--grid-gap)] pb-[clamp(64px,8vw,128px)] max-[599px]:gap-y-10">
         <ProjectCopy>

@@ -1,250 +1,180 @@
 "use client";
 
-import { useId, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { gsap, ScrollTrigger, useGSAP, motionConditions } from "@/lib/gsap";
+import type { createScrollBendRenderer } from "@/lib/scroll-bend-renderer";
 import styles from "./scroll-bend.module.css";
 
-/** Shared velocity-driven curvature for home covers and project images. */
+/** Native media at rest; one shared GPU mesh surface while scrolling. */
 export function ScrollBend({ children, className }: { children: ReactNode; className?: string }) {
   const root = useRef<HTMLDivElement>(null);
-  const definitions = useRef<SVGDefsElement>(null);
-  const template = useRef<SVGFilterElement>(null);
-  const filterId = `work-curve-${useId().replace(/:/g, "")}`;
-
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add({ ...motionConditions, mobile: "(max-width: 809px)" }, ({ conditions }) => {
-      if (conditions?.reduced || !root.current || !definitions.current || !template.current) return;
-      const images = root.current.querySelectorAll<HTMLElement>("[data-work-skew]");
-      const proxy = { bend: 0 };
-      const rendered = { bend: 0 };
-      const limit = conditions?.mobile ? 60 : 140;
-      // At rest, the combined displacement + lift is below half a device pixel.
-      const restThreshold = 0.5 / (0.62 * Math.max(1, window.devicePixelRatio));
+      const element = root.current;
+      if (conditions?.reduced || !element) return;
+      const hosts = Array.from(element.querySelectorAll<HTMLElement>("[data-work-skew]"));
       const visible = new Set<HTMLElement>();
-      const originalFilters = new Map(Array.from(images, (image) => [image, image.style.filter]));
-      const originalTranslations = new Map(Array.from(images, (image) => [image, image.style.translate]));
-      // Each cover owns its filter so only its visible consumer is invalidated.
-      const filters = new Map(Array.from(images, (image, index) => {
-        const filter = template.current!.cloneNode(true) as SVGFilterElement;
-        filter.id = `${filterId}-${index}`;
-        filter.setAttribute("filterUnits", "userSpaceOnUse");
-        definitions.current!.appendChild(filter);
-        return [image, {
-          filter,
-          map: filter.querySelector("feImage")!,
-          displacement: filter.querySelector("feDisplacementMap")!,
-          outline: filter.querySelector<SVGFEImageElement>("[data-bend-outline]")!,
-          width: 0,
-          active: false,
-          height: 0,
-          regionY: 0,
-          regionHeight: 0,
-        }];
-      }));
-      // The map ranges from .35 to .8, so max displacement is .3 * scale.
-      // Use pixel padding instead of rasterizing an extra full image height.
-      const padding = Math.ceil(limit * .3) + 2;
-      // Keep bilinear sampling away from the hard filter/map boundary. Even a
-      // neutral displacement channel can round by half a byte in the renderer.
-      const edgePadding = 2;
-      const setRegion = (image: HTMLElement, y: number, height: number) => {
-        const entry = filters.get(image)!;
-        if (entry.regionY === y && entry.regionHeight === height) return;
-        entry.regionY = y;
-        entry.regionHeight = height;
-        // The displacement map varies only horizontally, so cropping its vertical
-        // extent preserves the curve while bounding intermediate filter surfaces.
-        for (const element of [entry.filter, entry.map]) {
-          element.setAttribute("y", String(y));
-          element.setAttribute("height", String(height));
+      const near = new Set<HTMLElement>();
+      const queue = new Set<HTMLImageElement | HTMLVideoElement>();
+      const decoded = new WeakMap<HTMLImageElement, string>();
+      const decoding = new WeakMap<HTMLImageElement, string>();
+      const originals = new Map(hosts.map(host => [host, { transform: host.style.transform, translate: host.style.translate }]));
+      const limit = conditions?.mobile ? 90 : 210;
+      const threshold = .5 / (.62 * Math.max(1, devicePixelRatio));
+      let renderer: ReturnType<typeof createScrollBendRenderer> = null;
+      let disposed = false, unavailable = false, transitioning = false, ticking = false;
+      let target = 0, bend = 0, idle = 0, idleIsTimeout = false, refresh = 0, lastWarm = 0, lastScroll = -Infinity;
+      const restore = (host: HTMLElement) => {
+        delete host.dataset.bendGpu;
+        if (host.hasAttribute('data-bend-fallback')) {
+          delete host.dataset.bendFallback;
+          host.style.transform = originals.get(host)!.transform;
+          host.style.translate = originals.get(host)!.translate;
         }
       };
-      const measure = (image: HTMLElement, width: number, height: number) => {
-        const entry = filters.get(image)!;
-        entry.width = width;
-        entry.height = height;
-        for (const element of [entry.filter, entry.map]) {
-          element.setAttribute("x", String(-edgePadding));
-          element.setAttribute("width", String(width + 2 * edgePadding));
-        }
-        setRegion(image, -padding, height + 2 * padding);
+      const stop = () => {
+        gsap.ticker.remove(tick); ticking = false; target = bend = 0;
+        hosts.forEach(restore); renderer?.hide();
+        schedule();
       };
-      // clientWidth/clientHeight round fractional CSS pixels, which can put the
-      // image edge outside the filter region by a fraction of a pixel.
-      images.forEach(image => {
-        const style = getComputedStyle(image);
-        measure(image, parseFloat(style.width), parseFloat(style.height));
-      });
-      const restore = (image: HTMLElement) => {
-        const entry = filters.get(image)!;
-        if (!entry.active) return;
-        image.style.filter = originalFilters.get(image) ?? "";
-        image.style.translate = originalTranslations.get(image) ?? "";
-        entry.displacement.setAttribute("scale", "0");
-        entry.active = false;
-      };
-      let disposed = false;
-      const paint = (updateBend = true) => {
-        if (disposed) return;
-        if (Math.abs(rendered.bend) <= restThreshold) {
-          visible.forEach(restore);
-          return;
-        }
-        const viewportHeight = window.innerHeight;
-        const overscan = 256;
-        // Batch layout reads before filter/style writes. Small covers keep their
-        // full region; long images retain an overscanned viewport-sized window.
-        const regions = Array.from(visible, image => {
-          const entry = filters.get(image)!;
-          if (entry.height <= viewportHeight + 2 * overscan) {
-            return { image, y: -padding, height: entry.height + 2 * padding };
+      const busy = () => ticking || transitioning || performance.now() - lastScroll < 200;
+      const schedule = () => {
+        if (idle || disposed || !renderer || unavailable || !queue.size || document.hidden) return;
+        const work = (deadline?: IdleDeadline) => {
+          idle = 0;
+          if (disposed || !renderer || unavailable || document.hidden) return;
+          // A timed-out idle callback can run in the middle of a scroll frame.
+          // Keep new texture allocation out of the gesture, even on slow devices.
+          if (busy() || (deadline && deadline.timeRemaining() < 8)) { schedule(); return; }
+          const media = queue.values().next().value;
+          if (media) {
+            queue.delete(media);
+            const host = media.closest<HTMLElement>('[data-work-skew]');
+            if (host && near.has(host) && (!(media instanceof HTMLImageElement) || decoded.get(media) === (media.currentSrc || media.src))) renderer.prepare(media);
           }
-          const rect = image.getBoundingClientRect();
-          const scaleY = rect.height / entry.height || 1;
-          const top = -rect.top / scaleY;
-          const bottom = (viewportHeight - rect.top) / scaleY;
-          // Include both the displacement's sampling radius and a changed lift.
-          const guard = padding + limit * .32;
-          if (entry.active && entry.regionHeight <= Math.ceil(bottom - top + 2 * (guard + overscan)) + 1 &&
-              entry.regionY <= top - guard &&
-              entry.regionY + entry.regionHeight >= bottom + guard) {
-            return { image, y: entry.regionY, height: entry.regionHeight };
+          schedule();
+        };
+        idleIsTimeout = busy() || !window.requestIdleCallback;
+        idle = idleIsTimeout ? window.setTimeout(work, 200) : window.requestIdleCallback(work);
+      };
+      const warm = (host: HTMLElement) => {
+        if (!renderer || unavailable || disposed) return;
+        host.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img,video').forEach(media => {
+          // Start nearby lazy images before they enter the viewport; decode off
+          // the rendering path, then upload a single texture in each idle slot.
+          if (media instanceof HTMLImageElement) media.loading = 'eager';
+          if (!renderer!.needsPreparation(media)) return;
+          if (media instanceof HTMLImageElement) {
+            const src = media.currentSrc || media.src;
+            if (decoded.get(media) !== src) {
+              if (decoding.get(media) === src) return;
+              decoding.set(media, src);
+              void media.decode().then(() => {
+                if (disposed || !near.has(host) || src !== (media.currentSrc || media.src)) return;
+                decoded.set(media, src); queue.add(media); schedule();
+              }).catch(() => {}).finally(() => { if (decoding.get(media) === src) decoding.delete(media); });
+              return;
+            }
           }
-          const y = Math.max(-padding, Math.floor(top - guard - overscan));
-          const end = Math.min(entry.height + padding, Math.ceil(bottom + guard + overscan));
-          return { image, y, height: Math.max(1, end - y) };
+          queue.add(media);
         });
-        const bend = rendered.bend.toFixed(3);
-        const lift = -Math.abs(rendered.bend) * .32;
-        regions.forEach(({ image, y, height }) => {
-          const entry = filters.get(image)!;
-          const regionChanged = entry.regionY !== y || entry.regionHeight !== height;
-          setRegion(image, y, height);
-          // Region tracking remains live on skipped bend frames, avoiding gaps
-          // during fast scrolling without increasing curvature updates.
-          if (!updateBend && entry.active && !regionChanged) return;
-          if (!entry.active) {
-            image.style.filter = `url("#${entry.filter.id}")`;
-            entry.active = true;
-          }
-          entry.displacement.setAttribute("scale", bend);
-          // The displacement texture is quantized by the browser. Build the
-          // silhouette from the continuous quadratic instead of its stepped alpha.
-          const w = entry.width;
-          const h = entry.height;
-          const t0 = edgePadding / (w + 2 * edgePadding);
-          const span = w / (w + 2 * edgePadding);
-          const b = Number(bend);
-          const y0 = -b * (.3 - .9 * t0 + .45 * t0 * t0);
-          const yc = y0 + b * .9 * (1 - t0) * span / 2;
-          const y1 = -b * (.3 - .9 * (t0 + span) + .45 * (t0 + span) ** 2);
-          const outline = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${height}" viewBox="0 ${y} ${w} ${height}"><path fill="white" d="M0 ${y0} Q${w / 2} ${yc} ${w} ${y1} L${w} ${h + y1} Q${w / 2} ${h + yc} 0 ${h + y0}Z"/></svg>`;
-          entry.outline.setAttribute("x", "0");
-          entry.outline.setAttribute("y", String(y));
-          entry.outline.setAttribute("width", String(w));
-          entry.outline.setAttribute("height", String(height));
-          entry.outline.setAttribute("href", `data:image/svg+xml,${encodeURIComponent(outline)}`);
-          image.style.translate = `0 ${lift}px`;
-        });
+        schedule();
       };
-      // Only rasterize covers near the viewport; remove the filter at rest so
-      // images and playing videos regain their normal compositing path.
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(({ target, isIntersecting }) => {
-          const image = target as HTMLElement;
-          if (isIntersecting) visible.add(image);
+      const loaded = (event: Event) => {
+        const host = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-work-skew]') : null;
+        if (host && near.has(host)) warm(host);
+      };
+      const paint = () => {
+        if (Math.abs(bend) <= threshold) { hosts.forEach(restore); renderer?.hide(); return; }
+        const drawn = renderer && !unavailable ? renderer.draw([...visible], bend) : new Set<HTMLElement>();
+        const retry = performance.now() - lastWarm > 300;
+        if (retry) lastWarm = performance.now();
+        visible.forEach(host => {
+          if (drawn.has(host)) host.dataset.bendGpu = '';
           else {
-            visible.delete(image);
-            restore(image);
+            restore(host);
+            if (retry && !unavailable) warm(host);
+            // If WebGL is unavailable, preserve responsive motion with compositor transforms.
+            if (unavailable) {
+              host.dataset.bendFallback = '';
+              const skew = Math.atan(bend * .45 / Math.max(1, host.clientWidth));
+              host.style.transform = `${originals.get(host)!.transform} skewY(${skew}rad)`;
+              host.style.translate = `0 ${-Math.abs(bend) * .32}px`;
+            }
           }
         });
-        paint(false);
-      }, { rootMargin: `${padding}px` });
-      images.forEach((image) => observer.observe(image));
-      // A single frame loop follows and decays the impulse. Avoid restarting a
-      // second tween from the first tween's onUpdate on every scroll frame.
-      let ticking = false;
-      let paintBudget = 0;
-      const tick = (_time: number, deltaMs: number) => {
-        const dt = Math.min(deltaMs / 1000, .064);
-        rendered.bend += (proxy.bend - rendered.bend) * (1 - Math.exp(-dt / .055));
-        proxy.bend *= Math.exp(-dt / .16);
-        if (Math.abs(proxy.bend) <= restThreshold && Math.abs(rendered.bend) <= restThreshold) {
-          proxy.bend = rendered.bend = 0;
-          gsap.ticker.remove(tick);
-          ticking = false;
-        }
-        // Seven curvature writes per ten ticker frames, at any refresh rate.
-        // Integrate motion every frame so throttling does not slow the decay.
-        paintBudget += .7;
-        const updateBend = paintBudget >= 1 - 1e-9;
-        if (updateBend) paintBudget -= 1;
-        paint(updateBend);
       };
+      const tick = (_time: number, deltaMs: number) => {
+        if (document.hidden || transitioning) { stop(); return; }
+        const dt = Math.min(deltaMs / 1000, .064);
+        bend += (target - bend) * (1 - Math.exp(-dt / .055));
+        target *= Math.exp(-dt / .16);
+        if (Math.abs(target) <= threshold && Math.abs(bend) <= threshold) { stop(); return; }
+        paint();
+      };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(({ target, isIntersecting }) => {
+          const host = target as HTMLElement;
+          if (isIntersecting) visible.add(host);
+          else { visible.delete(host); restore(host); }
+        });
+      }, { rootMargin: '144px' });
+      const preload = new IntersectionObserver(entries => {
+        entries.forEach(({ target, isIntersecting }) => {
+          const host = target as HTMLElement;
+          if (isIntersecting) { near.add(host); warm(host); }
+          else near.delete(host);
+        });
+      }, { rootMargin: '1600px' });
+      hosts.forEach(host => { observer.observe(host); preload.observe(host); });
+      element.addEventListener('load', loaded, true);
+      element.addEventListener('loadeddata', loaded, true);
+      const visibility = () => { if (document.hidden) stop(); else schedule(); };
+      const transition = (event: Event) => { transitioning = (event as CustomEvent<boolean>).detail; if (transitioning) stop(); else schedule(); };
+      const scrolled = () => { lastScroll = performance.now(); };
+      const resized = () => { stop(); renderer?.resize(); near.forEach(warm); };
+      document.addEventListener('visibilitychange', visibility);
+      window.addEventListener('project-transition', transition);
+      window.addEventListener('scroll', scrolled, { passive: true });
+      window.addEventListener('resize', resized);
+      void import('@/lib/scroll-bend-renderer').then(({ createScrollBendRenderer }) => {
+        if (disposed) return;
+        try { renderer = createScrollBendRenderer(() => { unavailable = true; hosts.forEach(restore); }); }
+        catch { renderer = null; }
+        unavailable = !renderer;
+        near.forEach(warm);
+      }).catch(() => { if (!disposed) unavailable = true; });
       ScrollTrigger.create({
-        trigger: root.current,
-        start: "top bottom", end: "bottom top",
-        onUpdate: (self) => {
-          if (!self.isActive) return;
-          const bend = -limit * Math.tanh(self.getVelocity() / 2400);
-          if (Math.abs(bend) > Math.abs(proxy.bend) || bend * proxy.bend < 0) {
-            proxy.bend = bend;
-            if (!ticking) { ticking = true; paintBudget = .3; gsap.ticker.add(tick); }
+        trigger: element, start: 'top bottom', end: 'bottom top',
+        onUpdate(self) {
+          if (!self.isActive || transitioning || document.hidden) return;
+          const impulse = -limit * Math.tanh(self.getVelocity() / 2400);
+          if (Math.abs(impulse) > Math.abs(target) || impulse * target < 0) {
+            target = impulse;
+            if (!ticking) { ticking = true; gsap.ticker.add(tick); }
           }
         },
       });
-      // Intrinsic image sizes can change the gallery height after hydration.
-      let refreshFrame = 0;
-      const resize = new ResizeObserver(entries => {
-        entries.forEach(({ target, borderBoxSize, contentRect }) => {
-          if (filters.has(target as HTMLElement)) {
-            const image = target as HTMLElement;
-            const box = borderBoxSize[0];
-            measure(image, box?.inlineSize ?? contentRect.width, box?.blockSize ?? contentRect.height);
-          }
-        });
-        cancelAnimationFrame(refreshFrame);
-        refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+      const resize = new ResizeObserver(() => {
+        cancelAnimationFrame(refresh);
+        refresh = requestAnimationFrame(() => { ScrollTrigger.refresh(true); near.forEach(warm); });
       });
-      resize.observe(root.current);
-      images.forEach(image => resize.observe(image));
+      resize.observe(element);
       return () => {
-        disposed = true;
-        gsap.ticker.remove(tick);
-        cancelAnimationFrame(refreshFrame);
-        resize.disconnect();
-        observer.disconnect();
-        originalFilters.forEach((value, image) => { image.style.filter = value; });
-        originalTranslations.forEach((value, image) => { image.style.translate = value; });
-        filters.forEach(({ filter }) => filter.remove());
+        disposed = true; stop();
+        if (idleIsTimeout) clearTimeout(idle); else window.cancelIdleCallback?.(idle);
+        cancelAnimationFrame(refresh); resize.disconnect(); observer.disconnect(); preload.disconnect();
+        element.removeEventListener('load', loaded, true);
+        element.removeEventListener('loadeddata', loaded, true);
+        document.removeEventListener('visibilitychange', visibility);
+        window.removeEventListener('project-transition', transition);
+        window.removeEventListener('scroll', scrolled);
+        window.removeEventListener('resize', resized);
+        renderer?.dispose(); queue.clear();
       };
     }, root);
     return () => mm.revert();
   }, { scope: root });
-
-  return (
-    <div ref={root} className={`${styles.root}${className ? ` ${className}` : ""}`}>
-      <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute" }}>
-        <defs ref={definitions}>
-          <filter ref={template} id={filterId} x="0%" y="-50%" width="100%" height="200%" colorInterpolationFilters="sRGB">
-            <feImage href="/assets/work-curve-map.svg" x="0%" y="-50%" width="100%" height="200%" preserveAspectRatio="none" result="curve" />
-            {/* Exact neutral red prevents horizontal drift from 8-bit rounding. */}
-            <feColorMatrix in="curve" type="matrix" values="0 0 0 0 0.5  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1" result="verticalCurve" />
-            <feDisplacementMap in="SourceGraphic" in2="verticalCurve" scale="0" xChannelSelector="R" yChannelSelector="G" result="bent" />
-            {/* Extend edge colors across the subpixel displacement error, then
-                cut the result with a vector curve rasterized with antialiasing. */}
-            <feMorphology in="bent" operator="dilate" radius="1" result="edgeColors" />
-            <feMerge result="filledBend">
-              <feMergeNode in="edgeColors" />
-              <feMergeNode in="bent" />
-            </feMerge>
-            <feImage data-bend-outline="" preserveAspectRatio="none" result="outline" />
-            <feComposite in="filledBend" in2="outline" operator="in" />
-          </filter>
-        </defs>
-      </svg>
-      {children}
-    </div>
-  );
+  return <div ref={root} className={`${styles.root}${className ? ` ${className}` : ''}`}>{children}</div>;
 }

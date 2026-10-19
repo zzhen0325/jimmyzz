@@ -9,10 +9,10 @@ export function layerStyle(layer: VideoLayer) {
 }
 
 /** Shared canvas keeps the editor and published page in exact alignment. */
-export function LayeredMedia({ asset, alt, children }: { asset: Asset; alt: string; children?: ReactNode }) {
+export function LayeredMedia({ asset, alt, children, priority = false }: { asset: Asset; alt: string; children?: ReactNode; priority?: boolean }) {
   const layers = getVideoLayers(asset);
   return <div style={{ position: 'relative', isolation: 'isolate', width: '100%', overflow: 'hidden' }}>
-    <Image src={asset.src} alt={alt} width={asset.width || 960} height={asset.height || 540} sizes="(max-width: 599px) calc(100vw - 32px), 58.333vw" loading="lazy" draggable={false}
+    <Image src={asset.src} alt={alt} width={asset.width || 960} height={asset.height || 540} sizes="(max-width: 599px) calc(100vw - 32px), 58.333vw" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : undefined} draggable={false}
       style={{ display: 'block', position: 'relative', zIndex: 1, width: '100%', height: 'auto', margin: 0, background: 'transparent' }} />
     {layers.map((layer, index) => <div key={index} style={{ ...layerStyle(layer), borderRadius: `${layer.radius}% / ${layer.radius * layer.width * (asset.width || 1) / (layer.height * (asset.height || 1))}%` }}>
       <ViewportVideo src={layer.src} controls={false} aria-label={`${alt} · 叠层视频`}
