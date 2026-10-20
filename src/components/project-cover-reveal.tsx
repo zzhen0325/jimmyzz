@@ -53,7 +53,7 @@ export function ProjectCoverReveal({ children, className, style }: {
           "--cover-reveal-size": () => frame(true).backgroundSize,
           "--cover-reveal-position": () => frame(true).backgroundPosition,
           duration: 1.75,
-          ease: "none",
+          ease: "power4.inOut",
         })
         .set(overlay, { autoAlpha: 0 })
         .set(host, { maskImage: "none" });

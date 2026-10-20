@@ -6,6 +6,7 @@ import { createHomeRain, type HomeWeather } from "./home-rain";
 import { createVortexEasterEgg } from "./vortex-easter-egg";
 import { createPixelVortex } from "./pixel-vortex";
 import * as THREE from "three";
+import { gsap } from "gsap";
 import { home3DConfig as config, type FloatingModelConfig, type ModelMaterialConfig } from "./home-3d-config";
 import * as CANNON from "cannon-es";
 import { logoTriangles } from "./chrome-logo-shape";
@@ -32,6 +33,8 @@ import { driftRotation, sampleFloatingDrift } from "./floating-drift";
 export type FloatingMode = FlowMode | "gravity" | "diagonal-drift" | "orbit" | "wave" | "parallax" | "physics" | "physics-wave" | "planet-belt";
 export type ExportLayout = { rotation: number; tilt: number; spacing: number; size: number; logoSize: number; depth: number; motion: "tilted-orbit" | FloatingMode; playing: boolean };
 export { defaultExportLayout } from "./chrome-world-layout";
+
+const logoEntranceEase = gsap.parseEase("power4.inOut");
 
 export type ChromeWorldOptions = { platform?: ScenePlatform; weather?: HomeWeather; floatingMode?: FloatingMode; vortexTarget?: HTMLButtonElement; workProgress?: { readonly current: number }; paused?: boolean; debug?: boolean; onError?: (error: unknown) => void };
 type Item = { object: THREE.Group; body: CANNON.Body; originalSize: THREE.Vector3; phase: number; entranceScale?: number; entranceReleased?: boolean; billboard?: boolean; screen: { x: number; y: number; radius: number; fx: number; fy: number } };
@@ -143,6 +146,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let elapsed = 0;
   let portalGunAnimation: Awaited<ReturnType<typeof createChromePortalGun>> | undefined;
   let entranceActive = false;
+  let entranceDelayRemaining = 0;
   const entrance = { stagger: config.entrance.stagger, launch: config.entrance.launch, orbit: config.entrance.duration, releaseDrag: .45, coast: .18, dragRamp: .65, settle: 2.4 };
   const lastReleaseTime = () => entrance.launch + entrance.orbit + Math.max(0, items.length - 2) * entrance.stagger;
   const entrancePosition = new THREE.Vector3();
@@ -191,7 +195,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
   let logoScale = 1;
   let exportLayout: ExportLayout | null = null;
   let exportTime = 0;
-  const logoEntranceDuration = .95;
+  const logoEntranceDuration = 1.5;
   // Independent from physics resets: resizing or returning home must not replay it.
   let logoEntranceTime = 0;
   const workProgress = () => options.workProgress?.current ?? 0;
@@ -437,6 +441,7 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     flowBlend=isFlowMode(floatingMode)?1:0;flowSpeed=1;lastBurstTime=-Infinity;magnetBlend=0;
     beltAngle=0;beltSpeed=.10;orbit=0;power=.01;angle=0;elapsed=0;world.time=0;world.accumulator=0;world.stepnumber=0;contacts=0;collisions.clear();
     entranceActive = !reduced && usesPhysics() && floatingMode !== "gravity";
+    entranceDelayRemaining = entranceActive ? config.entrance.delay : 0;
     world.gravity.set(0, floatingMode === "gravity" ? -9.8 : 0, 0);
     world.defaultContactMaterial.friction = floatingMode === "gravity" ? .55 : referencePhysics.friction;
     world.defaultContactMaterial.restitution = entranceActive ? .8 : 0;
@@ -982,6 +987,13 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     }
   };
   const step=(delta:number)=>{
+    // Delay the entire prop timeline so orbit, growth and physics handoff stay aligned.
+    if (entranceActive && entranceDelayRemaining > 0) {
+      const wait = Math.min(delta, entranceDelayRemaining);
+      entranceDelayRemaining -= wait;
+      delta -= wait;
+      if (delta <= 0) { cameraFrame(); return; }
+    }
     elapsed+=delta;
     if (entranceActive) { stepEntrance(delta); return; }
     if (burstGravityAge !== null && workProgress() > 0) finishBurstGravity();
@@ -1095,14 +1107,16 @@ export function createChromeWorld(canvas: HTMLCanvasElement, options: ChromeWorl
     // Acceleration belongs to the shared timeline; local phases only remap its progress.
     const travel = THREE.MathUtils.clamp((p - .2) / .8, 0, 1);
     const turn = reduced ? 0 : THREE.MathUtils.clamp((p - .08) / .82, 0, 1) * Math.PI * 2;
-    logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, turn + pointerYaw * (1 - p)));
+    const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
+    // One full Y turn settles into the pointer pose alongside the entrance scale.
+    const entranceTurn = -Math.PI * 2 * (1 - logoEntranceEase(entranceProgress));
+    logo.quaternion.copy(camera.quaternion).multiply(spin.setFromAxisAngle(spinAxis, entranceTurn + turn + pointerYaw * (1 - p)));
     canvas.dataset.pointerYaw = String(pointerYaw);
     const introY = width < config.sizing.mobileBreakpoint ? 0 : height * (.5 - config.logo.centerY) / camera.zoom;
     const logoY = THREE.MathUtils.lerp(introY, (height / 2 - 44) / camera.zoom, travel);
     logoAnchor.set(0, logoY, 0).applyQuaternion(camera.quaternion);
     logo.position.copy(logoAnchor).addScaledVector(logoReturnOffset, reduced ? 0 : 1 - travel);
-    const entranceProgress = reduced ? 1 : Math.min(1, logoEntranceTime / logoEntranceDuration);
-    const entranceScale = .18 + .82 * (1 - Math.pow(1 - entranceProgress, 4));
+    const entranceScale = .18 + .82 * logoEntranceEase(entranceProgress);
     logo.scale.setScalar(THREE.MathUtils.lerp(logoScale * entranceScale, 72 / (3.1 * camera.zoom), travel));
     return { p, turn, logoY };
   };

@@ -2,19 +2,19 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { homeAssetUrl } from "@/lib/home-asset-url";
+import { gsap } from "gsap";
 import styles from "./home-loader.module.css";
 
 const frames = Array.from({ length: 21 }, (_, i) => i);
 const sequenceUrl = homeAssetUrl("/assets/loading/sequence.webp");
 const sequenceDurationMs = frames.length * 100;
 const finalFrameHoldMs = 200;
-const shrinkDurationMs = 160;
-const emptyHoldMs = 100;
+const shrinkDurationMs = 500;
 const fadeDurationMs = 160;
-const fadeDelayMs = finalFrameHoldMs + shrinkDurationMs + emptyHoldMs;
+// Overlap the slow end/start of both power4.inOut animations.
+const sceneOverlapMs = 500;
+const fadeDelayMs = finalFrameHoldMs + shrinkDurationMs - sceneOverlapMs;
 const overlayStyle = {
-  "--final-frame-hold": `${finalFrameHoldMs}ms`,
-  "--shrink-duration": `${shrinkDurationMs}ms`,
   "--fade-duration": `${fadeDurationMs}ms`,
 } as CSSProperties;
 const sequenceStyle = {
@@ -26,11 +26,25 @@ const slowLoadingMs = 8_000;
 
 export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { scope: RefObject<HTMLElement | null>; onReveal: () => void; onComplete: () => void; compact?: boolean }) {
   const sequence = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
   const shuffled = useRef(false);
   const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (!leaving || !viewport.current || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const context = gsap.context(() => {
+      gsap.to(viewport.current, {
+        scale: 0,
+        delay: finalFrameHoldMs / 1000,
+        duration: shrinkDurationMs / 1000,
+        ease: "power4.inOut",
+      });
+    });
+    return () => context.revert();
+  }, [leaving]);
 
   useEffect(() => {
     // Shuffle once after hydration; keep every frame exactly once per cycle.
@@ -96,7 +110,7 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
         removeTimer = setTimeout(() => {
           document.body.style.overflow = previousOverflow;
           onComplete();
-        }, reduced ? 0 : fadeDurationMs);
+        }, reduced ? 0 : Math.max(fadeDurationMs, sceneOverlapMs));
         return;
       }
       if (canvas?.dataset.assetError === "true" || scope.current?.querySelector("[data-scene-error='true']")) showFallback();
@@ -139,7 +153,7 @@ export function HomeLoader({ scope, onReveal, onComplete, compact = false }: { s
         <button type="button" onClick={() => window.location.reload()}>重新加载</button>
       </div>
     </div> : <div className={styles.loadingContent}>
-    <div className={styles.viewport} aria-hidden="true">
+    <div ref={viewport} className={styles.viewport} aria-hidden="true">
       <div ref={sequence} className={styles.sequence} style={sequenceStyle}>
         {frames.map(i => <div key={i} className={styles.logoFrame} style={{ backgroundImage: `url("${sequenceUrl}")`, backgroundPosition: `${i * 100 / (frames.length - 1)}% center` }} />)}
       </div>

@@ -34,7 +34,7 @@ export const home3DConfig = {
   // 后景保留 82% 尺寸，保持纵深，同时避免远处元素显得过小。
   depthSizing: { farScale: .82, range: .35 },
   // 轨道初期使用 0.35 倍率，结束前 1.2 秒开始，用 1.6 秒平滑恢复常规尺寸。
-  entrance: { stagger: .035, launch: .3, duration: 3.2, turns: 1.4, endSpeed: .18, size: .35, sizeRestoreLead: 2.4, sizeRestoreDuration: 1.6 },
+  entrance: { delay: .5, stagger: .035, launch: .3, duration: 3.2, turns: 1.4, endSpeed: .18, size: .35, sizeRestoreLead: 2.4, sizeRestoreDuration: 1.6 },
   magnet: { hoverRadius: .45, attractRadius: .85, repelStrength: 2.8, attractStrength: 60.5, burstSpeed: 5.1, burstRecovery: .9 },
   // 漂浮活动范围相对视口的倍率。桌面放宽边界，让 1.2 倍物件有空间翻滚；允许短暂出画。
   floatingBounds: { desktop: 1.2, mobile: 1.2 },

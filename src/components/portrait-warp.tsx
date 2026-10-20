@@ -479,7 +479,6 @@ export function PortraitWarp() {
         className={styles.prop} src={`/assets/images/portrait-props/${name === "laptop" ? "laptop" : "coffee-held"}.png`}
         alt="" aria-hidden="true" width={1280} height={1280} unoptimized draggable={false}
         style={{ left: `${anchor.x / 6}%`, top: `${anchor.y / 6}%`, width: `${width * 100}%`, transform: `translate(-50%, -50%) scale(${reveal})` }} />)}
-      <svg className={styles.outline} viewBox="0 0 100 100" aria-hidden="true"><path d={boundary} /></svg>
       <svg style={{ opacity: reveal }} className={styles.dragLabel} viewBox="0 0 100 100" aria-hidden="true">
         <defs><path id={labelPathId} d={labelPath} /></defs>
         <text style={{ fontSize: `${1400 / bounds.size}px` }}><textPath href={`#${labelPathId}`} startOffset="0%" textAnchor="start">Drag me</textPath></text>

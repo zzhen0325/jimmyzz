@@ -8,8 +8,7 @@
 .actions a { background: #171717; color: #fff; }
 .actions a:focus-visible, .actions button:focus-visible { outline: 2px solid #215cff; outline-offset: 4px; }
 .overlay[data-leaving="true"] .actions > * { pointer-events: none; }
-.viewport { width: min(600px, calc(100vw - 32px)); aspect-ratio: 1; overflow: hidden; transform: scale(1); transition: transform var(--shrink-duration) cubic-bezier(.65, 0, .35, 1) var(--final-frame-hold); }
-.overlay[data-leaving="true"] .viewport { transform: scale(0); }
+.viewport { width: min(600px, calc(100vw - 32px)); aspect-ratio: 1; overflow: hidden; transform: scale(1); }
 .overlay[data-compact="true"] .viewport { width: min(240px, calc(100vw - 32px)); }
 .overlay[data-compact="true"] { background: transparent; }
 .overlay[data-leaving="true"] .sequence { animation-play-state: paused; }
