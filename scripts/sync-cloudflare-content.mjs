@@ -28,6 +28,18 @@ const wrangler = (...args) => new Promise((resolve, reject) => {
   child.on('error', reject);
   child.on('exit', code => code === 0 ? resolve() : reject(new Error(`Wrangler failed (${code})`)));
 });
+// Media probes are read-only; retry transient transport failures without
+// weakening the size/hash checks or the final concurrent-edit checks.
+async function probeMedia(url) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await fetch(url, { headers: { Range: 'bytes=0-0' }, signal: AbortSignal.timeout(30000) });
+    } catch (error) {
+      if (attempt === 3) throw error;
+      console.warn(`Retrying media probe (${attempt}/3): ${url}`);
+    }
+  }
+}
 async function optionalRead(file) {
   try { return await readFile(file); } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
@@ -107,7 +119,7 @@ try {
       // A local-only merge can use existing immutable local files without
       // contacting the public CDN. Compare remote bytes before publication.
       if (writeLocal && data) { checked++; continue; }
-      const response = await fetch(`${origin}${ref}`, { headers: { Range: 'bytes=0-0' }, signal: AbortSignal.timeout(30000) });
+      const response = await probeMedia(`${origin}${ref}`);
       await response.body?.cancel();
       if (![200, 206, 404].includes(response.status)) throw new Error(`Media check failed: ${ref} (${response.status})`);
       const exists = response.status !== 404;

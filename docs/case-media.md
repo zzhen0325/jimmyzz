@@ -26,3 +26,8 @@ The manifest test checks file availability and MP4 index placement.
 Detail galleries start their image requests together, with the opening image
 at high priority. Videos buffer ahead of the viewport, display a first-frame
 poster, and pause offscreen. Other projects are warmed on navigation intent.
+
+Prepared videos are delivered through `/case-video/[name]` with explicit
+`206 Content-Range` responses. Cloudflare's static asset path can return a full
+200 response to range requests, so it is not used directly as the player source.
+The route streams only the requested bytes and retains immutable browser caching.

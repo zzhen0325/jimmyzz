@@ -10,7 +10,7 @@ export function preparedCaseImage(src: unknown): PreparedImage | undefined {
 }
 export function preparedCaseVideo(src: string): PreparedVideo | undefined {
   const entry = prepared[src];
-  return entry && 'poster' in entry ? entry : undefined;
+  return entry && 'poster' in entry ? { ...entry, src: entry.src.replace('/assets/case-media/', '/case-video/') } : undefined;
 }
 export function caseMediaImageLoader({ src, width }: { src: string; width: number }) {
   const image = preparedCaseImage(src);
