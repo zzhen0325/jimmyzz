@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type PointerEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type PointerEvent, type KeyboardEvent } from "react";
 import Image from "next/image";
 import lensTracking from "@/data/portrait-lens-tracking.json";
 import styles from "./portrait-warp.module.css";
@@ -102,7 +102,21 @@ const SMILE_FRAME = 54; // Source frame 92: settled smile after trimming holds.
 const SHAKE_START = 0;
 const SHAKE_END = 44; // Source frame 72: return to front after the final head turn.
 
+const portraitQuery = "(min-width: 760px)";
+const subscribeViewport = (notify: () => void) => {
+  const query = window.matchMedia(portraitQuery);
+  query.addEventListener("change", notify);
+  return () => query.removeEventListener("change", notify);
+};
+const getDesktopSnapshot = () => window.matchMedia(portraitQuery).matches;
+const getServerSnapshot = () => false;
+
 export function PortraitWarp() {
+  const desktop = useSyncExternalStore(subscribeViewport, getDesktopSnapshot, getServerSnapshot);
+  return <PortraitWarpContent compact={!desktop} />;
+}
+
+function PortraitWarpContent({ compact }: { compact: boolean }) {
   const labelPathId = useId();
   const [points, setPoints] = useState(collapsed);
   const [reveal, setReveal] = useState(0);
@@ -191,9 +205,11 @@ export function PortraitWarp() {
     const ctx = output?.getContext("2d");
     if (!ctx || !output) return;
     // Supersample the output while keeping mesh and pointer coordinates in 600-unit space.
-    ctx.setTransform(CANVAS_RESOLUTION / 600, 0, 0, CANVAS_RESOLUTION / 600, 0, 0);
+    const resolution = compact ? 600 : CANVAS_RESOLUTION;
+    output.width = output.height = resolution;
+    ctx.setTransform(resolution / 600, 0, 0, resolution / 600, 0, 0);
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    ctx.imageSmoothingQuality = compact ? "low" : "high";
     const texture = document.createElement("canvas");
     texture.width = texture.height = 600;
     const source = texture.getContext("2d");
@@ -232,7 +248,7 @@ export function PortraitWarp() {
         return image.decode();
       })).then(() => { if (!disposed) sheetsReady = true; }).catch(() => {});
       preload.disconnect();
-    }, { rootMargin: "1600px" });
+    }, { rootMargin: compact ? "300px" : "1600px" });
     preload.observe(output);
     let visible = false;
     let frame = 0;
@@ -294,6 +310,8 @@ export function PortraitWarp() {
     const draw = (now: number, warming = false) => {
       if ((!visible && !warming) || document.hidden) { frame = 0; return; }
       if (!warming) frame = requestAnimationFrame(draw);
+      // Bound mobile mesh redraws to 30fps, including entrance and dragging.
+      if (compact && !warming && now - lastDraw < 1000 / 30) return;
       const dt = Number.isFinite(lastDraw) ? Math.min((now - lastDraw) / 1000, .08) : 0;
       lastDraw = now;
       const active = now - lastDeformation.current < 220;
@@ -383,7 +401,7 @@ export function PortraitWarp() {
         meshPoints = geometry.current;
         silhouette = new Path2D(boundaryPath(meshPoints, 600));
         triangles = [];
-        const n = MESH_SEGMENTS;
+        const n = compact ? 10 : MESH_SEGMENTS;
         for (let y=0;y<n;y++) for(let x=0;x<n;x++) {
           const uv = [{x:x/n,y:y/n},{x:(x+1)/n,y:y/n},{x:(x+1)/n,y:(y+1)/n},{x:x/n,y:(y+1)/n}];
           const dst = uv.map(p=>surface(meshPoints!,p.x,p.y));
@@ -405,7 +423,7 @@ export function PortraitWarp() {
       preload.disconnect();
       document.removeEventListener("visibilitychange", syncPlayback);
     };
-  }, []);
+  }, [compact]);
   const deform = (time: number) => {
     interacted.current = true;
     cancelAnimationFrame(entranceFrame.current);

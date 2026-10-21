@@ -60,6 +60,7 @@
 .contactHeading span { display: block; transform: translateY(115%); transition: transform 500ms cubic-bezier(.22, 1, .36, 1); }
 .contactPanel[data-open="true"] .contactHeading span { transform: translateY(0); transition-delay: 400ms; }
 .contactLinks { min-width: 0; }
+.resourceLinks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap, 24px); }
 .contactLinks a { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 48px; padding-block: 10px; border-block: 1px solid #ccc; font-size: clamp(18px, 1.7vw, 28px); overflow-wrap: anywhere; }
 .contactLinks a span:last-child { transition: transform 220ms ease; }
 .contactLinks a:hover span:last-child { transform: translate(3px, -3px); }

@@ -66,8 +66,9 @@ export function ContactPanel({ open, panelRef, id }: { open: boolean; panelRef: 
       <div className={styles.contactLinks}>
         <a href={`mailto:${profile.email}`}><span>{profile.email}</span><span aria-hidden="true">↗</span></a>
       </div>
-      <div className={styles.contactLinks}>
+      <div className={`${styles.contactLinks} ${styles.resourceLinks}`}>
         <a href="https://effect-studio-zeta.vercel.app/" target="_blank" rel="noopener noreferrer"><span>Tool</span><span aria-hidden="true">↗</span></a>
+        <a href="https://my.feishu.cn/wiki/TsWQwCHhfi2CeukHxonc7Zwznwb?from=from_copylink" target="_blank" rel="noopener noreferrer"><span>Doc</span><span aria-hidden="true">↗</span></a>
       </div>
     </section>
   );

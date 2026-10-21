@@ -24,6 +24,7 @@ export function DissolveFooter() {
     const halo = document.createElement("canvas");
     const haloContext = halo.getContext("2d", { willReadFrequently: true });
     if (!context || !maskContext || !haloContext) return;
+    const supportsFilter = typeof haloContext.filter === "string";
 
     const rgbStops = stops.map(({ at, hex }) => ({
       at,
@@ -110,9 +111,21 @@ export function DissolveFooter() {
       }
       maskContext.globalAlpha = 1;
       haloContext.clearRect(0, 0, w, h);
-      haloContext.filter = `blur(${Math.max(.8, markHeight * .012)}px)`;
-      haloContext.drawImage(mask, 0, 0);
-      haloContext.filter = "none";
+      const blur = Math.max(.8, markHeight * .012);
+      haloContext.save();
+      if (supportsFilter) {
+        haloContext.filter = `blur(${blur}px)`;
+        haloContext.drawImage(mask, 0, 0);
+      } else {
+        // Safari lacks Canvas filter. Draw only the blurred shadow back into
+        // view; the sharp source stays outside the bitmap. Shadow blur uses
+        // half its value as the Gaussian sigma used by filter: blur().
+        haloContext.shadowColor = "#fff";
+        haloContext.shadowBlur = blur * 2;
+        haloContext.shadowOffsetX = w * 2;
+        haloContext.drawImage(mask, -w * 2, 0);
+      }
+      haloContext.restore();
       const pixels = haloContext.getImageData(0, 0, w, h);
       const data = pixels.data;
       // Map the blurred mask, with zero stochastic grain as requested.
