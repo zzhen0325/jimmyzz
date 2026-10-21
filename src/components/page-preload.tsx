@@ -5,6 +5,8 @@ import { getImageProps } from "next/image";
 import { useRouter } from "next/navigation";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 import { caseImageQuality, caseImageSizes, type PreloadRoute, type PreviewImage } from "@/lib/case-media";
+import { isUploadedImage } from "@/lib/media-image";
+import { preparedCaseImage, caseMediaImageLoader } from "@/lib/prepared-case-media";
 
 type ImageSource = { src: string; srcSet?: string; sizes?: string };
 const warmedImages = new Map<string, Promise<void>>();
@@ -12,7 +14,9 @@ const warmedRoutes = new Map<string, number>();
 
 function previewSource(image: PreviewImage): ImageSource {
   if (!image.width || !image.height || image.unoptimized) return { src: image.src };
-  const { props } = getImageProps({ ...image, alt: "", sizes: caseImageSizes, quality: caseImageQuality });
+  const { props } = getImageProps({ ...image, alt: "", sizes: caseImageSizes, quality: caseImageQuality,
+    ...(preparedCaseImage(image.src) || isUploadedImage(image.src) ? { loader: caseMediaImageLoader } : {}),
+  });
   return { src: props.src, srcSet: props.srcSet, sizes: props.sizes };
 }
 
@@ -43,7 +47,7 @@ function warmImage(source: ImageSource) {
   return promise;
 }
 
-/** Warm complete dynamic routes, then media in a bounded, interruptible queue. */
+/** Detail pages warm navigation on intent; keep their bandwidth for visible media. */
 export function PagePreload({ routes, home = false }: { routes: PreloadRoute[]; home?: boolean }) {
   const router = useRouter();
   useEffect(() => {
@@ -93,6 +97,7 @@ export function PagePreload({ routes, home = false }: { routes: PreloadRoute[]; 
       const route = byPath.get(url.pathname);
       if (!route && url.pathname !== "/") return;
       prefetch(url.pathname);
+      if (constrained) return;
       if (url.pathname === "/" && location.pathname !== "/") void import("./chrome-scene");
       if (url.pathname === "/work/portfolio-v1") void import("./v1-experience");
       if (route) queue.unshift(...route.images.map(previewSource));
@@ -125,8 +130,12 @@ export function PagePreload({ routes, home = false }: { routes: PreloadRoute[]; 
       transitioning = !!(event as CustomEvent<boolean>).detail;
       if (!transitioning) pump();
     };
-    routeTimer = setTimeout(nextRoute, 800);
-    mediaTimer = setTimeout(startMedia, 1200);
+    // Never force a detail gallery's lazy images (or every other project) to load.
+    // The home experience retains its existing background warmup.
+    if (home) {
+      routeTimer = setTimeout(nextRoute, 800);
+      mediaTimer = setTimeout(startMedia, 1200);
+    }
     document.addEventListener("pointerover", intent, { passive: true });
     document.addEventListener("focusin", intent);
     document.addEventListener("touchstart", intent, { passive: true });

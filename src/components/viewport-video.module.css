@@ -1,0 +1,65 @@
+.player { position: relative; width: 100%; overflow: hidden; isolation: isolate; }
+.embeddedPlayer { height: 100%; }
+/* Controls sit above the artwork even when the video itself is below it. */
+.embeddedHost { position: absolute; z-index: 3; pointer-events: none; container-type: inline-size; }
+.embeddedHost .controls { pointer-events: auto; }
+.embeddedHost .controls:hover, .embeddedHost .controls:focus-within,
+.embeddedHost .controls[data-playing='false'], :global([data-layered-media]:hover) .embeddedHost .controls { opacity: 1; transform: none; }
+@container (max-width: 260px) {
+  .embeddedHost .controls { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 0 4px; padding: 14px 8px 2px; }
+  .embeddedHost .toggle { grid-column: 1; grid-row: 1; width: 32px; height: 32px; }
+  .embeddedHost .time { grid-row: 1; font-size: 10px; }
+  .embeddedHost .time:last-child { text-align: right; }
+  .embeddedHost .seek { grid-row: 2; grid-column: 1 / -1; width: 100%; height: 32px; }
+  .embeddedHost .progress { height: 32px; }
+  .embeddedHost .marker { top: 0; height: 32px; }
+  .embeddedHost .previewTime { bottom: 32px; font-size: 10px; }
+}
+@container (max-width: 140px) {
+  .embeddedHost .controls { grid-template-columns: 24px 1fr 1fr; gap: 0 2px; padding: 12px 5px 4px; }
+  .embeddedHost .toggle { width: 24px; height: 28px; }
+  .embeddedHost .time, .embeddedHost .previewTime { font-size: 8px; }
+  .embeddedHost .previewTime { left: clamp(28px, var(--preview-position), calc(100% - 28px)); }
+}
+@container (max-width: 100px) {
+  .embeddedHost .controls { grid-template-columns: 1fr 1fr; }
+  .embeddedHost .toggle { grid-column: 1 / -1; justify-self: center; }
+  .embeddedHost .time { grid-row: 2; }
+  .embeddedHost .seek { grid-row: 3; }
+}
+.controls {
+  position: absolute; inset: auto 0 0; z-index: 3;
+  display: flex; align-items: center; gap: 6px;
+  padding: 18px clamp(8px, 1.5vw, 20px) 4px;
+  color: #fff;
+  background: linear-gradient(transparent, rgb(0 0 0 / 38%));
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.player:hover .controls, .player:focus-within .controls, .player[data-playing='false'] .controls { opacity: 1; transform: none; }
+.toggle {
+  display: grid; place-items: center; flex: 0 0 44px;
+  width: 44px; height: 44px; padding: 0; border: 0;
+  background: transparent; color: inherit; cursor: pointer;
+}
+.toggle:hover { opacity: .75; }
+.toggle:focus-visible, .progress:focus-visible { outline: 2px solid white; outline-offset: 2px; border-radius: 4px; }
+.time { flex-shrink: 0; font-size: clamp(10px, .85vw, 12px); font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
+.seek { position: relative; flex: 1; min-width: 0; height: 44px; }
+.preview { pointer-events: none; position: absolute; inset: 0; z-index: 1; }
+.previewTime { position: absolute; bottom: 40px; left: clamp(52px, var(--preview-position), calc(100% - 52px)); transform: translateX(-50%); white-space: nowrap; font-size: clamp(10px, .85vw, 12px); font-variant-numeric: tabular-nums; text-shadow: 0 1px 6px #000; }
+.previewTime span { color: rgb(255 255 255 / 50%); }
+.marker { position: absolute; left: var(--preview-position); top: 6px; width: 1px; height: 32px; background: rgb(255 255 255 / 75%); transform: translateX(-50%); }
+.progress {
+  appearance: none; -webkit-appearance: none; width: 100%; min-width: 0;
+  height: 44px; margin: 0; padding: 0; cursor: pointer; background: transparent;
+  touch-action: pan-y;
+}
+.progress::-webkit-slider-runnable-track { height: 3px; border-radius: 99px; background: linear-gradient(to right, white var(--video-progress), rgb(255 255 255 / 35%) var(--video-progress)); }
+.progress::-moz-range-track { height: 3px; border-radius: 99px; background: rgb(255 255 255 / 35%); }
+.progress::-moz-range-progress { height: 3px; border-radius: 99px; background: white; }
+.progress::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 2px; height: 3px; border: 0; background: white; }
+.progress::-moz-range-thumb { width: 2px; height: 3px; border: 0; border-radius: 0; background: white; }
+.progress:disabled { cursor: default; opacity: .5; }
+@media (hover: none) { .controls { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .controls { transition: none; } }

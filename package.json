@@ -13,14 +13,15 @@
     "deploy:cloudflare": "npm run build:cloudflare && opennextjs-cloudflare deploy",
     "prepare:video": "node scripts/prepare-video-transcoder.mjs",
     "prepare:home-geometry": "node scripts/prepare-home-geometry.mjs",
-    "predev": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers && npm run optimize:project-previews",
-    "prebuild": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers && npm run optimize:project-previews",
+    "predev": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers && npm run optimize:project-previews && npm run optimize:case-media",
+    "prebuild": "npm run prepare:video && npm run prepare:home-geometry && npm run optimize:home-covers && npm run optimize:project-previews && npm run optimize:case-media",
     "check:cloudflare": "node scripts/check-cloudflare-versions.mjs",
     "sync:content": "node scripts/sync-cloudflare-content.mjs",
     "test:content-sync": "node --test scripts/content-merge.test.mjs",
     "test:media": "node --test scripts/media-delivery.test.mjs",
     "optimize:project-previews": "node scripts/optimize-project-previews.mjs",
-    "optimize:home-covers": "node scripts/optimize-home-covers.mjs"
+    "optimize:home-covers": "node scripts/optimize-home-covers.mjs",
+    "optimize:case-media": "node scripts/optimize-case-media.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

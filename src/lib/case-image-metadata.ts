@@ -6,11 +6,14 @@ import { cloudflareStorage } from "./cloudflare-storage";
 import { contentDirectory } from "./content-store";
 import { isVideoAsset } from "./media";
 import type { Asset } from "./projects-config";
+import { preparedCaseImage } from './prepared-case-media';
 
 /** Older galleries and CMS uploads may not include their intrinsic dimensions. */
 export async function resolveCaseImageMetadata(assets: Asset[]): Promise<Asset[]> {
   return Promise.all(assets.map(async (asset) => {
     if (isVideoAsset(asset.src) || (asset.width && asset.height)) return asset;
+    const prepared = preparedCaseImage(asset.src);
+    if (prepared) return { ...asset, width: prepared.width, height: prepared.height };
     if (!asset.src.startsWith('/assets/') && !asset.src.startsWith('/media/')) return asset;
     const storage = cloudflareStorage();
     if (storage) {
